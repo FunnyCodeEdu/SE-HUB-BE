@@ -6,10 +6,12 @@ import com.se.hub.modules.blog.dto.response.BlogResponse;
 import com.se.hub.modules.blog.entity.Blog;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", 
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface BlogMapper {
     Blog toBlog(CreateBlogRequest request);
     BlogResponse toBlogResponse(Blog blog);

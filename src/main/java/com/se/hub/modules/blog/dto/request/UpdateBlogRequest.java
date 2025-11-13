@@ -2,8 +2,6 @@ package com.se.hub.modules.blog.dto.request;
 
 import com.se.hub.modules.blog.constant.BlogConstants;
 import com.se.hub.modules.blog.constant.BlogErrorCodeConstants;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -20,13 +18,21 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UpdateBlogRequest {
-    @NotBlank(message = BlogErrorCodeConstants.BLOG_CONTENT_INVALID)
+    /**
+     * Content of the blog. Optional for partial update.
+     * If provided, must not be blank and must not exceed max length.
+     */
     @Size(max = BlogConstants.CONTENT_MAX_LENGTH,
             message = BlogErrorCodeConstants.BLOG_CONTENT_INVALID)
     String content;
 
+    /**
+     * Cover image URL. Optional for partial update.
+     */
     String coverImageUrl;
 
-    @NotNull(message = BlogErrorCodeConstants.BLOG_ALLOW_COMMENTS_INVALID)
+    /**
+     * Allow comments flag. Optional for partial update.
+     */
     Boolean allowComments;
 }

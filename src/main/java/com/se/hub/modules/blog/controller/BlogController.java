@@ -14,8 +14,7 @@ import com.se.hub.modules.blog.constant.BlogMessageConstants;
 import com.se.hub.modules.blog.dto.request.CreateBlogRequest;
 import com.se.hub.modules.blog.dto.request.UpdateBlogRequest;
 import com.se.hub.modules.blog.dto.response.BlogResponse;
-import com.se.hub.modules.blog.service.api.BlogService;
-import com.se.hub.modules.profile.service.api.ProfileProgressService;
+import com.se.hub.modules.blog.service.BlogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -47,7 +46,6 @@ import org.springframework.web.bind.annotation.RestController;
 @Validated
 public class BlogController extends BaseController {
     BlogService blogService;
-    ProfileProgressService  profileProgressService;
 
     @PostMapping
     @Operation(summary = "Create new blog",
@@ -60,10 +58,6 @@ public class BlogController extends BaseController {
     })
     public ResponseEntity<GenericResponse<BlogResponse>> createBlog(@Valid @RequestBody CreateBlogRequest request) {
         BlogResponse blogResponse = blogService.createBlog(request);
-
-        //update user stats
-        profileProgressService.updatePostsUploaded();
-
         return success(blogResponse, MessageCodeConstant.M002_CREATED, MessageConstant.CREATED);
     }
 

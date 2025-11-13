@@ -63,20 +63,20 @@ public interface QuestionRepository extends JpaRepository<Question, String> {
     
     /**
      * Find random questions by criteria
-     * Note: This query uses a workaround for MySQL LIMIT with parameter binding
+     * Note: This query uses PostgreSQL RANDOM() function and named parameters
      */
     @Query(value = """
         SELECT q.* FROM question q
-        WHERE (?1 IS NULL OR q.category = ?1)
-            AND (?2 IS NULL OR q.difficulty = ?2)
-            AND (?3 IS NULL OR q.jlpt_level = ?3)
-            AND (?4 IS NULL OR q.question_type = ?4)
-        ORDER BY RAND()
-        LIMIT ?5
+        WHERE (:category IS NULL OR q.category = :category)
+            AND (:difficulty IS NULL OR q.difficulty = :difficulty)
+            AND (:jlptLevel IS NULL OR q.jlpt_level = :jlptLevel)
+            AND (:questionType IS NULL OR q.question_type = :questionType)
+        ORDER BY RANDOM()
+        LIMIT :limit
         """, nativeQuery = true)
-    List<Question> findRandomQuestions(String category,
-                                     String difficulty,
-                                     String jlptLevel,
-                                     String questionType,
-                                     int limit);
+    List<Question> findRandomQuestions(@Param("category") String category,
+                                     @Param("difficulty") String difficulty,
+                                     @Param("jlptLevel") String jlptLevel,
+                                     @Param("questionType") String questionType,
+                                     @Param("limit") int limit);
 }

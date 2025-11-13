@@ -55,6 +55,6 @@ public interface QuestionOptionRepository extends JpaRepository<QuestionOption, 
     /**
      * Find options by content containing keyword
      */
-    @Query("SELECT qo FROM QuestionOption qo WHERE qo.content LIKE %:keyword%")
+    @Query("SELECT qo FROM QuestionOption qo WHERE qo.content LIKE CONCAT('%', :keyword, '%')")
     List<QuestionOption> findByContentContaining(@Param("keyword") String keyword);
 }

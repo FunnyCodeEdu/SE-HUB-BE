@@ -1,0 +1,50 @@
+package com.catsocute.japanlearn_hub.modules.profile.dto.response;
+
+import com.catsocute.japanlearn_hub.modules.profile.enums.GenderEnums;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.FieldDefaults;
+
+import java.time.Instant;
+import java.util.Set;
+
+/**
+ * Profile response DTO
+ */
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class ProfileResponse {
+    //profile information
+    String id;
+    Instant createDate;
+    Instant updatedDate;
+    String fullName;
+    String phoneNum;
+    String email;
+    String avtUrl;
+    GenderEnums gender;
+
+    //profile status flags
+    boolean verified;
+    boolean blocked;
+    boolean active;
+
+    //user information
+    String userId;
+    String username;
+    Set<String> userRole;
+    String userStatus;
+
+    //nested objects
+    UserLevelResponse level;
+    UserStatsResponse userStats;
+    Set<AchievementResponse> achievements;
+}

@@ -1,0 +1,30 @@
+package com.catsocute.japanlearn_hub.modules.user.dto.request;
+
+import com.catsocute.japanlearn_hub.modules.user.constant.user.UserConstants;
+import com.catsocute.japanlearn_hub.modules.user.constant.user.UserErrorCodeConstants;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.FieldDefaults;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class ChangePasswordRequest {
+    @NotNull
+    String oldPassword;
+
+    @NotNull
+    @Size(min = UserConstants.MIN_CHARS_PASSWORD,
+            max = UserConstants.MAX_CHARS_PASSWORD,
+            message = UserErrorCodeConstants.USER_PASSWORD_INVALID)
+    String newPassword;
+}

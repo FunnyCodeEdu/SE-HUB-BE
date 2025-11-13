@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @Tag(name = "Blog Management",
         description = "Blog management API")
-@RequestMapping("/api/v1/blogs")
+@RequestMapping("/blogs")
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

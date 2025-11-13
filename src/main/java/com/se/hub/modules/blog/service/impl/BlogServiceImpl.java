@@ -53,7 +53,6 @@ public class BlogServiceImpl implements BlogService {
 
         Profile author = profileRepository.findByUserId(userId)
                 .orElseThrow(() -> {
-                    log.error("Profile not found for user id {}", userId);
                     return new AppException(ErrorCode.PROFILE_NOT_FOUND);
                 });
 
@@ -69,7 +68,6 @@ public class BlogServiceImpl implements BlogService {
     public BlogResponse getById(String blogId) {
         return blogMapper.toBlogResponse(blogRepository.findById(blogId)
                 .orElseThrow(() -> {
-                    log.error("BlogService_getById_Blog id {} not found", blogId);
                     return BlogErrorCode.BLOG_NOT_FOUND.toException();
                 }));
     }
@@ -123,7 +121,6 @@ public class BlogServiceImpl implements BlogService {
     public BlogResponse updateBlogById(String blogId, UpdateBlogRequest request) {
         Blog blog = blogRepository.findById(blogId)
                 .orElseThrow(() -> {
-                    log.error("BlogService_updateBlogById_Blog id {} not found", blogId);
                     return BlogErrorCode.BLOG_NOT_FOUND.toException();
                 });
 
@@ -137,17 +134,14 @@ public class BlogServiceImpl implements BlogService {
     @Transactional
     public void deleteBlogById(String blogId) {
         if (blogId == null || blogId.isBlank()) {
-            log.error("BlogService_deleteBlogById_Blog id is null or blank");
             throw BlogErrorCode.BLOG_ID_REQUIRED.toException();
         }
 
         if (!blogRepository.existsById(blogId)) {
-            log.error("BlogService_deleteBlogById_Blog id {} not found", blogId);
             throw BlogErrorCode.BLOG_NOT_FOUND.toException();
         }
 
         blogRepository.deleteById(blogId);
-        log.info("BlogService_deleteBlogById_Blog id {} deleted successfully", blogId);
     }
 
     @Override
@@ -235,12 +229,10 @@ public class BlogServiceImpl implements BlogService {
     @Transactional
     public void incrementViewCount(String blogId) {
         if (blogId == null || blogId.isBlank()) {
-            log.error("BlogService_incrementViewCount_Blog id is null or blank");
             throw BlogErrorCode.BLOG_ID_REQUIRED.toException();
         }
 
         if (!blogRepository.existsById(blogId)) {
-            log.error("BlogService_incrementViewCount_Blog id {} not found", blogId);
             throw BlogErrorCode.BLOG_NOT_FOUND.toException();
         }
 
@@ -252,12 +244,10 @@ public class BlogServiceImpl implements BlogService {
     @Transactional
     public void incrementReactionCount(String blogId, int delta) {
         if (blogId == null || blogId.isBlank()) {
-            log.error("BlogService_incrementReactionCount_Blog id is null or blank");
             throw BlogErrorCode.BLOG_ID_REQUIRED.toException();
         }
 
         if (!blogRepository.existsById(blogId)) {
-            log.error("BlogService_incrementReactionCount_Blog id {} not found", blogId);
             throw BlogErrorCode.BLOG_NOT_FOUND.toException();
         }
 
@@ -269,12 +259,10 @@ public class BlogServiceImpl implements BlogService {
     @Transactional
     public void incrementCommentCount(String blogId, int delta) {
         if (blogId == null || blogId.isBlank()) {
-            log.error("BlogService_incrementCommentCount_Blog id is null or blank");
             throw BlogErrorCode.BLOG_ID_REQUIRED.toException();
         }
 
         if (!blogRepository.existsById(blogId)) {
-            log.error("BlogService_incrementCommentCount_Blog id {} not found", blogId);
             throw BlogErrorCode.BLOG_NOT_FOUND.toException();
         }
 

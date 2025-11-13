@@ -13,6 +13,9 @@ import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Virtual Thread Configuration
@@ -61,7 +64,12 @@ public class VirtualThreadConfig implements WebMvcConfigurer, AsyncConfigurer, S
      */
     @Override
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-        taskRegistrar.setScheduler(Executors.newVirtualThreadPerTaskExecutor());
+        ThreadFactory virtualThreadFactory = Thread.ofVirtual().factory();
+        ScheduledExecutorService scheduler = new ScheduledThreadPoolExecutor(
+            Runtime.getRuntime().availableProcessors(),
+            virtualThreadFactory
+        );
+        taskRegistrar.setScheduler(scheduler);
     }
 
     /**

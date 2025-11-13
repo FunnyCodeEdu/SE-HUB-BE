@@ -43,33 +43,93 @@ public class PermissionInitializer implements ApplicationRunner {
     private Set<Permission> getPermissions() {
         return Set.of(
                 // ===== SYSTEM =====
-                new Permission(StartDefinedPermission.PERMISSION_MANAGE, "Manage permissions, including create, update, and delete"),
-                new Permission(StartDefinedPermission.PERMISSION_VIEW, "View the list of permissions"),
-                new Permission(StartDefinedPermission.SYSTEM_MANAGE, "Full system management access with the highest privileges"),
-                new Permission(StartDefinedPermission.SYSTEM_VIEW, "View system information and status"),
-                new Permission(StartDefinedPermission.ROLE_MANAGE, "Manage roles, including create, update, and delete"),
-                new Permission(StartDefinedPermission.ROLE_VIEW, "View the list of roles"),
-                new Permission(StartDefinedPermission.AUDIT_VIEW, "View system audit logs"),
+                Permission.builder()
+                        .name(StartDefinedPermission.PERMISSION_MANAGE)
+                        .description("Manage permissions, including create, update, and delete")
+                        .build(),
+                Permission.builder()
+                        .name(StartDefinedPermission.PERMISSION_VIEW)
+                        .description("View the list of permissions")
+                        .build(),
+                Permission.builder()
+                        .name(StartDefinedPermission.SYSTEM_MANAGE)
+                        .description("Full system management access with the highest privileges")
+                        .build(),
+                Permission.builder()
+                        .name(StartDefinedPermission.SYSTEM_VIEW)
+                        .description("View system information and status")
+                        .build(),
+                Permission.builder()
+                        .name(StartDefinedPermission.ROLE_MANAGE)
+                        .description("Manage roles, including create, update, and delete")
+                        .build(),
+                Permission.builder()
+                        .name(StartDefinedPermission.ROLE_VIEW)
+                        .description("View the list of roles")
+                        .build(),
+                Permission.builder()
+                        .name(StartDefinedPermission.AUDIT_VIEW)
+                        .description("View system audit logs")
+                        .build(),
 
                 // ===== USER =====
-                new Permission(StartDefinedPermission.USER_VIEW, "View user information"),
-                new Permission(StartDefinedPermission.USER_UPDATE, "Update user information"),
-                new Permission(StartDefinedPermission.USER_DELETE, "Delete a user account"),
+                Permission.builder()
+                        .name(StartDefinedPermission.USER_VIEW)
+                        .description("View user information")
+                        .build(),
+                Permission.builder()
+                        .name(StartDefinedPermission.USER_UPDATE)
+                        .description("Update user information")
+                        .build(),
+                Permission.builder()
+                        .name(StartDefinedPermission.USER_DELETE)
+                        .description("Delete a user account")
+                        .build(),
 
                 // ===== PROFILE =====
-                new Permission(StartDefinedPermission.PROFILE_UPDATE, "Update own profile information"),
-                new Permission(StartDefinedPermission.PROFILE_VIEW, "View own profile information"),
+                Permission.builder()
+                        .name(StartDefinedPermission.PROFILE_UPDATE)
+                        .description("Update own profile information")
+                        .build(),
+                Permission.builder()
+                        .name(StartDefinedPermission.PROFILE_VIEW)
+                        .description("View own profile information")
+                        .build(),
 
                 // ===== LEARNING CONTENT =====
-                new Permission(StartDefinedPermission.LESSON_CREATE, "Create a new lesson"),
-                new Permission(StartDefinedPermission.LESSON_VIEW, "View lesson details"),
-                new Permission(StartDefinedPermission.LESSON_DELETE, "Delete a lesson"),
-                new Permission(StartDefinedPermission.LESSON_UPDATE, "Update lesson information"),
+                Permission.builder()
+                        .name(StartDefinedPermission.LESSON_CREATE)
+                        .description("Create a new lesson")
+                        .build(),
+                Permission.builder()
+                        .name(StartDefinedPermission.LESSON_VIEW)
+                        .description("View lesson details")
+                        .build(),
+                Permission.builder()
+                        .name(StartDefinedPermission.LESSON_DELETE)
+                        .description("Delete a lesson")
+                        .build(),
+                Permission.builder()
+                        .name(StartDefinedPermission.LESSON_UPDATE)
+                        .description("Update lesson information")
+                        .build(),
 
-                new Permission(StartDefinedPermission.QUIZ_CREATE, "Create a new quiz"),
-                new Permission(StartDefinedPermission.QUIZ_VIEW, "View quiz details"),
-                new Permission(StartDefinedPermission.QUIZ_DELETE, "Delete a quiz"),
-                new Permission(StartDefinedPermission.QUIZ_UPDATE, "Update quiz information")
+                Permission.builder()
+                        .name(StartDefinedPermission.QUIZ_CREATE)
+                        .description("Create a new quiz")
+                        .build(),
+                Permission.builder()
+                        .name(StartDefinedPermission.QUIZ_VIEW)
+                        .description("View quiz details")
+                        .build(),
+                Permission.builder()
+                        .name(StartDefinedPermission.QUIZ_DELETE)
+                        .description("Delete a quiz")
+                        .build(),
+                Permission.builder()
+                        .name(StartDefinedPermission.QUIZ_UPDATE)
+                        .description("Update quiz information")
+                        .build()
         );
     }
 }

@@ -1,38 +1,34 @@
 package com.se.hub.modules.user.service.api;
 
-import com.se.hub.common.dto.request.PagingRequest;
-import com.se.hub.common.dto.response.PagingResponse;
 import com.se.hub.modules.user.dto.request.PermissionCreationRequest;
 import com.se.hub.modules.user.dto.response.PermissionResponse;
 
+import java.util.List;
+
 public interface PermissionService {
     /**
-     * create new permission
-     * @author catsocute
+     * Create permission
      */
     PermissionResponse create(PermissionCreationRequest request);
 
     /**
-     * get permission by id
-     * @author catsocute
+     * Get all permissions
+     */
+    List<PermissionResponse> getAll();
+
+    /**
+     * Get permission by name
      */
     PermissionResponse getByName(String name);
 
     /**
-     * get permissions
-     * @author catsocute
-     */
-    PagingResponse<PermissionResponse> getAll(PagingRequest request);
-
-    /**
-     * delete permission
-     * @author catsocute
+     * Delete permission by id
      */
     void deleteById(String id);
 
     /**
-     * delete all permissions
-     * @author catsocute
+     * Delete all permissions
      */
     void deleteAll();
 }
+

@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Grammar Management",
         description = "Grammar management API")
-@RequestMapping("/api/v1/grammars")
+@RequestMapping("/grammars")
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

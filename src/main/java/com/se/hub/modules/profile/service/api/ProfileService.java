@@ -5,8 +5,6 @@ import com.se.hub.common.dto.response.PagingResponse;
 import com.se.hub.modules.profile.dto.request.CreateDefaultProfileRequest;
 import com.se.hub.modules.profile.dto.request.UpdateProfileRequest;
 import com.se.hub.modules.profile.dto.response.ProfileResponse;
-import com.se.hub.modules.profile.entity.Profile;
-import com.se.hub.modules.user.entity.User;
 
 public interface ProfileService {
     /**
@@ -14,7 +12,7 @@ public interface ProfileService {
      * @author catsocute
      *
      */
-    Profile createDefaultProfile(User user, CreateDefaultProfileRequest request);
+    void createDefaultProfile(CreateDefaultProfileRequest request);
 
     /**
      * Update profile API
@@ -36,6 +34,15 @@ public interface ProfileService {
      *
      */
     ProfileResponse getProfileById(String profileId);
+    
+    /**
+     * Get profile detail by profileId (alias for getProfileById)
+     * @author catsocute
+     *
+     */
+    default ProfileResponse getDetailProfileByProfileId(String profileId) {
+        return getProfileById(profileId);
+    }
 
     /**
      * Get all profiles with pagination

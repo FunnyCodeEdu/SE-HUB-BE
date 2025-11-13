@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Lesson Management",
         description = "Lesson management API")
-@RequestMapping("/api/v1/lessons")
+@RequestMapping("/lessons")
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

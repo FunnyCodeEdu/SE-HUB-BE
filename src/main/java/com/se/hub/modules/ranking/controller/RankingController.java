@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Ranking Management",
         description = "Ranking management API")
-@RequestMapping("/api/v1/ranking")
+@RequestMapping("/ranking")
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

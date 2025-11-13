@@ -1,160 +1,129 @@
 package com.se.hub.modules.profile.controller;
 
-import com.se.hub.common.constant.ApiConstant;
-import com.se.hub.common.constant.BaseFieldConstant;
-import com.se.hub.common.constant.MessageCodeConstant;
 import com.se.hub.common.constant.MessageConstant;
-import com.se.hub.common.constant.PaginationConstants;
-import com.se.hub.common.dto.MessageDTO;
+import com.se.hub.common.controller.BaseController;
 import com.se.hub.common.dto.request.PagingRequest;
-import com.se.hub.common.dto.request.SortRequest;
 import com.se.hub.common.dto.response.GenericResponse;
 import com.se.hub.common.dto.response.PagingResponse;
+import org.springframework.http.ResponseEntity;
 import com.se.hub.modules.profile.constant.profile.ProfileControllerConstants;
+import com.se.hub.modules.profile.dto.request.CreateDefaultProfileRequest;
 import com.se.hub.modules.profile.dto.request.UpdateProfileRequest;
 import com.se.hub.modules.profile.dto.response.ProfileResponse;
 import com.se.hub.modules.profile.service.api.ProfileService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.http.ResponseEntity;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Profile Management",
-        description = "Profile management API")
-@RequestMapping("/api/v1/profiles")
+@Tag(name = ProfileControllerConstants.TAG_NAME, description = ProfileControllerConstants.TAG_DESCRIPTION)
+@RequestMapping("/profile")
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class ProfileController {
+@Validated
+@Slf4j
+public class ProfileController extends BaseController {
     ProfileService profileService;
 
-    @GetMapping
-    @Operation(summary = "Get all profiles",
-            description = "Get list of all profiles with pagination")
+    @PostMapping("/default")
+    @Operation(summary = ProfileControllerConstants.CREATE_DEFAULT_OPERATION_SUMMARY, description = ProfileControllerConstants.CREATE_DEFAULT_OPERATION_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = ProfileControllerConstants.GET_ALL_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = "200", description = ProfileControllerConstants.CREATE_DEFAULT_SUCCESS_RESPONSE),
             @ApiResponse(responseCode = "400", description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
             @ApiResponse(responseCode = "500", description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
     })
-    public ResponseEntity<GenericResponse<PagingResponse<ProfileResponse>>> getAllProfiles(
-            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
-            @RequestParam(required = false, defaultValue = BaseFieldConstant.CREATE_DATE) String field,
-            @RequestParam(required = false, defaultValue = PaginationConstants.DESC) String direction
-            ) {
-
-        PagingRequest request = PagingRequest.builder()
-                .page(page)
-                .pageSize(size)
-                .sortRequest(new SortRequest(direction, field))
-                .build();
-
-        GenericResponse<PagingResponse<ProfileResponse>> response = GenericResponse.<PagingResponse<ProfileResponse>>builder()
-                .isSuccess(ApiConstant.SUCCESS)
-                .message(MessageDTO.builder()
-                        .messageCode(MessageCodeConstant.M005_RETRIEVED)
-                        .messageDetail(MessageConstant.RETRIEVED)
-                        .build())
-                .data(profileService.getAllProfiles(request))
-                .build();
-
-        return ResponseEntity.ok(response);
+    public ResponseEntity<GenericResponse<String>> createDefaultProfile(@Valid @RequestBody CreateDefaultProfileRequest request) {
+        log.info("Creating default profile for userId: {}", request.getUserId());
+        profileService.createDefaultProfile(request);
+        log.info("Default profile created successfully for userId: {}", request.getUserId());
+        return success(MessageConstant.CREATE_DATA_SUCCESS);
     }
 
-    @GetMapping("/me")
-    @Operation(summary = "Get my profile",
-            description = "Get current user's profile information")
+    @PutMapping
+    @Operation(summary = ProfileControllerConstants.UPDATE_OPERATION_SUMMARY, description = ProfileControllerConstants.UPDATE_OPERATION_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = ProfileControllerConstants.GET_MY_PROFILE_SUCCESS_RESPONSE),
-            @ApiResponse(responseCode = "401", description = ProfileControllerConstants.UNAUTHORIZED_RESPONSE),
-            @ApiResponse(responseCode = "500", description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
-    })
-    public ResponseEntity<GenericResponse<ProfileResponse>> getMyProfile() {
-        GenericResponse<ProfileResponse> response = GenericResponse.<ProfileResponse>builder()
-                .isSuccess(ApiConstant.SUCCESS)
-                .message(MessageDTO.builder()
-                        .messageCode(MessageCodeConstant.M005_RETRIEVED)
-                        .messageDetail(MessageConstant.RETRIEVED)
-                        .build())
-                .data(profileService.getMyProfile())
-                .build();
-
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/{profileId}")
-    @Operation(summary = "Get profile by ID",
-            description = "Get profile details by profile ID")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = ProfileControllerConstants.GET_BY_ID_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = "200", description = ProfileControllerConstants.UPDATE_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = "400", description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
             @ApiResponse(responseCode = "404", description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
             @ApiResponse(responseCode = "500", description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
     })
-    public ResponseEntity<GenericResponse<ProfileResponse>> getProfileById(@PathVariable String profileId) {
-        GenericResponse<ProfileResponse> response = GenericResponse.<ProfileResponse>builder()
-                .isSuccess(ApiConstant.SUCCESS)
-                .message(MessageDTO.builder()
-                        .messageCode(MessageCodeConstant.M005_RETRIEVED)
-                        .messageDetail(MessageConstant.RETRIEVED)
-                        .build())
-                .data(profileService.getProfileById(profileId))
-                .build();
+    public ResponseEntity<GenericResponse<ProfileResponse>> updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
+        log.info("Updating profile");
+        ProfileResponse data = profileService.updateProfile(request);
+        log.debug("Profile updated successfully");
+        return success(data);
+    }
 
-        return ResponseEntity.ok(response);
+    @GetMapping
+    @Operation(summary = ProfileControllerConstants.GET_ALL_OPERATION_SUMMARY, description = ProfileControllerConstants.GET_ALL_OPERATION_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = ProfileControllerConstants.GET_ALL_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Authentication required"),
+            @ApiResponse(responseCode = "400", description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
+            @ApiResponse(responseCode = "500", description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<PagingResponse<ProfileResponse>>> getAllProfiles(PagingRequest pagingRequest) {
+        log.debug("Getting all profiles with paging: page={}, size={}", pagingRequest.getPage(), pagingRequest.getPageSize());
+        PagingResponse<ProfileResponse> data = profileService.getAllProfiles(pagingRequest);
+        return success(data);
+    }
+
+    @GetMapping("/my-profile")
+    @Operation(summary = ProfileControllerConstants.GET_MY_PROFILE_OPERATION_SUMMARY, description = ProfileControllerConstants.GET_MY_PROFILE_OPERATION_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = ProfileControllerConstants.GET_MY_PROFILE_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = "404", description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
+            @ApiResponse(responseCode = "500", description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<ProfileResponse>> getMyProfile() {
+        log.debug("Getting current user's profile");
+        ProfileResponse data = profileService.getMyProfile();
+        return success(data);
+    }
+
+    @GetMapping("/{profileId}")
+    @Operation(summary = ProfileControllerConstants.GET_BY_PROFILE_ID_OPERATION_SUMMARY, description = ProfileControllerConstants.GET_BY_PROFILE_ID_OPERATION_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = ProfileControllerConstants.GET_BY_PROFILE_ID_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = "404", description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
+            @ApiResponse(responseCode = "500", description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<ProfileResponse>> getDetailProfileByProfileId(
+            @Parameter(description = ProfileControllerConstants.PROFILE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable @NotBlank(message = "Profile ID cannot be blank") String profileId) {
+        log.debug("Getting profile by profileId: {}", profileId);
+        ProfileResponse data = profileService.getDetailProfileByProfileId(profileId);
+        return success(data);
     }
 
     @GetMapping("/user/{userId}")
-    @Operation(summary = "Get profile by user ID",
-            description = "Get profile details by user ID")
+    @Operation(summary = ProfileControllerConstants.GET_BY_USER_ID_OPERATION_SUMMARY, description = ProfileControllerConstants.GET_BY_USER_ID_OPERATION_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = ProfileControllerConstants.GET_BY_USER_ID_SUCCESS_RESPONSE),
             @ApiResponse(responseCode = "404", description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
             @ApiResponse(responseCode = "500", description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
     })
-    public ResponseEntity<GenericResponse<ProfileResponse>> getProfileByUserId(@PathVariable String userId) {
-        GenericResponse<ProfileResponse> response = GenericResponse.<ProfileResponse>builder()
-                .isSuccess(ApiConstant.SUCCESS)
-                .message(MessageDTO.builder()
-                        .messageCode(MessageCodeConstant.M005_RETRIEVED)
-                        .messageDetail(MessageConstant.RETRIEVED)
-                        .build())
-                .data(profileService.getDetailProfileByUserId(userId))
-                .build();
-
-        return ResponseEntity.ok(response);
-    }
-
-    @PutMapping
-    @Operation(summary = "Update profile",
-            description = "Update current user's profile information")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = ProfileControllerConstants.UPDATE_SUCCESS_RESPONSE),
-            @ApiResponse(responseCode = "400", description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
-            @ApiResponse(responseCode = "401", description = ProfileControllerConstants.UNAUTHORIZED_RESPONSE),
-            @ApiResponse(responseCode = "500", description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
-    })
-    public ResponseEntity<GenericResponse<ProfileResponse>> updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
-        GenericResponse<ProfileResponse> response = GenericResponse.<ProfileResponse>builder()
-                .isSuccess(ApiConstant.SUCCESS)
-                .message(MessageDTO.builder()
-                        .messageCode(MessageCodeConstant.M003_UPDATED)
-                        .messageDetail(MessageConstant.UPDATED)
-                        .build())
-                .data(profileService.updateProfile(request))
-                .build();
-
-        return ResponseEntity.ok(response);
+    public ResponseEntity<GenericResponse<ProfileResponse>> getDetailProfileByUserId(
+            @Parameter(description = ProfileControllerConstants.USER_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable @NotBlank(message = "User ID cannot be blank") String userId) {
+        log.debug("Getting profile by userId: {}", userId);
+        ProfileResponse data = profileService.getDetailProfileByUserId(userId);
+        return success(data);
     }
 }

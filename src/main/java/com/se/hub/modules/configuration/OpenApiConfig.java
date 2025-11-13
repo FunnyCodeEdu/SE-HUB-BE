@@ -1,0 +1,72 @@
+package com.se.hub.modules.configuration;
+
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Configuration
+public class OpenApiConfig {
+
+    private static final String AUTHORIZATION = "Authorization";
+    private static final String BEARER_AUTH = "bearerAuth";
+    private static final String BEARER = "bearer";
+    private static final String JWT = "JWT";
+
+    @Value("${swagger.server.urls:}")
+    private String serverUrls;
+
+    // No longer need context-path since we're using WebMvcConfig to add /api prefix
+
+    @Bean
+    public OpenAPI customizeOpenAPI() {
+        final String securitySchemeName = BEARER_AUTH;
+
+        List<Server> servers = new ArrayList<>();
+
+        // Add servers from configuration if provided
+        if (serverUrls != null && !serverUrls.trim().isEmpty()) {
+            String[] urls = serverUrls.split(";");
+            for (String item : urls) {
+                if (item != null && !item.trim().isEmpty()) {
+                    servers.add(new Server().url(item.trim()));
+                }
+            }
+        }
+
+        // Always add both production and development servers
+        // Production server first (will be selected by default in production)
+        // Note: Server URLs should include /api prefix since all API endpoints have /api prefix
+        servers.add(new Server().url("http://localhost:8080").description("Local Development Server"));
+        servers.add(new Server().url("https://apisehub.ftes.vn").description("Production Server"));
+        
+
+        // Remove duplicates
+        List<Server> uniqueServers = new ArrayList<>();
+        for (Server server : servers) {
+            boolean exists = uniqueServers.stream()
+                    .anyMatch(s -> s.getUrl().equals(server.getUrl()));
+            if (!exists) {
+                uniqueServers.add(server);
+            }
+        }
+
+        return new OpenAPI()
+                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
+                .components(new Components()
+                        .addSecuritySchemes(securitySchemeName, new SecurityScheme()
+                                .name(AUTHORIZATION)
+                                .type(SecurityScheme.Type.HTTP)
+                                .scheme(BEARER)
+                                .bearerFormat(JWT)))
+                .servers(uniqueServers);
+    }
+}
+

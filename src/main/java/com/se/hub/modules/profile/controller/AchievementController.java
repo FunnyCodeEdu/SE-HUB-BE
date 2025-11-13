@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Achievement Management",
         description = "Achievement management API")
-@RequestMapping("/api/v1/achievements")
+@RequestMapping("/achievements")
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

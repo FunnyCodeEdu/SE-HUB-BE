@@ -29,7 +29,7 @@ import java.util.List;
 
 @Tag(name = "Question Option Management",
         description = "Question option management API")
-@RequestMapping("/api/v1/question-options")
+@RequestMapping("/question-options")
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

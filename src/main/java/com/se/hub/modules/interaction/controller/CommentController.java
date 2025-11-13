@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Comment Management",
         description = "Comment management API")
-@RequestMapping("/api/v1/comments")
+@RequestMapping("/comments")
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

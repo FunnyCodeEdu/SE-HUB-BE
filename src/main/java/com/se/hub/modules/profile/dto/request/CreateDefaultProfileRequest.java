@@ -1,6 +1,6 @@
 package com.se.hub.modules.profile.dto.request;
 
-import com.se.hub.modules.user.dto.request.UserCreationRequest;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,5 +16,6 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CreateDefaultProfileRequest {
-    UserCreationRequest request;
+    @NotBlank(message = "User ID is required")
+    String userId;
 }

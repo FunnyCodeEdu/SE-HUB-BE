@@ -47,10 +47,17 @@ public class RoleInitializer implements ApplicationRunner {
     }
 
     private Set<Role> getRoles() {
-        return Set.of(
-                new Role(PredefinedRole.ADMIN_ROLE, "Admin role", getAdminPermission()),
-                new Role(PredefinedRole.USER_ROLE, "User role", getUserPermission())
-        );
+        Role adminRole = Role.builder()
+                .name(PredefinedRole.ADMIN_ROLE)
+                .permissions(getAdminPermission())
+                .build();
+        
+        Role userRole = Role.builder()
+                .name(PredefinedRole.USER_ROLE)
+                .permissions(getUserPermission())
+                .build();
+        
+        return Set.of(adminRole, userRole);
     }
 
     private Set<Permission> getUserPermission() {

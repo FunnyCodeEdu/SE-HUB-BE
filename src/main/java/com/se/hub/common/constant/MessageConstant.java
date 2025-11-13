@@ -5,6 +5,7 @@ public class MessageConstant {
     // ===== SUCCESS MESSAGES =====
     public static final String SUCCESS = "Success";
     public static final String CREATED = "Created successfully";
+    public static final String CREATE_DATA_SUCCESS = "Create data success";
     public static final String UPDATED = "Updated successfully";
     public static final String DELETED = "Deleted successfully";
     public static final String RETRIEVED = "Retrieved successfully";

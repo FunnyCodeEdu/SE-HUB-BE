@@ -291,7 +291,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
             ExamResultResponse.ProfileInfo profileInfo = ExamResultResponse.ProfileInfo.builder()
                     .id(attempt.getProfile().getId())
                     .displayName(attempt.getProfile().getFullName())
-                    .username(attempt.getProfile().getUser() != null ? attempt.getProfile().getUser().getUsername() : null)
+                    .username(attempt.getProfile().getUsername())
                     .avtUrl(attempt.getProfile().getAvtUrl())
                     .build();
             response.setProfile(profileInfo);
@@ -312,7 +312,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
             ExamResultResponse.ProfileInfo profileInfo = ExamResultResponse.ProfileInfo.builder()
                     .id(attempt.getProfile().getId())
                     .displayName(attempt.getProfile().getFullName())
-                    .username(attempt.getProfile().getUser() != null ? attempt.getProfile().getUser().getUsername() : null)
+                    .username(attempt.getProfile().getUsername())
                     .avtUrl(attempt.getProfile().getAvtUrl())
                     .build();
             response.setProfile(profileInfo);

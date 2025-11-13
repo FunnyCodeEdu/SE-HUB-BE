@@ -1,0 +1,30 @@
+package com.se.hub.modules.configuration;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+public class WebMvcConfig implements WebMvcConfigurer {
+
+    /**
+     * Add "/api" prefix to all request mappings in com.se.hub packages
+     * This replaces the need for server.servlet.context-path
+     * Excludes SpringDoc endpoints and other third-party controllers
+     */
+    @Override
+    public void configurePathMatch(PathMatchConfigurer configurer) {
+        configurer.addPathPrefix("/api", c -> {
+            // Only add prefix to controllers in com.se.hub packages
+            String packageName = c.getPackageName();
+            boolean isSeHubController = packageName != null && packageName.startsWith("com.se.hub");
+            
+            // Check if it's a RestController or Controller annotation
+            boolean isController = c.isAnnotationPresent(org.springframework.web.bind.annotation.RestController.class)
+                    || c.isAnnotationPresent(org.springframework.stereotype.Controller.class);
+            
+            return isSeHubController && isController;
+        });
+    }
+}
+

@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Vocabulary Management",
         description = "Vocabulary management API")
-@RequestMapping("/api/v1/vocabularies")
+@RequestMapping("/vocabularies")
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

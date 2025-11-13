@@ -12,6 +12,16 @@ public class ProfileErrorCodeConstants {
     public static final String GENDER_NOT_NULL = "PROFILE_GENDER_NOT_NULL";
     public static final String LEVEL_NOT_NULL = "PROFILE_LEVEL_NOT_NULL";
     public static final String USER_NOT_NULL = "PROFILE_USER_NOT_NULL";
+    public static final String BIO_SIZE_INVALID = "PROFILE_BIO_SIZE_INVALID";
+    public static final String ADDRESS_SIZE_INVALID = "PROFILE_ADDRESS_SIZE_INVALID";
+    public static final String WEBSITE_SIZE_INVALID = "PROFILE_WEBSITE_SIZE_INVALID";
+    public static final String WEBSITE_PATTERN_INVALID = "PROFILE_WEBSITE_PATTERN_INVALID";
+    public static final String MAJOR_SIZE_INVALID = "PROFILE_MAJOR_SIZE_INVALID";
+    public static final String USERNAME_SIZE_INVALID = "PROFILE_USERNAME_SIZE_INVALID";
+    public static final String GITHUB_SIZE_INVALID = "PROFILE_GITHUB_SIZE_INVALID";
+    public static final String GITHUB_PATTERN_INVALID = "PROFILE_GITHUB_PATTERN_INVALID";
+    public static final String WEB_SIZE_INVALID = "PROFILE_WEB_SIZE_INVALID";
+    public static final String WEB_PATTERN_INVALID = "PROFILE_WEB_PATTERN_INVALID";
     
     // ===== BUSINESS LOGIC ERROR CODES =====
     public static final String PROFILE_NOT_NULL = "PROFILE_NOT_NULL";

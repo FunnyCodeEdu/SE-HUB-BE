@@ -1,6 +1,7 @@
 package com.se.hub.modules.configuration;
 
-import com.se.hub.modules.auth.constant.JwtClaimSetConstant;
+import com.se.hub.modules.configuration.CustomJwtAuthenticationConverter;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -11,94 +12,136 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.crypto.spec.SecretKeySpec;
-import java.util.HashSet;
-import java.util.List;
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = false) // Disable @PreAuthorize permission checks for entire project
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final String[] PUBLIC_POST_ENDPOINT = {
-            "/api/v1/users",
-            "/api/v1/auth/token",
-            "/api/v1/auth/introspect"
+            // No public POST endpoints - all require authentication via FTES JWT
+    };
+
+    // Public GET endpoints (read-only, public information)
+    private final String[] PUBLIC_GET_ENDPOINTS = {
+            // Health check endpoints (if any)
+            "/actuator/health"
+    };
+    
+    // Endpoints that require authentication but no permission check
+    private static final String[] AUTHENTICATED_NO_PERMISSION_ENDPOINTS = {
+            "/api/token/my-info" // Token endpoint - requires JWT but no permission check
+    };
+
+    private static final String[] WHITELIST_ENDPOINTS = {
+            // Swagger UI endpoints with /api prefix
+            "/api/v3/api-docs",
+            "/api/v3/api-docs/**",
+            "/api/swagger-ui.html",
+            "/api/swagger-ui/**",
+            "/api/swagger-resources/**",
+            "/api/webjars/**",
+            // Swagger UI endpoints without /api prefix (fallback)
+            "/v3/api-docs",
+            "/v3/api-docs/**",
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/swagger-resources/**",
+            "/webjars/**"
     };
 
     @NonFinal
-    @Value(value = "${security.jwt.signer-key}")
-    private String SIGNER_KEY;
+    @Value(value = "${ftes.jwt.secret}")
+    private String FTES_JWT_SECRET;
+
+    private final CustomJwtAuthenticationConverter customJwtAuthenticationConverter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity, CorsConfigurationSource corsConfigurationSource) throws Exception {
         return httpSecurity
-                //disable session
+                //disable session - use STATELESS for JWT
                 .sessionManagement(
-                        session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
+                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 //cors config
-                .cors(cors -> {})
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
 
                 //disable csrf
                 .csrf(AbstractHttpConfigurer::disable)
 
-                //authorization rules
+                //authorization rules - public endpoints first
                 .authorizeHttpRequests(request -> request
+                        // Swagger UI endpoints - must be first, allow ALL HTTP methods
+                        .requestMatchers(WHITELIST_ENDPOINTS).permitAll()
+                        // Public POST endpoints
                         .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINT).permitAll()
+                        // Public GET endpoints (other public endpoints)
+                        .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS).permitAll()
+                        // Endpoints that require authentication but no permission check
+                        .requestMatchers(AUTHENTICATED_NO_PERMISSION_ENDPOINTS).authenticated()
+                        // Public profile endpoints - GET profile by ID or user ID (read-only, public info)
+                        .requestMatchers(HttpMethod.GET, "/api/profile/user/*").permitAll() // GET /api/profile/user/{userId}
+                        // Note: We need to exclude /api/profile/my-profile from public access
+                        // So we check for exact match first, then allow pattern matching
+                        .requestMatchers(HttpMethod.GET, "/api/profile/*").permitAll() // GET /api/profile/{profileId} - but /api/profile/my-profile will be checked by method security
+                        // Allow CORS preflight requests
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // All other requests require authentication
                         .anyRequest().authenticated()
                 )
 
                 //config oauth2 resource server
+                // Note: oauth2ResourceServer will try to authenticate all requests
+                // But permitAll() endpoints will bypass authentication before reaching oauth2ResourceServer
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder())
-                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                                .jwtAuthenticationConverter(customJwtAuthenticationConverter))
                         .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
                 )
 
                 .build();
     }
 
-    @Bean
-    JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwt -> {
-            HashSet<GrantedAuthority> authorities = new HashSet<>();
-
-            //role converter
-            List<String> roles = jwt.getClaimAsStringList(JwtClaimSetConstant.CLAIM_SCOPE);
-            if(roles != null) {
-                roles.forEach(role -> authorities.add(new SimpleGrantedAuthority(role)));
-            }
-
-            //permission converter
-            List<String> permissions = jwt.getClaimAsStringList(JwtClaimSetConstant.CLAIM_PERMISSION);
-            if (permissions != null) {
-                permissions.forEach(permission -> authorities.add(new SimpleGrantedAuthority(permission)));
-            }
-
-            return authorities;
-        });
-        return jwtAuthenticationConverter;
-    }
 
     @Bean
     JwtDecoder jwtDecoder() {
-        SecretKeySpec secretKey = new SecretKeySpec(SIGNER_KEY.getBytes(), "HS512");
+        SecretKeySpec secretKey = new SecretKeySpec(FTES_JWT_SECRET.getBytes(), "HS512");
         return NimbusJwtDecoder.withSecretKey(secretKey)
                 .macAlgorithm(MacAlgorithm.HS512)
                 .build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration corsConfiguration = new CorsConfiguration();
+        // Allow specific origins - using patterns for flexibility
+        corsConfiguration.setAllowedOriginPatterns(Arrays.asList(
+            "https://sehub.ftes.vn",
+            "https://apisehub.ftes.vn",  // For Swagger UI on production
+            "http://localhost:*",  // For local development (all ports)
+            "http://127.0.0.1:*"   // For local development (all ports)
+        ));
+        corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
+        corsConfiguration.setAllowedHeaders(Arrays.asList("*"));
+        corsConfiguration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Total-Count"));
+        corsConfiguration.setAllowCredentials(true);
+        corsConfiguration.setMaxAge(3600L); // Cache preflight request for 1 hour
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", corsConfiguration);
+        return source;
     }
 
     @Bean

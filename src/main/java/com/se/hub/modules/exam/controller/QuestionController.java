@@ -41,7 +41,7 @@ import java.util.List;
 
 @Tag(name = "Question Management",
         description = "Question management API")
-@RequestMapping("/api/v1/questions")
+@RequestMapping("/questions")
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

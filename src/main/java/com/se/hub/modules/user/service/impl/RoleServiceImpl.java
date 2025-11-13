@@ -39,7 +39,6 @@ public class RoleServiceImpl implements RoleService {
     public RoleResponse create(RoleCreationRequest request) {
         Role role = Role.builder()
                 .name(request.getName())
-                .description(request.getDescription())
                 .permissions(getPermission(request.getPermissions().stream().toList()))
                 .build();
         List<Permission> permissions = permissionRepository.findAllById(request.getPermissions());

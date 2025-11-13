@@ -3,11 +3,9 @@ package com.se.hub.modules.datainitializer;
 import com.se.hub.common.constant.InitializerOrder;
 import com.se.hub.common.enums.ErrorCode;
 import com.se.hub.common.exception.AppException;
-import com.se.hub.modules.configuration.AdminProperties;
 import com.se.hub.modules.profile.dto.request.CreateDefaultProfileRequest;
 import com.se.hub.modules.profile.service.api.ProfileService;
 import com.se.hub.modules.user.constant.role.PredefinedRole;
-import com.se.hub.modules.user.dto.request.UserCreationRequest;
 import com.se.hub.modules.user.entity.Role;
 import com.se.hub.modules.user.entity.User;
 import com.se.hub.modules.user.enums.UserStatus;
@@ -20,12 +18,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Set;
-
+/**
+ * AdminInitializer is disabled because users are now created via SSO (FTES).
+ * Users are created when they first authenticate via JWT token.
+ * This initializer is kept for reference but does not create any users.
+ */
 @Order(InitializerOrder.ADMIN)
 @Component
 @RequiredArgsConstructor
@@ -34,44 +34,13 @@ import java.util.Set;
 public class AdminInitializer implements ApplicationRunner {
     UserRepository userRepository;
     RoleRepository roleRepository;
-    ProfileService  profileService;
-    PasswordEncoder passwordEncoder;
-    AdminProperties  adminProperties;
+    ProfileService profileService;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        log.info("Initializing admin ...");
-        //check admin existed
-        boolean existed = userRepository.existsByUsername(adminProperties.getUsername());
-        if (!existed) {
-            //set user role = ADMIN
-            Role role = roleRepository.findById(PredefinedRole.ADMIN_ROLE)
-                    .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
-
-            User admin = User.builder()
-                    .username(adminProperties.getUsername())
-                    .password(passwordEncoder.encode(adminProperties.getPassword()))
-                    .roles(Set.of(role))
-                    .status(UserStatus.ACTIVE)
-                    .build();
-            userRepository.save(admin);
-
-            //create default profile for admin
-            profileService.createDefaultProfile(admin, createDefaultProfileRequest());
-
-            log.info("Admin has been created with username {}", admin.getUsername());
-            log.info("Admin has been created with password {}", passwordEncoder.encode(admin.getPassword()));
-        }
-    }
-
-    private CreateDefaultProfileRequest createDefaultProfileRequest() {
-        return CreateDefaultProfileRequest.builder()
-                .request(UserCreationRequest.builder()
-                        .username(adminProperties.getUsername())
-                        .fullName("ADMIN")
-                        .password(passwordEncoder.encode(adminProperties.getPassword()))
-                        .build())
-                .build();
+        log.info("AdminInitializer: Users are now created via SSO (FTES). No local admin user creation needed.");
+        // Note: Users are created when they first authenticate via JWT token from FTES
+        // If you need to assign ADMIN role to an existing user, use the UserManagementController
     }
 }

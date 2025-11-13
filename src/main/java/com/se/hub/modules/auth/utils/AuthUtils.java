@@ -14,15 +14,43 @@ public class AuthUtils {
 
     public static String getCurrentUserId()  {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
-            Jwt jwt = jwtAuth.getToken();
-            Object claim = jwt.getClaims().get(JwtClaimSetConstant.CLAIM_USER_ID);
-            log.info("Claim userId: {}", claim.toString());
-            return claim.toString();
-        } else  {
-            log.info("Cannot get current user id from jwt");
+        
+        if (authentication == null || !authentication.isAuthenticated()) {
+            log.warn("No authenticated user found in SecurityContext");
             throw new AppException(ErrorCode.JWT_CLAIM_MISSING);
         }
+        
+        // First try to get from authentication name (username is set to userId in CustomJwtAuthenticationConverter)
+        String userId = authentication.getName();
+        if (userId != null && !userId.isEmpty()) {
+            return userId;
+        }
+        
+        // Fallback: try to get from JWT claims
+        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+            Jwt jwt = jwtAuth.getToken();
+            
+            // Try different claim names
+            Object claim = jwt.getClaims().get(JwtClaimSetConstant.CLAIM_USER_ID);
+            if (claim == null) {
+                claim = jwt.getClaims().get("userId");
+            }
+            if (claim == null) {
+                claim = jwt.getClaims().get("sub"); // Subject claim
+            }
+            if (claim == null) {
+                claim = jwt.getClaims().get("id");
+            }
+            
+            if (claim != null) {
+                String userIdFromClaim = claim.toString();
+                log.debug("Got userId from JWT claim: {}", userIdFromClaim);
+                return userIdFromClaim;
+            }
+        }
+        
+        log.warn("Cannot get current user id from authentication or JWT claims");
+        throw new AppException(ErrorCode.JWT_CLAIM_MISSING);
     }
 
     public static String getCurrentUserName()  {

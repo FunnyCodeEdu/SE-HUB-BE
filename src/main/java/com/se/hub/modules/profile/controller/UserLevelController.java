@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "User Level Management",
         description = "User level management API")
-@RequestMapping("/api/v1/levels")
+@RequestMapping("/levels")
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Course - Lesson Management",
         description = "Course - Lesson management API")
-@RequestMapping("/api/v1/courses")
+@RequestMapping("/courses")
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

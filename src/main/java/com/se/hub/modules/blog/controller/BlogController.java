@@ -4,12 +4,13 @@ import com.se.hub.common.constant.BaseFieldConstant;
 import com.se.hub.common.constant.MessageCodeConstant;
 import com.se.hub.common.constant.MessageConstant;
 import com.se.hub.common.constant.PaginationConstants;
+import com.se.hub.common.constant.ResponseCode;
 import com.se.hub.common.controller.BaseController;
 import com.se.hub.common.dto.request.PagingRequest;
 import com.se.hub.common.dto.request.SortRequest;
 import com.se.hub.common.dto.response.GenericResponse;
 import com.se.hub.common.dto.response.PagingResponse;
-import com.se.hub.modules.blog.constant.BlogMessageCodes;
+import com.se.hub.modules.blog.constant.BlogMessageConstants;
 import com.se.hub.modules.blog.dto.request.CreateBlogRequest;
 import com.se.hub.modules.blog.dto.request.UpdateBlogRequest;
 import com.se.hub.modules.blog.dto.response.BlogResponse;
@@ -52,19 +53,17 @@ public class BlogController extends BaseController {
     @Operation(summary = "Create new blog",
             description = "Create a new blog in the system")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Blog created successfully", 
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_CREATED_SUCCESS, 
                     useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "400", description = "Bad request - " + BlogMessageCodes.VALIDATION_ERROR),
-            @ApiResponse(responseCode = "500", description = "Internal server error - " + BlogMessageCodes.INTERNAL_ERROR)
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = BlogMessageConstants.API_BAD_REQUEST),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<BlogResponse>> createBlog(@Valid @RequestBody CreateBlogRequest request) {
-        log.info("BlogController_createBlog_Creating new blog");
         BlogResponse blogResponse = blogService.createBlog(request);
 
         //update user stats
         profileProgressService.updatePostsUploaded();
 
-        log.info("BlogController_createBlog_Blog created successfully with id: {}", blogResponse.getId());
         return success(blogResponse, MessageCodeConstant.M002_CREATED, MessageConstant.CREATED);
     }
 
@@ -72,9 +71,9 @@ public class BlogController extends BaseController {
     @Operation(summary = "Get all blogs",
             description = "Get list of all blogs with pagination")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Retrieved all blogs successfully"),
-            @ApiResponse(responseCode = "400", description = "Bad request"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_RETRIEVED_ALL_SUCCESS),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = BlogMessageConstants.API_BAD_REQUEST),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<PagingResponse<BlogResponse>>> getBlogs(
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
@@ -96,9 +95,9 @@ public class BlogController extends BaseController {
     @Operation(summary = "Get blog by ID",
             description = "Get blog information by blog ID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Retrieved blog by ID successfully"),
-            @ApiResponse(responseCode = "404", description = "Blog not found"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_RETRIEVED_BY_ID_SUCCESS),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = BlogMessageConstants.BLOG_NOT_FOUND_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<BlogResponse>> getBlogById(@PathVariable String blogId) {
         return success(blogService.getById(blogId), MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
@@ -108,9 +107,9 @@ public class BlogController extends BaseController {
     @Operation(summary = "Get blogs by author ID",
             description = "Get list of blogs for a specific author with pagination")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Retrieved blogs by author ID successfully"),
-            @ApiResponse(responseCode = "400", description = "Bad request"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_RETRIEVED_BY_AUTHOR_SUCCESS),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = BlogMessageConstants.API_BAD_REQUEST),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<PagingResponse<BlogResponse>>> getBlogsByAuthorId(
             @PathVariable String authorId,
@@ -133,10 +132,10 @@ public class BlogController extends BaseController {
     @Operation(summary = "Update blog",
             description = "Update blog information by blog ID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Blog updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Bad request"),
-            @ApiResponse(responseCode = "404", description = "Blog not found"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_UPDATED_SUCCESS),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = BlogMessageConstants.API_BAD_REQUEST),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = BlogMessageConstants.BLOG_NOT_FOUND_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<BlogResponse>> updateBlog(
             @PathVariable String blogId,
@@ -148,15 +147,13 @@ public class BlogController extends BaseController {
     @Operation(summary = "Delete blog",
             description = "Delete a blog from the system")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Blog deleted successfully", 
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_DELETED_SUCCESS, 
                     useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "404", description = "Blog not found - " + BlogMessageCodes.NOT_FOUND),
-            @ApiResponse(responseCode = "500", description = "Internal server error - " + BlogMessageCodes.INTERNAL_ERROR)
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = BlogMessageConstants.BLOG_NOT_FOUND_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<Void>> deleteBlog(@PathVariable String blogId) {
-        log.info("BlogController_deleteBlog_Deleting blog with id: {}", blogId);
         blogService.deleteBlogById(blogId);
-        log.info("BlogController_deleteBlog_Blog deleted successfully with id: {}", blogId);
         return success(null, MessageCodeConstant.M004_DELETED, MessageConstant.DELETED);
     }
 
@@ -164,10 +161,10 @@ public class BlogController extends BaseController {
     @Operation(summary = "Get most popular blogs",
             description = "Get list of most popular blogs sorted by view count with pagination")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Retrieved popular blogs successfully", 
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_POPULAR_SUCCESS, 
                     useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "400", description = "Bad request - " + BlogMessageCodes.VALIDATION_ERROR),
-            @ApiResponse(responseCode = "500", description = "Internal server error - " + BlogMessageCodes.INTERNAL_ERROR)
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = BlogMessageConstants.API_BAD_REQUEST),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<PagingResponse<BlogResponse>>> getPopularBlogs(
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
@@ -189,10 +186,10 @@ public class BlogController extends BaseController {
     @Operation(summary = "Get most liked blogs",
             description = "Get list of most liked blogs sorted by reaction count with pagination")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Retrieved liked blogs successfully", 
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_LIKED_SUCCESS, 
                     useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "400", description = "Bad request - " + BlogMessageCodes.VALIDATION_ERROR),
-            @ApiResponse(responseCode = "500", description = "Internal server error - " + BlogMessageCodes.INTERNAL_ERROR)
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = BlogMessageConstants.API_BAD_REQUEST),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<PagingResponse<BlogResponse>>> getLikedBlogs(
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
@@ -214,10 +211,10 @@ public class BlogController extends BaseController {
     @Operation(summary = "Get latest blogs",
             description = "Get list of latest blogs sorted by created date with pagination")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Retrieved latest blogs successfully", 
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_LATEST_SUCCESS, 
                     useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "400", description = "Bad request - " + BlogMessageCodes.VALIDATION_ERROR),
-            @ApiResponse(responseCode = "500", description = "Internal server error - " + BlogMessageCodes.INTERNAL_ERROR)
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = BlogMessageConstants.API_BAD_REQUEST),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<PagingResponse<BlogResponse>>> getLatestBlogs(
             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
@@ -239,10 +236,10 @@ public class BlogController extends BaseController {
     @Operation(summary = "Increment view count",
             description = "Increment view count for a blog (atomic operation)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "View count incremented successfully", 
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_VIEW_INCREMENTED_SUCCESS, 
                     useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "404", description = "Blog not found - " + BlogMessageCodes.NOT_FOUND),
-            @ApiResponse(responseCode = "500", description = "Internal server error - " + BlogMessageCodes.INTERNAL_ERROR)
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = BlogMessageConstants.BLOG_NOT_FOUND_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<Void>> incrementViewCount(@PathVariable String blogId) {
         log.debug("BlogController_incrementViewCount_Incrementing view count for blog id: {}", blogId);
@@ -254,11 +251,11 @@ public class BlogController extends BaseController {
     @Operation(summary = "Increment reaction count",
             description = "Increment or decrement reaction count for a blog (atomic operation). Use delta=1 for like, delta=-1 for unlike")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Reaction count updated successfully", 
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_REACTION_UPDATED_SUCCESS, 
                     useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "404", description = "Blog not found - " + BlogMessageCodes.NOT_FOUND),
-            @ApiResponse(responseCode = "400", description = "Bad request - " + BlogMessageCodes.VALIDATION_ERROR),
-            @ApiResponse(responseCode = "500", description = "Internal server error - " + BlogMessageCodes.INTERNAL_ERROR)
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = BlogMessageConstants.BLOG_NOT_FOUND_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = BlogMessageConstants.API_BAD_REQUEST),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<Void>> incrementReactionCount(
             @PathVariable String blogId,

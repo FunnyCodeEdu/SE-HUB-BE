@@ -105,7 +105,6 @@ public class BlogServiceImpl implements BlogService {
     public BlogResponse getById(String blogId) {
         log.debug("BlogService_getById_Fetching blog with id: {}", blogId);
         return blogMapper.toBlogResponse(blogRepository.findById(blogId)
-                .filter(blog -> !blog.getDeleted())
                 .orElseThrow(() -> {
                     log.error("BlogService_getById_Blog not found with id: {}", blogId);
                     return BlogErrorCode.BLOG_NOT_FOUND.toException();
@@ -140,7 +139,7 @@ public class BlogServiceImpl implements BlogService {
                 PagingUtil.createSort(request)
         );
 
-        Page<Blog> blogs = blogRepository.findAllNonDeleted(pageable);
+        Page<Blog> blogs = blogRepository.findAll(pageable);
         return buildPagingResponse(blogs);
     }
 
@@ -181,21 +180,19 @@ public class BlogServiceImpl implements BlogService {
             BlogCacheConstants.CACHE_LATEST_BLOGS
     }, allEntries = true)
     public void deleteBlogById(String blogId) {
-        log.debug("BlogService_deleteBlogById_Soft deleting blog with id: {}", blogId);
+        log.debug("BlogService_deleteBlogById_Deleting blog with id: {}", blogId);
         if (blogId == null || blogId.isBlank()) {
             log.error("BlogService_deleteBlogById_Blog ID is required");
             throw BlogErrorCode.BLOG_ID_REQUIRED.toException();
         }
 
-        blogRepository.findById(blogId)
-                .filter(b -> !b.getDeleted())
-                .orElseThrow(() -> {
-                    log.error("BlogService_deleteBlogById_Blog not found with id: {}", blogId);
-                    return BlogErrorCode.BLOG_NOT_FOUND.toException();
-                });
+        if (!blogRepository.existsById(blogId)) {
+            log.error("BlogService_deleteBlogById_Blog not found with id: {}", blogId);
+            throw BlogErrorCode.BLOG_NOT_FOUND.toException();
+        }
 
-        blogRepository.softDeleteById(blogId);
-        log.debug("BlogService_deleteBlogById_Blog soft deleted successfully with id: {}", blogId);
+        blogRepository.deleteById(blogId);
+        log.debug("BlogService_deleteBlogById_Blog deleted successfully with id: {}", blogId);
     }
 
     @Override
@@ -260,12 +257,10 @@ public class BlogServiceImpl implements BlogService {
             throw BlogErrorCode.BLOG_ID_REQUIRED.toException();
         }
 
-        blogRepository.findById(blogId)
-                .filter(b -> !b.getDeleted())
-                .orElseThrow(() -> {
-                    log.error("BlogService_incrementViewCount_Blog not found with id: {}", blogId);
-                    return BlogErrorCode.BLOG_NOT_FOUND.toException();
-                });
+        if (!blogRepository.existsById(blogId)) {
+            log.error("BlogService_incrementViewCount_Blog not found with id: {}", blogId);
+            throw BlogErrorCode.BLOG_NOT_FOUND.toException();
+        }
 
         blogRepository.incrementViewCount(blogId);
         log.debug("BlogService_incrementViewCount_View count incremented for blog id {}", blogId);
@@ -279,12 +274,10 @@ public class BlogServiceImpl implements BlogService {
             throw BlogErrorCode.BLOG_ID_REQUIRED.toException();
         }
 
-        blogRepository.findById(blogId)
-                .filter(b -> !b.getDeleted())
-                .orElseThrow(() -> {
-                    log.error("BlogService_incrementReactionCount_Blog not found with id: {}", blogId);
-                    return BlogErrorCode.BLOG_NOT_FOUND.toException();
-                });
+        if (!blogRepository.existsById(blogId)) {
+            log.error("BlogService_incrementReactionCount_Blog not found with id: {}", blogId);
+            throw BlogErrorCode.BLOG_NOT_FOUND.toException();
+        }
 
         blogRepository.incrementReactionCount(blogId, delta);
         log.debug("BlogService_incrementReactionCount_Reaction count incremented by {} for blog id {}", delta, blogId);
@@ -298,12 +291,10 @@ public class BlogServiceImpl implements BlogService {
             throw BlogErrorCode.BLOG_ID_REQUIRED.toException();
         }
 
-        blogRepository.findById(blogId)
-                .filter(b -> !b.getDeleted())
-                .orElseThrow(() -> {
-                    log.error("BlogService_incrementCommentCount_Blog not found with id: {}", blogId);
-                    return BlogErrorCode.BLOG_NOT_FOUND.toException();
-                });
+        if (!blogRepository.existsById(blogId)) {
+            log.error("BlogService_incrementCommentCount_Blog not found with id: {}", blogId);
+            throw BlogErrorCode.BLOG_NOT_FOUND.toException();
+        }
 
         blogRepository.incrementCommentCount(blogId, delta);
         log.debug("BlogService_incrementCommentCount_Comment count incremented by {} for blog id {}", delta, blogId);

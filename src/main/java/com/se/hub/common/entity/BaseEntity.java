@@ -51,16 +51,10 @@ public abstract class BaseEntity implements Serializable {
     @LastModifiedDate
     Instant updatedDate;
 
-    @Column(nullable = false)
-    Boolean deleted = false;
-
     @PrePersist
     protected void onCreate() {
         this.createDate = Instant.now();
         this.updatedDate = Instant.now();
-        if (this.deleted == null) {
-            this.deleted = false;
-        }
     }
 
     @PreUpdate

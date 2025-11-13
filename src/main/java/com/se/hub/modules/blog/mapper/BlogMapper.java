@@ -7,9 +7,18 @@ import com.se.hub.modules.blog.entity.Blog;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface BlogMapper {
     Blog toBlog(CreateBlogRequest request);
     BlogResponse toBlogResponse(Blog blog);
     Blog updateBlogFromRequest(@MappingTarget Blog blog, UpdateBlogRequest request);
+    
+    /**
+     * Map list of Blog entities to list of BlogResponse DTOs
+     * @param blogs list of Blog entities
+     * @return list of BlogResponse DTOs
+     */
+    List<BlogResponse> toListBlogResponse(List<Blog> blogs);
 }

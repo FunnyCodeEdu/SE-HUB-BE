@@ -60,8 +60,26 @@ public class Blog extends BaseEntity {
             nullable = false)
     int reactionCount = 0;
 
+    @Builder.Default
+    @Column(name = BlogConstants.COL_VIEW_COUNT,
+            nullable = false)
+    int viewCount = 0;
+
     @NotNull(message = BlogErrorCodeConstants.BLOG_ALLOW_COMMENTS_INVALID)
     @Column(name = BlogConstants.COL_ALLOW_COMMENTS,
             nullable = false)
     Boolean allowComments;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Blog blog = (Blog) o;
+        return getId() != null && getId().equals(blog.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getId() != null ? getId().hashCode() : 0;
+    }
 }

@@ -18,7 +18,6 @@ public class ProfileConstants {
     public static final String BIO = "bio";
     public static final String ADDRESS = "address";
     public static final String WEBSITE = "website";
-    public static final String SOCIAL_LINKS = "socialLinks";
     public static final String DATE_OF_BIRTH = "dateOfBirth";
     public static final String MAJOR = "major";
     public static final String USERNAME = "username";

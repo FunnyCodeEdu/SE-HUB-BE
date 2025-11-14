@@ -102,7 +102,17 @@ public class GlobalExceptionHandler extends RuntimeException{
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     public ResponseEntity<GenericResponse<Object>> handlingMethodArgumentNotValidException(MethodArgumentNotValidException exception) {
         String enumKey = Objects.requireNonNull(exception.getFieldError()).getDefaultMessage();
-        ErrorCode errorCode = ErrorCode.valueOf(enumKey);
+        ErrorCode errorCode;
+        
+        try {
+            // Try to convert validation message to ErrorCode enum
+            errorCode = ErrorCode.valueOf(enumKey);
+        } catch (IllegalArgumentException e) {
+            // If enum constant doesn't exist, fallback to DATA_INVALID
+            log.warn("GlobalExceptionHandler_handlingMethodArgumentNotValidException_ErrorCode enum not found for validation message: {}. Using DATA_INVALID as fallback.", enumKey);
+            errorCode = ErrorCode.DATA_INVALID;
+        }
+        
         GenericResponse<Object> genericResponse = GenericResponse.builder()
                 .isSuccess(ApiConstant.FAILURE)
                 .message(MessageDTO.builder()

@@ -37,7 +37,6 @@ public class ProfileResponse {
     String bio;
     String address;
     String website;
-    String socialLinks;
     LocalDate dateOfBirth;
     String major;
     String github;

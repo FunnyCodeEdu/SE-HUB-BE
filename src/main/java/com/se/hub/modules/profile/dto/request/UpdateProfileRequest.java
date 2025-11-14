@@ -17,8 +17,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import io.swagger.v3.oas.annotations.media.Schema;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.se.hub.modules.profile.util.SocialLinksDeserializer;
 
 import java.time.LocalDate;
 
@@ -74,10 +72,6 @@ public class UpdateProfileRequest {
     @Pattern(regexp = ProfileConstants.URL_PATTERN,
             message = ProfileErrorCodeConstants.WEBSITE_PATTERN_INVALID)
     String website;
-
-    @Schema(description = "Social links as JSON string or object", example = "{\"facebook\":\"https://facebook.com/user\",\"twitter\":\"https://twitter.com/user\"}")
-    @JsonDeserialize(using = SocialLinksDeserializer.class)
-    String socialLinks; // JSON string, accepts both string and object
 
     @Schema(description = "Date of birth", example = "1990-01-01")
     LocalDate dateOfBirth;

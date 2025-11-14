@@ -94,9 +94,6 @@ public class Profile extends BaseEntity {
             message = ProfileErrorCodeConstants.WEBSITE_PATTERN_INVALID)
     String website;
 
-    @Column(name = ProfileConstants.SOCIAL_LINKS, columnDefinition = "TEXT")
-    String socialLinks; // JSON string containing social links
-
     @Column(name = ProfileConstants.DATE_OF_BIRTH)
     java.time.LocalDate dateOfBirth;
 

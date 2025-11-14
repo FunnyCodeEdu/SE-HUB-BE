@@ -1,6 +1,5 @@
 package com.se.hub.modules.configuration;
 
-import com.se.hub.modules.configuration.CustomJwtAuthenticationConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;

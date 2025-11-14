@@ -12,8 +12,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-import java.util.Set;
-
 @Getter
 @Setter
 @AllArgsConstructor
@@ -30,8 +28,6 @@ public class RoleCreationRequest {
     @Size(min = RoleConstants.MAX_CHARS_DESCRIPTION,
             max =  RoleConstants.MAX_CHARS_DESCRIPTION)
     String description;
-
-    Set<String> permissions;
 
     public String getName() {
         return this.name.toUpperCase();

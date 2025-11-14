@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 /**
  * Custom JWT Authentication Converter that:
  * 1. Automatically creates user if not exists in database
- * 2. Uses roles and permissions from database instead of JWT
+ * 2. Uses roles from database instead of JWT
  */
 @Slf4j
 @Component
@@ -33,7 +33,7 @@ public class CustomJwtAuthenticationConverter implements Converter<Jwt, JwtAuthe
         // Get or create user from JWT (this loads user with role)
         User user = userSyncService.getOrCreateUser(jwt);
         
-        // Get authorities from database (role + permissions)
+        // Get authorities from database (role only)
         Collection<GrantedAuthority> authorities = getAuthoritiesFromDatabase(user);
         
         // Ensure at least one authority exists (default to ROLE_USER if none)
@@ -55,7 +55,7 @@ public class CustomJwtAuthenticationConverter implements Converter<Jwt, JwtAuthe
     }
 
     /**
-     * Get authorities from database user (role + permissions)
+     * Get authorities from database user (role only)
      */
     private Collection<GrantedAuthority> getAuthoritiesFromDatabase(User user) {
         Set<GrantedAuthority> authorities = new HashSet<>();
@@ -69,14 +69,6 @@ public class CustomJwtAuthenticationConverter implements Converter<Jwt, JwtAuthe
             }
             authorities.add(new SimpleGrantedAuthority(roleName));
             log.debug("Added role authority: {} for user {}", roleName, user.getId());
-            
-            // Add permissions from role
-            // Note: Permissions are lazy-loaded, but we don't need them for basic authorization
-            // Role-based authorization is sufficient. If permissions are needed, they should be
-            // loaded eagerly in UserRepository.findByIdWithRole() using JOIN FETCH
-            // For now, we skip permissions to avoid lazy initialization issues
-            // If permissions are required, modify UserRepository to use:
-            // @Query("SELECT u FROM User u LEFT JOIN FETCH u.role r LEFT JOIN FETCH r.permissions WHERE u.id = :id")
         } else {
             log.warn("User {} has no role assigned", user.getId());
         }

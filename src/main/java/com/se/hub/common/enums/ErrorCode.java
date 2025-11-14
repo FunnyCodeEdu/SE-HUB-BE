@@ -45,10 +45,6 @@ public enum ErrorCode {
     USER_EXISTED("USER_1005", "User is already exists", HttpStatus.CONFLICT),
     USER_NOT_EXISTED("USER_1006", "User not existed", HttpStatus.NOT_FOUND),
 
-    // ==== PERMISSION ====
-    PERM_PERMISSION_EXISTED("PERM_1000", "Permission already exists", HttpStatus.CONFLICT),
-    PERM_PERMISSION_NOT_EXISTED("PERM_1001", "Permission not existed", HttpStatus.CONFLICT),
-
     //===== PROFILE ======
     PROFILE_NOT_FOUND("PROFILE_1000", "Profile not found", HttpStatus.NOT_FOUND),
     PROFILE_NOT_EXISTED("PROFILE_1001", "Profile not existed", HttpStatus.NOT_FOUND),

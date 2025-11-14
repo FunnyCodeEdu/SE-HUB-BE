@@ -1,13 +1,8 @@
 package com.se.hub.modules.datainitializer;
 
 import com.se.hub.common.constant.InitializerOrder;
-import com.se.hub.common.enums.ErrorCode;
-import com.se.hub.common.exception.AppException;
-import com.se.hub.modules.user.constant.permission.StartDefinedPermission;
 import com.se.hub.modules.user.constant.role.PredefinedRole;
-import com.se.hub.modules.user.entity.Permission;
 import com.se.hub.modules.user.entity.Role;
-import com.se.hub.modules.user.repository.PermissionRepository;
 import com.se.hub.modules.user.repository.RoleRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +23,6 @@ import java.util.Set;
 @Slf4j
 public class RoleInitializer implements ApplicationRunner {
     RoleRepository roleRepository;
-    PermissionRepository permissionRepository;
 
     @Override
     @Transactional
@@ -44,8 +38,7 @@ public class RoleInitializer implements ApplicationRunner {
                 if (!roleRepository.existsById(role.getName())) {
                     roleRepository.save(role);
                     createdCount++;
-                    log.debug("RoleInitializer_run_Created role: {} with {} permissions", 
-                            role.getName(), role.getPermissions() != null ? role.getPermissions().size() : 0);
+                    log.debug("RoleInitializer_run_Created role: {}", role.getName());
                 } else {
                     skippedCount++;
                     log.debug("RoleInitializer_run_Role already exists, skipped: {}", role.getName());
@@ -61,61 +54,19 @@ public class RoleInitializer implements ApplicationRunner {
     }
 
     /**
-     * Get all predefined roles with their permissions
+     * Get all predefined roles
      * 
      * @return Set of roles to initialize
      */
     private Set<Role> getRoles() {
         Role adminRole = Role.builder()
                 .name(PredefinedRole.ADMIN_ROLE)
-                .permissions(getAdminPermissions())
                 .build();
         
         Role userRole = Role.builder()
                 .name(PredefinedRole.USER_ROLE)
-                .permissions(getUserPermissions())
                 .build();
         
         return Set.of(adminRole, userRole);
-    }
-
-    /**
-     * Get permissions for USER role
-     * 
-     * @return Set of permissions for USER role
-     * @throws AppException if required permissions are not found
-     */
-    private Set<Permission> getUserPermissions() {
-        log.debug("RoleInitializer_getUserPermissions_Loading permissions for USER role");
-        Permission userUpdate = permissionRepository.findById(StartDefinedPermission.USER_UPDATE)
-                .orElseThrow(() -> {
-                    log.error("RoleInitializer_getUserPermissions_Permission not found: {}", StartDefinedPermission.USER_UPDATE);
-                    return new AppException(ErrorCode.PERM_PERMISSION_NOT_EXISTED);
-                });
-        
-        Permission userDelete = permissionRepository.findById(StartDefinedPermission.USER_DELETE)
-                .orElseThrow(() -> {
-                    log.error("RoleInitializer_getUserPermissions_Permission not found: {}", StartDefinedPermission.USER_DELETE);
-                    return new AppException(ErrorCode.PERM_PERMISSION_NOT_EXISTED);
-                });
-        
-        return Set.of(userUpdate, userDelete);
-    }
-
-    /**
-     * Get permissions for ADMIN role
-     * 
-     * @return Set of permissions for ADMIN role
-     * @throws AppException if required permissions are not found
-     */
-    private Set<Permission> getAdminPermissions() {
-        log.debug("RoleInitializer_getAdminPermissions_Loading permissions for ADMIN role");
-        Permission systemManage = permissionRepository.findById(StartDefinedPermission.SYSTEM_MANAGE)
-                .orElseThrow(() -> {
-                    log.error("RoleInitializer_getAdminPermissions_Permission not found: {}", StartDefinedPermission.SYSTEM_MANAGE);
-                    return new AppException(ErrorCode.PERM_PERMISSION_NOT_EXISTED);
-                });
-        
-        return Set.of(systemManage);
     }
 }

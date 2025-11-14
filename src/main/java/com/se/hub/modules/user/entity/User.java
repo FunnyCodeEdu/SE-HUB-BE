@@ -3,7 +3,6 @@ package com.se.hub.modules.user.entity;
 import com.se.hub.modules.profile.entity.Profile;
 import com.se.hub.modules.user.constant.user.UserConstants;
 import com.se.hub.modules.user.enums.UserStatus;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

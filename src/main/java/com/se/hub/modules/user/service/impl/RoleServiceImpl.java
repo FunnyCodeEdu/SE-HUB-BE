@@ -9,10 +9,8 @@ import com.se.hub.common.utils.PagingUtil;
 import com.se.hub.modules.user.dto.request.RoleCreationRequest;
 import com.se.hub.modules.user.dto.request.RoleUpdateRequest;
 import com.se.hub.modules.user.dto.response.RoleResponse;
-import com.se.hub.modules.user.entity.Permission;
 import com.se.hub.modules.user.entity.Role;
 import com.se.hub.modules.user.mapper.RoleMapper;
-import com.se.hub.modules.user.repository.PermissionRepository;
 import com.se.hub.modules.user.repository.RoleRepository;
 import com.se.hub.modules.user.service.api.RoleService;
 import lombok.AccessLevel;
@@ -23,26 +21,18 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class RoleServiceImpl implements RoleService {
     RoleRepository roleRepository;
-    PermissionRepository permissionRepository;
     RoleMapper roleMapper;
 
     @Override
     public RoleResponse create(RoleCreationRequest request) {
         Role role = Role.builder()
                 .name(request.getName())
-                .permissions(getPermission(request.getPermissions().stream().toList()))
                 .build();
-        List<Permission> permissions = permissionRepository.findAllById(request.getPermissions());
-        role.setPermissions(new HashSet<>(permissions));
         return roleMapper.toRoleResponse(roleRepository.save(role));
     }
 
@@ -82,9 +72,6 @@ public class RoleServiceImpl implements RoleService {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 
-        List<Permission> permissions = permissionRepository.findAllById(request.getPermissions());
-        role.setPermissions(new HashSet<>(permissions));
-
         return roleMapper.toRoleResponse(roleRepository.save(role));
     }
 
@@ -100,9 +87,5 @@ public class RoleServiceImpl implements RoleService {
 
     private boolean isRoleExisted(String id) {
         return roleRepository.existsById(id);
-    }
-
-    private Set<Permission> getPermission(List<String> permissionNames) {
-        return new HashSet<>(permissionRepository.findAllById(permissionNames));
     }
 }

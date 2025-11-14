@@ -4,7 +4,7 @@ import com.se.hub.common.entity.BaseEntity;
 import com.se.hub.modules.course.constant.CourseConstants;
 import com.se.hub.modules.course.constant.CourseErrorCodeConstants;
 import com.se.hub.modules.course.enums.Specialization;
-import com.se.hub.modules.lesson.entity.Lesson;
+import com.se.hub.modules.document.entity.Document;
 import com.se.hub.modules.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -80,8 +80,8 @@ public class Course extends BaseEntity {
             columnDefinition = CourseConstants.IMG_URL_DEFINITION)
     String imgUrl;
 
-    @OneToMany(mappedBy = CourseConstants.TABLE_COURSE, fetch = FetchType.LAZY)
-    Set<Lesson> lessons;
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
+    Set<Document> documents;
 
     @ManyToMany(fetch = FetchType.LAZY)
     List<User> users;

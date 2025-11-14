@@ -17,19 +17,28 @@ import java.util.Objects;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends RuntimeException{
-    @ExceptionHandler(value = RuntimeException.class)
-    public ResponseEntity<GenericResponse<Object>> handlingRuntimeException(RuntimeException exception){
-        log.error(exception.getMessage(),exception);
+    
+    // Handle DocumentException first (more specific)
+    @ExceptionHandler(value = com.se.hub.modules.document.exception.DocumentException.class)
+    public ResponseEntity<GenericResponse<Object>> handlingDocumentException(
+            com.se.hub.modules.document.exception.DocumentException exception) {
+        log.info("GlobalExceptionHandler_handlingDocumentException_Handling DocumentException: {}", exception.getMessage());
+        com.se.hub.modules.document.exception.DocumentErrorCode documentErrorCode = exception.getDocumentErrorCode();
+        String formattedMessage = exception.getFormattedMessage();
+        
+        log.info("GlobalExceptionHandler_handlingDocumentException_Error code: {}, Message: {}", 
+                documentErrorCode.getCode(), formattedMessage);
+        
         GenericResponse<Object> genericResponse = GenericResponse.builder()
                 .isSuccess(ApiConstant.FAILURE)
                 .message(MessageDTO.builder()
-                        .messageCode(ErrorCode.SERVER_UNCATEGORIZED_EXCEPTION.getCode())
-                        .messageDetail(ErrorCode.SERVER_UNCATEGORIZED_EXCEPTION.getMessage())
+                        .messageCode(documentErrorCode.getCode())
+                        .messageDetail(formattedMessage)
                         .build())
                 .build();
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(genericResponse);
+        return ResponseEntity.status(documentErrorCode.getHttpStatus()).body(genericResponse);
     }
-
+    
     @ExceptionHandler(value = AppException.class)
     public ResponseEntity<GenericResponse<Object>> handlingAppException(AppException exception){
         ErrorCode errorCode = exception.getErrorCode();
@@ -41,6 +50,24 @@ public class GlobalExceptionHandler extends RuntimeException{
                         .build())
                 .build();
         return ResponseEntity.status(errorCode.getHttpStatusCode()).body(genericResponse);
+    }
+    
+    @ExceptionHandler(value = RuntimeException.class)
+    public ResponseEntity<GenericResponse<Object>> handlingRuntimeException(RuntimeException exception){
+        // Skip if it's an AppException (already handled)
+        if (exception instanceof AppException) {
+            return handlingAppException((AppException) exception);
+        }
+        
+        log.error(exception.getMessage(), exception);
+        GenericResponse<Object> genericResponse = GenericResponse.builder()
+                .isSuccess(ApiConstant.FAILURE)
+                .message(MessageDTO.builder()
+                        .messageCode(ErrorCode.SERVER_UNCATEGORIZED_EXCEPTION.getCode())
+                        .messageDetail(ErrorCode.SERVER_UNCATEGORIZED_EXCEPTION.getMessage())
+                        .build())
+                .build();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(genericResponse);
     }
 
     //handling Denied Access

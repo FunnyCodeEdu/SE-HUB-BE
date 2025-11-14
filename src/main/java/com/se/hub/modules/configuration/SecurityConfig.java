@@ -20,10 +20,12 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Arrays;
 
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = false) // Disable @PreAuthorize permission checks for entire project
@@ -88,7 +90,10 @@ public class SecurityConfig {
             "/swagger-ui.html",
             "/swagger-ui/**",
             "/swagger-resources/**",
-            "/webjars/**"
+            "/webjars/**",
+            // Google Drive OAuth callback endpoints
+            "/api/drive/callback",
+            "/api/drive/auth-url"
     };
 
     @NonFinal
@@ -113,7 +118,7 @@ public class SecurityConfig {
 
                 //authorization rules - public endpoints first
                 .authorizeHttpRequests(request -> request
-                        // Swagger UI endpoints - must be first, allow ALL HTTP methods
+                        // Whitelist endpoints - MUST BE FIRST
                         .requestMatchers(WHITELIST_ENDPOINTS).permitAll()
                         // Public POST endpoints
                         .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINT).permitAll()
@@ -132,10 +137,34 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                //config oauth2 resource server
-                // Note: oauth2ResourceServer will try to authenticate all requests
-                // But permitAll() endpoints will bypass authentication before reaching oauth2ResourceServer
+                //config oauth2 resource server with custom bearer token resolver
+                // The resolver will return null for whitelisted endpoints, effectively skipping OAuth2 processing
                 .oauth2ResourceServer(oauth2 -> oauth2
+                        .bearerTokenResolver(request -> {
+                            String requestPath = request.getRequestURI();
+                            
+                            // Check if this is a whitelisted endpoint
+                            boolean isWhitelisted = Arrays.stream(WHITELIST_ENDPOINTS)
+                                    .anyMatch(pattern -> {
+                                        if (pattern.endsWith("/**")) {
+                                            String basePattern = pattern.substring(0, pattern.length() - 3);
+                                            return requestPath.startsWith(basePattern);
+                                        }
+                                        return requestPath.equals(pattern) || requestPath.startsWith(pattern + "/");
+                                    });
+                            
+                            // If whitelisted, return null to skip OAuth2 processing
+                            if (isWhitelisted) {
+                                return null;
+                            }
+                            
+                            // For non-whitelisted endpoints, extract bearer token from Authorization header
+                            String authorization = request.getHeader("Authorization");
+                            if (authorization != null && authorization.startsWith("Bearer ")) {
+                                return authorization.substring(7);
+                            }
+                            return null;
+                        })
                         .jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder())
                                 .jwtAuthenticationConverter(customJwtAuthenticationConverter))
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)

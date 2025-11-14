@@ -15,6 +15,9 @@ public class DocumentMessageConstants {
     public static final String DOCUMENT_ID_REQUIRED_MESSAGE = "Document ID is required";
     public static final String DOCUMENT_COURSE_NOT_FOUND_MESSAGE = "Course not found";
     public static final String DOCUMENT_UNAPPROVED_MESSAGE = "Document is not approved";
+    public static final String DOCUMENT_FILE_REQUIRED_MESSAGE = "File is required";
+    public static final String DOCUMENT_UPLOAD_FAILED_MESSAGE = "Failed to upload file to Google Drive";
+    public static final String DOCUMENT_GOOGLE_DRIVE_NOT_CONFIGURED_MESSAGE = "Google Drive is not configured. Please authorize first. Authorization URL: {0}";
 
     // API Response Messages
     public static final String API_DOCUMENT_CREATED_SUCCESS = "Document created successfully";

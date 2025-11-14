@@ -10,9 +10,12 @@ import java.util.List;
 
 public interface DocumentService {
     /**
-     * Create new document (User endpoint - requires authentication, document will be pending approval)
+     * Create new document with file upload (User endpoint - requires authentication, document will be pending approval)
+     * @param request Document creation request
+     * @param file File to upload to Google Drive
+     * @return DocumentResponse with file URL
      */
-    DocumentResponse createDocument(CreateDocumentRequest request);
+    DocumentResponse createDocument(CreateDocumentRequest request, org.springframework.web.multipart.MultipartFile file);
 
     /**
      * Get document by ID (only approved documents for public access)

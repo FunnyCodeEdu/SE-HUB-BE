@@ -38,15 +38,21 @@ public interface DocumentMapper {
 
     /**
      * Build file URL from file path
-     * @param filePath file path
+     * If filePath is already a Google Drive URL, return it as is
+     * Otherwise, return the filePath directly
+     * @param filePath file path (can be Google Drive URL)
      * @return file URL
      */
     default String buildFileUrl(String filePath) {
         if (filePath == null || filePath.isEmpty()) {
             return null;
         }
-        String filename = filePath.substring(filePath.lastIndexOf("/") + 1);
-        return "/api/files/" + filename;
+        // If it's already a Google Drive URL, return it as is
+        if (filePath.startsWith("https://drive.google.com")) {
+            return filePath;
+        }
+        // Otherwise, return the filePath directly
+        return filePath;
     }
 }
 

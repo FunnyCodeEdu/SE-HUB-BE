@@ -15,6 +15,7 @@ import com.se.hub.modules.document.exception.DocumentErrorCode;
 import com.se.hub.modules.document.mapper.DocumentMapper;
 import com.se.hub.modules.document.repository.DocumentRepository;
 import com.se.hub.modules.document.service.DocumentService;
+import com.se.hub.modules.document.service.GoogleDriveService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -24,7 +25,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -45,6 +48,7 @@ public class DocumentServiceImpl implements DocumentService {
     DocumentRepository documentRepository;
     CourseRepository courseRepository;
     DocumentMapper documentMapper;
+    GoogleDriveService googleDriveService;
 
     /**
      * Helper method to build PagingResponse from Page<Document>
@@ -64,9 +68,16 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional
-    public DocumentResponse createDocument(CreateDocumentRequest request) {
-        log.debug("DocumentService_createDocument_Creating new document for user: {}", AuthUtils.getCurrentUserId());
+    public DocumentResponse createDocument(CreateDocumentRequest request, MultipartFile file) {
+        log.debug("DocumentService_createDocument_Creating new document for user: {} with file: {}", 
+                AuthUtils.getCurrentUserId(), file.getOriginalFilename());
         String userId = AuthUtils.getCurrentUserId();
+
+        // Validate file
+        if (file == null || file.isEmpty()) {
+            log.error("DocumentService_createDocument_File is required");
+            throw DocumentErrorCode.DOCUMENT_FILE_REQUIRED.toException();
+        }
 
         Course course = courseRepository.findById(request.getCourseId())
                 .orElseThrow(() -> {
@@ -74,12 +85,33 @@ public class DocumentServiceImpl implements DocumentService {
                     return DocumentErrorCode.DOCUMENT_COURSE_NOT_FOUND.toException();
                 });
 
+        // Upload file to Google Drive
+        String fileId;
+        try {
+            fileId = googleDriveService.uploadFile(file);
+            log.debug("DocumentService_createDocument_File uploaded to Google Drive with ID: {}", fileId);
+        } catch (com.se.hub.modules.document.exception.DocumentException e) {
+            // Re-throw DocumentException to preserve error message with link
+            throw e;
+        } catch (IOException e) {
+            log.error("DocumentService_createDocument_Failed to upload file to Google Drive: {}", e.getMessage(), e);
+            throw DocumentErrorCode.DOCUMENT_UPLOAD_FAILED.toException();
+        }
+
+        // Build file path (Google Drive view URL)
+        String filePath = googleDriveService.getFileViewUrl(fileId);
+        String fileType = file.getContentType();
+        Long fileSize = file.getSize();
+
         Document document = documentMapper.toDocument(request);
         document.setCourse(course);
         document.setUploadedBy(userId);
         document.setIsApproved(false); // User creates document - pending approval
         document.setCreatedBy(userId);
         document.setUpdateBy(userId);
+        document.setFilePath(filePath);
+        document.setFileType(fileType);
+        document.setFileSize(fileSize);
 
         DocumentResponse response = documentMapper.toDocumentResponse(documentRepository.save(document));
         log.debug("DocumentService_createDocument_Document created successfully with id: {}", response.getId());

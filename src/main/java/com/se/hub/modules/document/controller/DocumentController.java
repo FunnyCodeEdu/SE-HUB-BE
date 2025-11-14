@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -49,17 +50,34 @@ import java.util.List;
 public class DocumentController extends BaseController {
     DocumentService documentService;
 
-    @PostMapping
+    @PostMapping(consumes = {"multipart/form-data"})
     @Operation(summary = "Create new document",
-            description = "Create a new document in the system. Document will be pending approval.")
+            description = "Create a new document in the system with file upload to Google Drive. Document will be pending approval.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = ResponseCode.OK_200, description = DocumentMessageConstants.API_DOCUMENT_CREATED_SUCCESS,
                     useReturnTypeSchema = true),
             @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = DocumentMessageConstants.API_BAD_REQUEST),
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = DocumentMessageConstants.API_INTERNAL_ERROR)
     })
-    public ResponseEntity<GenericResponse<DocumentResponse>> createDocument(@Valid @RequestBody CreateDocumentRequest request) {
-        DocumentResponse documentResponse = documentService.createDocument(request);
+    public ResponseEntity<GenericResponse<DocumentResponse>> createDocument(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("courseId") String courseId,
+            @RequestParam("documentName") String documentName,
+            @RequestParam(required = false) String descript,
+            @RequestParam(required = false) String semester,
+            @RequestParam(required = false) String major) {
+        log.debug("DocumentController_createDocument_Received file upload request: {}", file.getOriginalFilename());
+        
+        // Build and validate request
+        CreateDocumentRequest request = CreateDocumentRequest.builder()
+                .courseId(courseId)
+                .documentName(documentName)
+                .descript(descript)
+                .semester(semester)
+                .major(major)
+                .build();
+        
+        DocumentResponse documentResponse = documentService.createDocument(request, file);
         return success(documentResponse, MessageCodeConstant.M002_CREATED, MessageConstant.CREATED);
     }
 

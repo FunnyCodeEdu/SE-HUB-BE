@@ -49,9 +49,12 @@ public class SecurityConfig {
             // Exam endpoints
             "/api/exams",
             "/api/exams/**",
-            // Document endpoints
+            // Document endpoints (only approved documents are public)
             "/api/documents",
-            "/api/documents/**",
+            "/api/documents/{documentId}",
+            "/api/documents/course/{courseId}",
+            "/api/documents/latest",
+            "/api/documents/{documentId}/suggestions",
             // Comment endpoints
             "/api/comments",
             "/api/comments/**",
@@ -73,18 +76,16 @@ public class SecurityConfig {
     
     // Endpoints that require authentication but no permission check
     private static final String[] AUTHENTICATED_NO_PERMISSION_ENDPOINTS = {
-            "/api/token/my-info" // Token endpoint - requires JWT but no permission check
+            "/api/token/my-info"
     };
 
     private static final String[] WHITELIST_ENDPOINTS = {
-            // Swagger UI endpoints with /api prefix
             "/api/v3/api-docs",
             "/api/v3/api-docs/**",
             "/api/swagger-ui.html",
             "/api/swagger-ui/**",
             "/api/swagger-resources/**",
             "/api/webjars/**",
-            // Swagger UI endpoints without /api prefix (fallback)
             "/v3/api-docs",
             "/v3/api-docs/**",
             "/swagger-ui.html",
@@ -106,11 +107,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity, CorsConfigurationSource corsConfigurationSource) throws Exception {
         return httpSecurity
-                //disable session - use STATELESS for JWT
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                //cors config
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
 
                 //disable csrf

@@ -17,13 +17,6 @@ import org.springframework.stereotype.Component;
 import jakarta.annotation.PostConstruct;
 import java.util.List;
 
-/**
- * Socket Handler for Chat namespace
- * Handles Socket.IO connection events for /chat namespace
- * Virtual Thread Best Practice:
- * - This handler uses synchronous blocking I/O operations
- * - Virtual threads automatically handle blocking operations efficiently
- */
 @Component
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

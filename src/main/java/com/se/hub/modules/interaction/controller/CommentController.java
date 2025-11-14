@@ -60,8 +60,7 @@ public class CommentController extends BaseController {
     public ResponseEntity<GenericResponse<CommentResponse>> createComment(
             @Valid @RequestBody CreateCommentRequest request) {
         CommentResponse response = commentService.createComment(request);
-        
-        // Update comment count
+
         profileProgressService.updateCmtCount();
 
         return success(response, MessageCodeConstant.M002_CREATED, MessageConstant.CREATED);

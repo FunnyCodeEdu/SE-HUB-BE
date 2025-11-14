@@ -23,7 +23,6 @@ public class OpenApiConfig {
     @Value("${swagger.server.urls:}")
     private String serverUrls;
 
-    // No longer need context-path since we're using WebMvcConfig to add /api prefix
 
     @Bean
     public OpenAPI customizeOpenAPI() {
@@ -31,7 +30,6 @@ public class OpenApiConfig {
 
         List<Server> servers = new ArrayList<>();
 
-        // Add servers from configuration if provided
         if (serverUrls != null && !serverUrls.trim().isEmpty()) {
             String[] urls = serverUrls.split(";");
             for (String item : urls) {
@@ -41,14 +39,10 @@ public class OpenApiConfig {
             }
         }
 
-        // Always add both production and development servers
-        // Production server first (will be selected by default in production)
-        // Note: Server URLs should include /api prefix since all API endpoints have /api prefix
         servers.add(new Server().url("http://localhost:8080").description("Local Development Server"));
         servers.add(new Server().url("https://apisehub.ftes.vn").description("Production Server"));
         
 
-        // Remove duplicates
         List<Server> uniqueServers = new ArrayList<>();
         for (Server server : servers) {
             boolean exists = uniqueServers.stream()

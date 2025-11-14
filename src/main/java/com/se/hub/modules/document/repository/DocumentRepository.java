@@ -47,5 +47,11 @@ public interface DocumentRepository extends JpaRepository<Document, String> {
      * Check if document exists and is approved
      */
     boolean existsByIdAndIsApprovedTrue(String id);
+
+    /**
+     * Get all unapproved documents with pagination (for admin)
+     */
+    @Query("SELECT d FROM Document d WHERE d.isApproved = false OR d.isApproved IS NULL")
+    Page<Document> findAllUnapproved(Pageable pageable);
 }
 

@@ -23,6 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -234,6 +237,83 @@ public class DocumentServiceImpl implements DocumentService {
 
         documentRepository.deleteById(documentId);
         log.debug("DocumentService_deleteDocumentById_Document deleted successfully with id: {}", documentId);
+    }
+
+    @Override
+    public PagingResponse<DocumentResponse> getPendingDocuments(PagingRequest request) {
+        log.debug("DocumentService_getPendingDocuments_Fetching pending documents with page: {}, size: {}",
+                request.getPage(), request.getPageSize());
+
+        // Check admin permission
+        checkAdminPermission();
+
+        Pageable pageable = PageRequest.of(
+                request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
+                request.getPageSize(),
+                PagingUtil.createSort(request)
+        );
+
+        Page<Document> documents = documentRepository.findAllUnapproved(pageable);
+        log.debug("DocumentService_getPendingDocuments_Found {} pending documents", documents.getTotalElements());
+        return buildPagingResponse(documents);
+    }
+
+    @Override
+    @Transactional
+    public DocumentResponse approveDocument(String documentId) {
+        log.debug("DocumentService_approveDocument_Approving document with id: {}", documentId);
+
+        // Check admin permission
+        checkAdminPermission();
+
+        if (documentId == null || documentId.isBlank()) {
+            log.error("DocumentService_approveDocument_Document ID is required");
+            throw DocumentErrorCode.DOCUMENT_ID_REQUIRED.toException();
+        }
+
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> {
+                    log.error("DocumentService_approveDocument_Document not found with id: {}", documentId);
+                    return DocumentErrorCode.DOCUMENT_NOT_FOUND.toException();
+                });
+
+        // Check if already approved
+        if (document.getIsApproved() != null && document.getIsApproved()) {
+            log.warn("DocumentService_approveDocument_Document {} is already approved", documentId);
+            throw DocumentErrorCode.DOCUMENT_ALREADY_APPROVED.toException();
+        }
+
+        // Approve document
+        document.setIsApproved(true);
+        document.setUpdateBy(AuthUtils.getCurrentUserId());
+
+        DocumentResponse response = documentMapper.toDocumentResponse(documentRepository.save(document));
+        log.debug("DocumentService_approveDocument_Document approved successfully with id: {}", documentId);
+        return response;
+    }
+
+    /**
+     * Check if current user is admin
+     */
+    private boolean isAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
+    }
+
+    /**
+     * Check admin permission and throw exception if not authorized
+     */
+    private void checkAdminPermission() {
+        if (!isAdmin()) {
+            log.error("DocumentService_checkAdminPermission_User {} is not admin", AuthUtils.getCurrentUserId());
+            throw DocumentErrorCode.DOCUMENT_FORBIDDEN_OPERATION.toException();
+        }
     }
 }
 

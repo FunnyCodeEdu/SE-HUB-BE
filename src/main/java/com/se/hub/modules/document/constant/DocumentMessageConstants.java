@@ -28,8 +28,12 @@ public class DocumentMessageConstants {
     public static final String API_DOCUMENT_DELETED_SUCCESS = "Document deleted successfully";
     public static final String API_DOCUMENT_LATEST_SUCCESS = "Retrieved latest documents successfully";
     public static final String API_DOCUMENT_SUGGESTED_SUCCESS = "Retrieved suggested documents successfully";
+    public static final String API_DOCUMENT_PENDING_RETRIEVED_SUCCESS = "Retrieved pending documents successfully";
+    public static final String API_DOCUMENT_APPROVED_SUCCESS = "Document approved successfully";
     public static final String API_BAD_REQUEST = "Bad request";
     public static final String API_INTERNAL_ERROR = "Internal server error";
+    public static final String DOCUMENT_FORBIDDEN_OPERATION_MESSAGE = "You do not have permission to perform this operation";
+    public static final String DOCUMENT_ALREADY_APPROVED_MESSAGE = "Document is already approved";
 
     private DocumentMessageConstants() {
         // Prevent instantiation

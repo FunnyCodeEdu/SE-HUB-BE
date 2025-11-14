@@ -12,3 +12,4 @@ public interface NotificationSettingRepository extends JpaRepository<Notificatio
 }
 
 
+

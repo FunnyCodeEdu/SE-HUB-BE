@@ -194,5 +194,43 @@ public class DocumentController extends BaseController {
         documentService.deleteDocumentById(documentId);
         return success(null, MessageCodeConstant.M004_DELETED, MessageConstant.DELETED);
     }
+
+    @GetMapping("/pending")
+    @Operation(summary = "Get pending documents",
+            description = "Get list of unapproved documents with pagination (Admin only)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = DocumentMessageConstants.API_DOCUMENT_PENDING_RETRIEVED_SUCCESS),
+            @ApiResponse(responseCode = ResponseCode.FORBIDDEN_403, description = DocumentMessageConstants.DOCUMENT_FORBIDDEN_OPERATION_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = DocumentMessageConstants.API_BAD_REQUEST),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = DocumentMessageConstants.API_INTERNAL_ERROR)
+    })
+    public ResponseEntity<GenericResponse<PagingResponse<DocumentResponse>>> getPendingDocuments(
+            @RequestParam(value = PaginationConstants.PARAM_PAGE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE) int page,
+            @RequestParam(value = PaginationConstants.PARAM_SIZE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE) int size,
+            @RequestParam(required = false, defaultValue = BaseFieldConstant.CREATE_DATE) String field,
+            @RequestParam(required = false, defaultValue = PaginationConstants.DESC) String direction
+    ) {
+        PagingRequest request = PagingRequest.builder()
+                .page(page)
+                .pageSize(size)
+                .sortRequest(new SortRequest(direction, field))
+                .build();
+
+        return success(documentService.getPendingDocuments(request), MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
+    }
+
+    @PutMapping("/{documentId}/approve")
+    @Operation(summary = "Approve document",
+            description = "Approve a pending document (Admin only)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = DocumentMessageConstants.API_DOCUMENT_APPROVED_SUCCESS),
+            @ApiResponse(responseCode = ResponseCode.FORBIDDEN_403, description = DocumentMessageConstants.DOCUMENT_FORBIDDEN_OPERATION_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = DocumentMessageConstants.DOCUMENT_ALREADY_APPROVED_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = DocumentMessageConstants.DOCUMENT_NOT_FOUND_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = DocumentMessageConstants.API_INTERNAL_ERROR)
+    })
+    public ResponseEntity<GenericResponse<DocumentResponse>> approveDocument(@PathVariable String documentId) {
+        return success(documentService.approveDocument(documentId), MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
+    }
 }
 

@@ -51,5 +51,15 @@ public interface DocumentService {
      * Delete document by ID
      */
     void deleteDocumentById(String documentId);
+
+    /**
+     * Get all pending (unapproved) documents with pagination (Admin only)
+     */
+    PagingResponse<DocumentResponse> getPendingDocuments(PagingRequest request);
+
+    /**
+     * Approve document by ID (Admin only)
+     */
+    DocumentResponse approveDocument(String documentId);
 }
 

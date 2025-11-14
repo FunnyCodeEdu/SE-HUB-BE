@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
@@ -62,6 +63,21 @@ public class RedisConfig {
         template.setEnableTransactionSupport(false); // Disable transaction for better performance
         template.afterPropertiesSet();
         return template;
+    }
+
+    /**
+     * RedisMessageListenerContainer Bean
+     * Used for Redis Pub/Sub message listening
+     * Required by notification module for real-time notification delivery via WebSocket
+     * Virtual Thread Best Practice:
+     * - Redis Pub/Sub operations are blocking I/O
+     * - Virtual threads automatically handle blocking operations efficiently
+     */
+    @Bean
+    public RedisMessageListenerContainer redisMessageListenerContainer(RedisConnectionFactory redisConnectionFactory) {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(redisConnectionFactory);
+        return container;
     }
 }
 

@@ -1,0 +1,275 @@
+package com.se.hub.modules.interaction.service.impl;
+
+import com.se.hub.common.enums.ErrorCode;
+import com.se.hub.common.exception.AppException;
+import com.se.hub.modules.auth.utils.AuthUtils;
+import com.se.hub.modules.interaction.dto.response.ReactionResponse;
+import com.se.hub.modules.interaction.dto.response.ReactionToggleResult;
+import com.se.hub.modules.interaction.entity.Comment;
+import com.se.hub.modules.interaction.entity.Reaction;
+import com.se.hub.modules.interaction.enums.ReactionType;
+import com.se.hub.modules.interaction.enums.TargetType;
+import com.se.hub.modules.interaction.repository.CommentRepository;
+import com.se.hub.modules.interaction.repository.ReactionRepository;
+import com.se.hub.modules.interaction.service.api.ReactionService;
+import com.se.hub.modules.profile.entity.Profile;
+import com.se.hub.modules.profile.repository.ProfileRepository;
+import com.se.hub.modules.profile.repository.UserStatsRepository;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
+
+/**
+ * Reaction Service Implementation
+ * Virtual Thread Best Practice:
+ * - This service uses synchronous blocking I/O operations (JPA repository calls)
+ * - Virtual threads automatically handle blocking operations efficiently
+ * - No need to use CompletableFuture or reactive APIs
+ * - Each method call will run on a virtual thread, allowing high concurrency
+ * - Database operations are blocking but virtual threads handle them efficiently
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+public class ReactionServiceImpl implements ReactionService {
+
+    ReactionRepository reactionRepository;
+    CommentRepository commentRepository;
+    ProfileRepository profileRepository;
+    UserStatsRepository userStatsRepository;
+
+    /**
+     * Toggle reaction (like/unlike) for a target.
+     * Virtual Thread Best Practice: Uses @Transactional with synchronous blocking I/O operations.
+     * Virtual threads yield during each database operation, enabling high concurrency.
+     * Race conditions are handled using unique constraint with exception handling.
+     */
+    @Override
+    @Transactional
+    public boolean toggleReaction(TargetType targetType, String targetId, ReactionType reactionType) {
+
+        Profile currentUser = getCurrentUser();
+
+        Optional<Reaction> existing = reactionRepository
+                .findByTargetTypeAndTargetIdAndUser(targetType, targetId, currentUser);
+
+        return existing
+                .map(reaction -> handleExistingReaction(reaction, reactionType, targetType, targetId))
+                .orElseGet(() -> handleNewReaction(targetType, targetId, reactionType, currentUser));
+
+    }
+
+    /* ========================  HELPERS  ======================== */
+
+    private Profile getCurrentUser() {
+        String userId = AuthUtils.getCurrentUserId();
+        return profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.PROFILE_NOT_FOUND));
+    }
+
+    /**
+     * Existing reaction → remove or update
+     */
+    private boolean handleExistingReaction(
+            Reaction reaction, ReactionType newType,
+            TargetType targetType, String targetId) {
+
+        ReactionType oldType = reaction.getReactionType();
+
+        if (oldType == newType) {
+            // Toggle off
+            adjustPoints(targetType, oldType, null, targetId);
+            reactionRepository.delete(reaction);
+            return false;
+        }
+
+        // Update reaction
+        adjustPoints(targetType, oldType, newType, targetId);
+        reaction.setReactionType(newType);
+        reactionRepository.save(reaction);
+        return true;
+    }
+
+    /**
+     * No existing reaction → create new
+     */
+    private boolean handleNewReaction(
+            TargetType targetType, String targetId, ReactionType reactionType, Profile user) {
+
+        Reaction newReaction = Reaction.builder()
+                .targetType(targetType)
+                .targetId(targetId)
+                .user(user)
+                .reactionType(reactionType)
+                .build();
+
+        try {
+            reactionRepository.save(newReaction);
+            adjustPoints(targetType, null, reactionType, targetId);
+            return true;
+
+        } catch (DataIntegrityViolationException e) {
+            // Race condition → fetch & delegate to existing handler
+            Reaction existing = reactionRepository
+                    .findByTargetTypeAndTargetIdAndUser(targetType, targetId, user)
+                    .orElseThrow(() -> new AppException(ErrorCode.DATA_INVALID));
+
+            return handleExistingReaction(existing, reactionType, targetType, targetId);
+        }
+    }
+
+    /**
+     * Unified point update logic
+     */
+    private void adjustPoints(TargetType targetType,
+                              ReactionType oldType, ReactionType newType,
+                              String targetId) {
+
+        if (targetType != TargetType.COMMENT) return;
+
+        // oldType = LIKE, newType = null   → remove like: -1
+        // oldType = null, newType = LIKE   → add like: +1
+        // oldType = LIKE, newType != LIKE  → unlike: -1
+        // oldType != LIKE, newType = LIKE  → relike: +1
+
+        int delta = 0;
+
+        if (oldType == ReactionType.LIKE && newType != ReactionType.LIKE) {
+            delta = -1;
+        } else if (oldType != ReactionType.LIKE && newType == ReactionType.LIKE) {
+            delta = 1;
+        }
+
+        if (delta != 0) {
+            updateCommentOwnerPoints(targetId, delta);
+        }
+    }
+
+
+    /**
+     * Toggle reaction and return both toggle result and count.
+     * Virtual Thread Best Practice: Uses synchronous blocking I/O operations.
+     * Virtual threads yield during database queries, enabling high concurrency.
+     */
+    @Override
+    @Transactional
+    public ReactionToggleResult toggleReactionWithCount(TargetType targetType, String targetId, ReactionType reactionType) {
+        boolean isAdded = toggleReaction(targetType, targetId, reactionType);
+        // Blocking I/O - virtual thread yields here
+        long count = getReactionCount(targetType, targetId, reactionType);
+
+        return ReactionToggleResult.builder()
+                .isAdded(isAdded)
+                .count(count)
+                .build();
+    }
+
+    /**
+     * Get reaction count for a target.
+     * Virtual Thread Best Practice: Uses synchronous blocking I/O operation.
+     * Virtual threads yield during database query, enabling high concurrency.
+     */
+    @Override
+    public long getReactionCount(TargetType targetType, String targetId, ReactionType reactionType) {
+        // Blocking I/O - virtual thread yields here
+        return reactionRepository.countByTargetTypeAndTargetIdAndReactionType(targetType, targetId, reactionType);
+    }
+
+    /**
+     * Check if current user has reacted to target.
+     * Virtual Thread Best Practice: Uses synchronous blocking I/O operations.
+     * Virtual threads yield during database queries, enabling high concurrency.
+     */
+    @Override
+    public boolean hasUserReacted(TargetType targetType, String targetId) {
+        try {
+            // Blocking I/O - virtual thread yields here
+            String userId = AuthUtils.getCurrentUserId();
+            Profile currentUser = profileRepository.findByUserId(userId)
+                    .orElseThrow(() -> new AppException(ErrorCode.PROFILE_NOT_FOUND));
+            // Blocking I/O - virtual thread yields here
+            return reactionRepository.existsByTargetTypeAndTargetIdAndUser(targetType, targetId, currentUser);
+        } catch (Exception e) {
+            log.debug("ReactionServiceImpl_hasUserReacted_Error checking user reaction: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Toggle reaction using string target type (converts to enum internally)
+     * Virtual Thread Best Practice: Uses synchronous blocking I/O operations.
+     */
+    @Override
+    @Transactional
+    public ReactionResponse toggleReaction(String targetTypeString, String targetId, ReactionType reactionType) {
+        TargetType targetType = parseTargetType(targetTypeString);
+        ReactionToggleResult result = toggleReactionWithCount(targetType, targetId, reactionType);
+        
+        return ReactionResponse.builder()
+                .isReacted(result.isAdded())
+                .count(result.getCount())
+                .reactionType(reactionType)
+                .build();
+    }
+
+    /**
+     * Get reaction count using string target type (converts to enum internally)
+     * Virtual Thread Best Practice: Uses synchronous blocking I/O operations.
+     */
+    @Override
+    public ReactionResponse getReactionCount(String targetTypeString, String targetId, ReactionType reactionType) {
+        TargetType targetType = parseTargetType(targetTypeString);
+        long count = getReactionCount(targetType, targetId, reactionType);
+        boolean hasReacted = hasUserReacted(targetType, targetId);
+        
+        return ReactionResponse.builder()
+                .isReacted(hasReacted)
+                .count(count)
+                .reactionType(reactionType)
+                .build();
+    }
+
+    /**
+     * Parse string to TargetType enum
+     */
+    private TargetType parseTargetType(String targetTypeString) {
+        try {
+            return TargetType.valueOf(targetTypeString.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.error("ReactionServiceImpl_parseTargetType_Invalid target type: {}", targetTypeString);
+            throw new AppException(ErrorCode.COMMENT_TARGET_TYPE_INVALID);
+        }
+    }
+
+    /**
+     * Cập nhật points cho comment owner.
+     * Let exception propagate to ensure transaction rollback on failure.
+     * Virtual Thread Best Practice: Uses synchronous blocking I/O operations.
+     * Virtual threads yield during each database operation, enabling high concurrency.
+     */
+    private void updateCommentOwnerPoints(String commentId, int pointsChange) {
+        // Blocking I/O - virtual thread yields here
+        Optional<Comment> commentOpt = commentRepository.findById(commentId);
+        if (commentOpt.isPresent()) {
+            Comment comment = commentOpt.get();
+            String commentOwnerUserId = comment.getAuthor().getUser().getId();
+
+            // Blocking I/O - virtual thread yields here
+            if (pointsChange > 0) {
+                userStatsRepository.updateUserStats(commentOwnerUserId, pointsChange, 0, 0, 0, 0, 0);
+                log.debug("ReactionServiceImpl_updateCommentOwnerPoints_Increased {} points for comment owner: {}", pointsChange, commentOwnerUserId);
+            } else {
+                userStatsRepository.updateUserStats(commentOwnerUserId, pointsChange, 0, 0, 0, 0, 0);
+                log.debug("ReactionServiceImpl_updateCommentOwnerPoints_Decreased {} points for comment owner: {}", Math.abs(pointsChange), commentOwnerUserId);
+            }
+        }
+    }
+}
+

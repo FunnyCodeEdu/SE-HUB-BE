@@ -5,6 +5,9 @@ public enum TargetType {
     QUESTION,
     COURSE,
     LESSON,
-    COMMENT
+    COMMENT,
+    EXAM,
+    PRACTICAL_EXAM,
+    DOCUMENT
 }
 

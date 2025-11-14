@@ -45,7 +45,7 @@ public class GlobalExceptionHandler extends RuntimeException{
 
     //handling Denied Access
     @ExceptionHandler(value = AccessDeniedException.class)
-    ResponseEntity<GenericResponse<Object>> handlingAccessDeniedException(AccessDeniedException exception) {
+    public ResponseEntity<GenericResponse<Object>> handlingAccessDeniedException(AccessDeniedException exception) {
         GenericResponse<Object> genericResponse = GenericResponse.builder()
                 .isSuccess(ApiConstant.FAILURE)
                 .message(MessageDTO.builder()
@@ -58,7 +58,7 @@ public class GlobalExceptionHandler extends RuntimeException{
 
     //handling MethodArgumentNotValidException
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    ResponseEntity<GenericResponse<Object>> handlingMethodArgumentNotValidException(MethodArgumentNotValidException exception) {
+    public ResponseEntity<GenericResponse<Object>> handlingMethodArgumentNotValidException(MethodArgumentNotValidException exception) {
         String enumKey = Objects.requireNonNull(exception.getFieldError()).getDefaultMessage();
         ErrorCode errorCode = ErrorCode.valueOf(enumKey);
         GenericResponse<Object> genericResponse = GenericResponse.builder()

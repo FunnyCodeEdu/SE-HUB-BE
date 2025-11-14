@@ -36,8 +36,37 @@ public class SecurityConfig {
 
     // Public GET endpoints (read-only, public information)
     private final String[] PUBLIC_GET_ENDPOINTS = {
-            // Health check endpoints (if any)
-            "/actuator/health"
+            // Health check endpoints
+            "/actuator/health",
+            // Blog endpoints
+            "/api/blogs",
+            "/api/blogs/**",
+            // Course endpoints
+            "/api/courses",
+            "/api/courses/**",
+            // Exam endpoints
+            "/api/exams",
+            "/api/exams/**",
+            // Document endpoints
+            "/api/documents",
+            "/api/documents/**",
+            // Comment endpoints
+            "/api/comments",
+            "/api/comments/**",
+            // Reaction endpoints
+            "/api/reactions/**",
+            // Ranking endpoints
+            "/api/ranking",
+            "/api/ranking/**",
+            // User Level endpoints
+            "/api/levels",
+            "/api/levels/**",
+            // Achievement endpoints (public read)
+            "/api/achievements",
+            "/api/achievements/*",
+            // Question endpoints
+            "/api/questions",
+            "/api/questions/**"
     };
     
     // Endpoints that require authentication but no permission check

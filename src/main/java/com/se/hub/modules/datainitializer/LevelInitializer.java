@@ -28,17 +28,31 @@ public class LevelInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        log.info("Initializing levels ...");
+        log.info("LevelInitializer_run_Starting level initialization");
+        
+        try {
+            Set<UserLevel> levels = getLevels();
+            int createdCount = 0;
+            int skippedCount = 0;
 
-        Set<UserLevel> levels = getLevels();
-
-        levels.forEach(level -> {
-            if (!userLevelRepository.existsByLevel(level.getLevel())) {
-                userLevelRepository.save(level);
-                log.info("Created level [{}]", level.getLevel());
+            for (UserLevel level : levels) {
+                if (!userLevelRepository.existsByLevel(level.getLevel())) {
+                    userLevelRepository.save(level);
+                    createdCount++;
+                    log.debug("LevelInitializer_run_Created level: {} (min: {}, max: {})", 
+                            level.getLevel(), level.getMinPoints(), level.getMaxPoints());
+                } else {
+                    skippedCount++;
+                    log.debug("LevelInitializer_run_Level already exists, skipped: {}", level.getLevel());
+                }
             }
-        });
-        log.info("Levels initialization completed!");
+            
+            log.info("LevelInitializer_run_Level initialization completed. Created: {}, Skipped: {}, Total: {}", 
+                    createdCount, skippedCount, levels.size());
+        } catch (Exception e) {
+            log.error("LevelInitializer_run_Error during level initialization", e);
+            throw e;
+        }
     }
 
     private Set<UserLevel> getLevels() {

@@ -27,17 +27,30 @@ public class PermissionInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        log.info("Initializing permission ...");
+        log.info("PermissionInitializer_run_Starting permission initialization");
+        
+        try {
+            Set<Permission> permissions = getPermissions();
+            int createdCount = 0;
+            int skippedCount = 0;
 
-        Set<Permission> permissions = getPermissions();
-
-        permissions.forEach(permission -> {
-            if (!permissionRepository.existsById(permission.getName())) {
-                permissionRepository.save(permission);
-                log.info("Created permission [{}]", permission.getName());
+            for (Permission permission : permissions) {
+                if (!permissionRepository.existsById(permission.getName())) {
+                    permissionRepository.save(permission);
+                    createdCount++;
+                    log.debug("PermissionInitializer_run_Created permission: {}", permission.getName());
+                } else {
+                    skippedCount++;
+                    log.debug("PermissionInitializer_run_Permission already exists, skipped: {}", permission.getName());
+                }
             }
-        });
-        log.info("Permission initialization completed!");
+            
+            log.info("PermissionInitializer_run_Permission initialization completed. Created: {}, Skipped: {}, Total: {}", 
+                    createdCount, skippedCount, permissions.size());
+        } catch (Exception e) {
+            log.error("PermissionInitializer_run_Error during permission initialization", e);
+            throw e;
+        }
     }
 
     private Set<Permission> getPermissions() {

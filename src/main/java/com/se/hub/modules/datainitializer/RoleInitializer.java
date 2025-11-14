@@ -33,46 +33,89 @@ public class RoleInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        log.info("Initializing roles ...");
+        log.info("RoleInitializer_run_Starting role initialization");
+        
+        try {
+            Set<Role> roles = getRoles();
+            int createdCount = 0;
+            int skippedCount = 0;
 
-        Set<Role> roles = getRoles();
-
-        roles.forEach(role -> {
-            if (!roleRepository.existsById(role.getName())) {
-                roleRepository.save(role);
-                log.info("Created role [{}]", role.getName());
+            for (Role role : roles) {
+                if (!roleRepository.existsById(role.getName())) {
+                    roleRepository.save(role);
+                    createdCount++;
+                    log.debug("RoleInitializer_run_Created role: {} with {} permissions", 
+                            role.getName(), role.getPermissions() != null ? role.getPermissions().size() : 0);
+                } else {
+                    skippedCount++;
+                    log.debug("RoleInitializer_run_Role already exists, skipped: {}", role.getName());
+                }
             }
-        });
-        log.info("Role initialization completed!");
+            
+            log.info("RoleInitializer_run_Role initialization completed. Created: {}, Skipped: {}, Total: {}", 
+                    createdCount, skippedCount, roles.size());
+        } catch (Exception e) {
+            log.error("RoleInitializer_run_Error during role initialization", e);
+            throw e;
+        }
     }
 
+    /**
+     * Get all predefined roles with their permissions
+     * 
+     * @return Set of roles to initialize
+     */
     private Set<Role> getRoles() {
         Role adminRole = Role.builder()
                 .name(PredefinedRole.ADMIN_ROLE)
-                .permissions(getAdminPermission())
+                .permissions(getAdminPermissions())
                 .build();
         
         Role userRole = Role.builder()
                 .name(PredefinedRole.USER_ROLE)
-                .permissions(getUserPermission())
+                .permissions(getUserPermissions())
                 .build();
         
         return Set.of(adminRole, userRole);
     }
 
-    private Set<Permission> getUserPermission() {
-        return Set.of(
-                permissionRepository.findById(StartDefinedPermission.USER_UPDATE)
-                        .orElseThrow(() -> new AppException(ErrorCode.PERM_PERMISSION_NOT_EXISTED)),
-                permissionRepository.findById(StartDefinedPermission.USER_DELETE)
-                        .orElseThrow(() -> new AppException(ErrorCode.PERM_PERMISSION_NOT_EXISTED))
-        );
+    /**
+     * Get permissions for USER role
+     * 
+     * @return Set of permissions for USER role
+     * @throws AppException if required permissions are not found
+     */
+    private Set<Permission> getUserPermissions() {
+        log.debug("RoleInitializer_getUserPermissions_Loading permissions for USER role");
+        Permission userUpdate = permissionRepository.findById(StartDefinedPermission.USER_UPDATE)
+                .orElseThrow(() -> {
+                    log.error("RoleInitializer_getUserPermissions_Permission not found: {}", StartDefinedPermission.USER_UPDATE);
+                    return new AppException(ErrorCode.PERM_PERMISSION_NOT_EXISTED);
+                });
+        
+        Permission userDelete = permissionRepository.findById(StartDefinedPermission.USER_DELETE)
+                .orElseThrow(() -> {
+                    log.error("RoleInitializer_getUserPermissions_Permission not found: {}", StartDefinedPermission.USER_DELETE);
+                    return new AppException(ErrorCode.PERM_PERMISSION_NOT_EXISTED);
+                });
+        
+        return Set.of(userUpdate, userDelete);
     }
 
-    private Set<Permission> getAdminPermission() {
-        return Set.of(
-                permissionRepository.findById(StartDefinedPermission.SYSTEM_MANAGE)
-                        .orElseThrow(() -> new AppException(ErrorCode.PERM_PERMISSION_NOT_EXISTED))
-        );
+    /**
+     * Get permissions for ADMIN role
+     * 
+     * @return Set of permissions for ADMIN role
+     * @throws AppException if required permissions are not found
+     */
+    private Set<Permission> getAdminPermissions() {
+        log.debug("RoleInitializer_getAdminPermissions_Loading permissions for ADMIN role");
+        Permission systemManage = permissionRepository.findById(StartDefinedPermission.SYSTEM_MANAGE)
+                .orElseThrow(() -> {
+                    log.error("RoleInitializer_getAdminPermissions_Permission not found: {}", StartDefinedPermission.SYSTEM_MANAGE);
+                    return new AppException(ErrorCode.PERM_PERMISSION_NOT_EXISTED);
+                });
+        
+        return Set.of(systemManage);
     }
 }

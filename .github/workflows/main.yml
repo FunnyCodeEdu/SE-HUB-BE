@@ -3,7 +3,7 @@ name: Build and Deploy Backend
 on:
   push:
     branches:
-      - master
+      - main
   workflow_dispatch:
 
 jobs:
@@ -27,11 +27,11 @@ jobs:
       
       - name: Verify jar file exists
         run: |
-          if [ ! -f target/Application-0.0.1-SNAPSHOT.jar ]; then
+          if [ ! -f target/sehub.jar ]; then
             echo "❌ Error: JAR file not found!"
             exit 1
           fi
-          echo "✅ JAR file found: $(ls -lh target/Application-0.0.1-SNAPSHOT.jar)"
+          echo "✅ JAR file found: $(ls -lh target/sehub.jar)"
       
       - name: Install sshpass
         run: |
@@ -47,7 +47,7 @@ jobs:
           port: 22
           script: |
             echo "🧹 Cleaning up old files..."
-            sudo rm -rf /tmp/app.jar /tmp/target /tmp/Application-0.0.1-SNAPSHOT.jar
+            sudo rm -rf /tmp/app.jar /tmp/target /tmp/sehub.jar
             echo "✅ Cleanup completed"
       
       - name: Upload jar file to server
@@ -55,7 +55,7 @@ jobs:
           echo "📤 Uploading JAR file to server..."
           sshpass -p "${{ secrets.SSH_PASSWORD }}" scp -o StrictHostKeyChecking=no \
             -P 22 \
-            target/Application-0.0.1-SNAPSHOT.jar \
+            target/sehub.jar \
             ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/tmp/app.jar
           
           echo "✅ Upload completed"
@@ -92,10 +92,10 @@ jobs:
             
             echo "📝 Checking and copying .env file..."
             # Check if .env exists in source location
-            if [ -f /var/www/SEHUB-backend/.env ]; then
-              echo "✅ Found .env file at /var/www/SEHUB-backend/.env"
+            if [ -f /var/www/SE-HUB-BE/.env ]; then
+              echo "✅ Found .env file at /var/www/SE-HUB-BE/.env"
               # Copy .env to deployment location
-              sudo cp /var/www/SEHUB-backend/.env /opt/sehub/.env
+              sudo cp /var/www/SE-HUB-BE/.env /opt/sehub/.env
               sudo chown root:root /opt/sehub/.env
               sudo chmod 600 /opt/sehub/.env
               echo "✅ .env file copied to /opt/sehub/.env"
@@ -121,7 +121,7 @@ jobs:
             elif [ -f /opt/sehub/.env ]; then
               echo "✅ .env file already exists at /opt/sehub/.env"
             else
-              echo "⚠️  Warning: .env file not found at /var/www/SEHUB-backend/.env or /opt/sehub/.env"
+              echo "⚠️  Warning: .env file not found at /var/www/SE-HUB-BE/.env or /opt/sehub/.env"
               echo "💡 Spring Boot will use environment variables or system properties instead"
               echo "⚠️  Make sure all required environment variables are set in systemd service or system environment"
             fi

@@ -1,4 +1,4 @@
-package com.se.hub.modules.exam.service.api;
+package com.se.hub.modules.exam.service;
 
 import com.se.hub.common.dto.request.PagingRequest;
 import com.se.hub.common.dto.response.PagingResponse;
@@ -99,3 +99,4 @@ public interface QuestionService {
      */
     void deleteQuestion(String questionId);
 }
+

@@ -1,4 +1,4 @@
-package com.se.hub.modules.exam.service.api;
+package com.se.hub.modules.exam.service;
 
 import com.se.hub.common.dto.request.PagingRequest;
 import com.se.hub.common.dto.response.PagingResponse;
@@ -27,7 +27,10 @@ public interface ExamService {
      */
     PagingResponse<ExamResponse> getAll(PagingRequest request);
 
-
+    /**
+     * get exams by course id
+     * @author catsocute
+     */
     PagingResponse<ExamResponse> getByCourseId(String courseId, PagingRequest request);
 
     /**
@@ -50,10 +53,9 @@ public interface ExamService {
     ExamResponse addQuestions(String examId, AddQuestionsToExamRequest request);
 
     /**
-     * remove questions to exam
+     * remove questions from exam
      * @author catsocute
      */
     ExamResponse removeQuestions(String examId, RemoveQuestionsFromExamRequest request);
 }
-
 

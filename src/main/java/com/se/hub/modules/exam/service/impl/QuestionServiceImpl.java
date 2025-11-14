@@ -3,10 +3,8 @@ package com.se.hub.modules.exam.service.impl;
 import com.se.hub.common.constant.GlobalVariable;
 import com.se.hub.common.dto.request.PagingRequest;
 import com.se.hub.common.dto.response.PagingResponse;
-import com.se.hub.common.enums.ErrorCode;
-import com.se.hub.common.exception.AppException;
-import com.se.hub.modules.auth.utils.AuthUtils;
 import com.se.hub.common.utils.PagingUtil;
+import com.se.hub.modules.auth.utils.AuthUtils;
 import com.se.hub.modules.exam.dto.request.CreateQuestionRequest;
 import com.se.hub.modules.exam.dto.request.CreateQuestionOptionRequest;
 import com.se.hub.modules.exam.dto.request.UpdateQuestionOptionRequest;
@@ -17,11 +15,12 @@ import com.se.hub.modules.exam.entity.QuestionOption;
 import com.se.hub.modules.exam.enums.QuestionCategory;
 import com.se.hub.modules.exam.enums.QuestionDifficulty;
 import com.se.hub.modules.exam.enums.QuestionType;
+import com.se.hub.modules.exam.exception.QuestionErrorCode;
 import com.se.hub.modules.exam.mapper.QuestionMapper;
 import com.se.hub.modules.exam.mapper.QuestionOptionMapper;
 import com.se.hub.modules.exam.repository.QuestionOptionRepository;
 import com.se.hub.modules.exam.repository.QuestionRepository;
-import com.se.hub.modules.exam.service.api.QuestionService;
+import com.se.hub.modules.exam.service.QuestionService;
 import com.se.hub.modules.lesson.enums.JLPTLevel;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -35,19 +34,47 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Question Service Implementation
+ * 
+ * Virtual Thread Best Practice:
+ * - This service uses synchronous blocking I/O operations (JPA repository calls)
+ * - Virtual threads automatically handle blocking operations efficiently
+ * - No need to use CompletableFuture or reactive APIs
+ * - Each method call will run on a virtual thread, allowing high concurrency
+ * - Database operations are blocking but virtual threads handle them efficiently
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class QuestionServiceImpl implements QuestionService {
     QuestionRepository questionRepository;
-    QuestionOptionRepository  questionOptionRepository;
+    QuestionOptionRepository questionOptionRepository;
     QuestionMapper questionMapper;
     QuestionOptionMapper questionOptionMapper;
+
+    /**
+     * Helper method to build PagingResponse from Page<Question>
+     * Reduces code duplication across get methods
+     */
+    private PagingResponse<QuestionResponse> buildPagingResponse(Page<Question> questions) {
+        return PagingResponse.<QuestionResponse>builder()
+                .currentPage(questions.getNumber() + GlobalVariable.PAGE_SIZE_INDEX)
+                .totalPages(questions.getTotalPages())
+                .pageSize(questions.getSize())
+                .totalElement(questions.getTotalElements())
+                .data(questions.getContent().stream()
+                        .map(questionMapper::toQuestionResponse)
+                        .toList()
+                )
+                .build();
+    }
 
     @Override
     @Transactional
     public QuestionResponse createQuestion(CreateQuestionRequest request) {
+        log.debug("QuestionService_createQuestion_Creating new question for user: {}", AuthUtils.getCurrentUserId());
         Question question = questionMapper.toQuestion(request);
         String userId = AuthUtils.getCurrentUserId();
         question.setCreatedBy(userId);
@@ -61,20 +88,25 @@ public class QuestionServiceImpl implements QuestionService {
             savedQuestion.setOptions(createOptions(userId, savedQuestion, request.getOptions()));
         }
 
-        return questionMapper.toQuestionResponse(savedQuestion);
+        QuestionResponse response = questionMapper.toQuestionResponse(savedQuestion);
+        log.debug("QuestionService_createQuestion_Question created successfully with id: {}", response.getId());
+        return response;
     }
 
     @Override
     public QuestionResponse getById(String questionId) {
+        log.debug("QuestionService_getById_Fetching question with id: {}", questionId);
         return questionMapper.toQuestionResponse(questionRepository.findById(questionId)
                 .orElseThrow(() -> {
-                    log.error("QuestionServiceImpl_getById_Question id {} not found", questionId);
-                    return new AppException(ErrorCode.QUESTION_NOT_FOUND);
+                    log.error("QuestionService_getById_Question not found with id: {}", questionId);
+                    return QuestionErrorCode.QUESTION_NOT_FOUND.toException();
                 }));
     }
 
     @Override
     public PagingResponse<QuestionResponse> getAllQuestions(PagingRequest request) {
+        log.debug("QuestionService_getAllQuestions_Fetching questions with page: {}, size: {}", 
+                request.getPage(), request.getPageSize());
         Pageable pageable = PageRequest.of(
                 request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
                 request.getPageSize(),
@@ -82,21 +114,13 @@ public class QuestionServiceImpl implements QuestionService {
         );
 
         Page<Question> questionPages = questionRepository.findAll(pageable);
-
-        return PagingResponse.<QuestionResponse>builder()
-                .currentPage(request.getPage())
-                .pageSize(questionPages.getSize())
-                .totalPages(questionPages.getTotalPages())
-                .totalElement(questionPages.getTotalElements())
-                .data(questionPages.getContent().stream()
-                        .map(questionMapper::toQuestionResponse)
-                        .toList()
-                )
-                .build();
+        return buildPagingResponse(questionPages);
     }
 
     @Override
     public PagingResponse<QuestionResponse> getQuestionsByCategory(QuestionCategory category, PagingRequest request) {
+        log.debug("QuestionService_getQuestionsByCategory_Fetching questions by category: {} with page: {}, size: {}", 
+                category, request.getPage(), request.getPageSize());
         Pageable pageable = PageRequest.of(
                 request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
                 request.getPageSize(),
@@ -104,21 +128,13 @@ public class QuestionServiceImpl implements QuestionService {
         );
 
         Page<Question> questionPages = questionRepository.findByCategory(category, pageable);
-
-        return PagingResponse.<QuestionResponse>builder()
-                .currentPage(request.getPage())
-                .pageSize(questionPages.getSize())
-                .totalPages(questionPages.getTotalPages())
-                .totalElement(questionPages.getTotalElements())
-                .data(questionPages.getContent().stream()
-                        .map(questionMapper::toQuestionResponse)
-                        .toList()
-                )
-                .build();
+        return buildPagingResponse(questionPages);
     }
 
     @Override
     public PagingResponse<QuestionResponse> getQuestionsByDifficulty(QuestionDifficulty difficulty, PagingRequest request) {
+        log.debug("QuestionService_getQuestionsByDifficulty_Fetching questions by difficulty: {} with page: {}, size: {}", 
+                difficulty, request.getPage(), request.getPageSize());
         Pageable pageable = PageRequest.of(
                 request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
                 request.getPageSize(),
@@ -126,21 +142,13 @@ public class QuestionServiceImpl implements QuestionService {
         );
 
         Page<Question> questionPages = questionRepository.findByDifficulty(difficulty, pageable);
-
-        return PagingResponse.<QuestionResponse>builder()
-                .currentPage(request.getPage())
-                .pageSize(questionPages.getSize())
-                .totalPages(questionPages.getTotalPages())
-                .totalElement(questionPages.getTotalElements())
-                .data(questionPages.getContent().stream()
-                        .map(questionMapper::toQuestionResponse)
-                        .toList()
-                )
-                .build();
+        return buildPagingResponse(questionPages);
     }
 
     @Override
     public PagingResponse<QuestionResponse> getQuestionsByJlptLevel(JLPTLevel jlptLevel, PagingRequest request) {
+        log.debug("QuestionService_getQuestionsByJlptLevel_Fetching questions by JLPT level: {} with page: {}, size: {}", 
+                jlptLevel, request.getPage(), request.getPageSize());
         Pageable pageable = PageRequest.of(
                 request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
                 request.getPageSize(),
@@ -148,21 +156,13 @@ public class QuestionServiceImpl implements QuestionService {
         );
 
         Page<Question> questionPages = questionRepository.findByJlptLevel(jlptLevel, pageable);
-
-        return PagingResponse.<QuestionResponse>builder()
-                .currentPage(request.getPage())
-                .pageSize(questionPages.getSize())
-                .totalPages(questionPages.getTotalPages())
-                .totalElement(questionPages.getTotalElements())
-                .data(questionPages.getContent().stream()
-                        .map(questionMapper::toQuestionResponse)
-                        .toList()
-                )
-                .build();
+        return buildPagingResponse(questionPages);
     }
 
     @Override
     public PagingResponse<QuestionResponse> getQuestionsByType(QuestionType questionType, PagingRequest request) {
+        log.debug("QuestionService_getQuestionsByType_Fetching questions by type: {} with page: {}, size: {}", 
+                questionType, request.getPage(), request.getPageSize());
         Pageable pageable = PageRequest.of(
                 request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
                 request.getPageSize(),
@@ -170,17 +170,7 @@ public class QuestionServiceImpl implements QuestionService {
         );
 
         Page<Question> questionPages = questionRepository.findByQuestionType(questionType, pageable);
-
-        return PagingResponse.<QuestionResponse>builder()
-                .currentPage(request.getPage())
-                .pageSize(questionPages.getSize())
-                .totalPages(questionPages.getTotalPages())
-                .totalElement(questionPages.getTotalElements())
-                .data(questionPages.getContent().stream()
-                        .map(questionMapper::toQuestionResponse)
-                        .toList()
-                )
-                .build();
+        return buildPagingResponse(questionPages);
     }
 
     @Override
@@ -189,6 +179,8 @@ public class QuestionServiceImpl implements QuestionService {
                                                                    JLPTLevel jlptLevel,
                                                                    QuestionType questionType,
                                                                    PagingRequest request) {
+        log.debug("QuestionService_getQuestionsByCriteria_Fetching questions by criteria with page: {}, size: {}", 
+                request.getPage(), request.getPageSize());
         Pageable pageable = PageRequest.of(
                 request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
                 request.getPageSize(),
@@ -196,21 +188,13 @@ public class QuestionServiceImpl implements QuestionService {
         );
 
         Page<Question> questionPages = questionRepository.findByCriteria(category, difficulty, jlptLevel, questionType, pageable);
-
-        return PagingResponse.<QuestionResponse>builder()
-                .currentPage(request.getPage())
-                .pageSize(questionPages.getSize())
-                .totalPages(questionPages.getTotalPages())
-                .totalElement(questionPages.getTotalElements())
-                .data(questionPages.getContent().stream()
-                        .map(questionMapper::toQuestionResponse)
-                        .toList()
-                )
-                .build();
+        return buildPagingResponse(questionPages);
     }
 
     @Override
     public PagingResponse<QuestionResponse> searchQuestionsByContent(String keyword, PagingRequest request) {
+        log.debug("QuestionService_searchQuestionsByContent_Searching questions with keyword: {} with page: {}, size: {}", 
+                keyword, request.getPage(), request.getPageSize());
         Pageable pageable = PageRequest.of(
                 request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
                 request.getPageSize(),
@@ -218,21 +202,13 @@ public class QuestionServiceImpl implements QuestionService {
         );
 
         Page<Question> questionPages = questionRepository.findByContentContainingIgnoreCase(keyword, pageable);
-
-        return PagingResponse.<QuestionResponse>builder()
-                .currentPage(request.getPage())
-                .pageSize(questionPages.getSize())
-                .totalPages(questionPages.getTotalPages())
-                .totalElement(questionPages.getTotalElements())
-                .data(questionPages.getContent().stream()
-                        .map(questionMapper::toQuestionResponse)
-                        .toList()
-                )
-                .build();
+        return buildPagingResponse(questionPages);
     }
 
     @Override
     public PagingResponse<QuestionResponse> getQuestionsByScoreRange(int minScore, int maxScore, PagingRequest request) {
+        log.debug("QuestionService_getQuestionsByScoreRange_Fetching questions by score range [{}, {}] with page: {}, size: {}", 
+                minScore, maxScore, request.getPage(), request.getPageSize());
         Pageable pageable = PageRequest.of(
                 request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
                 request.getPageSize(),
@@ -240,17 +216,7 @@ public class QuestionServiceImpl implements QuestionService {
         );
 
         Page<Question> questionPages = questionRepository.findByScoreBetween(minScore, maxScore, pageable);
-
-        return PagingResponse.<QuestionResponse>builder()
-                .currentPage(request.getPage())
-                .pageSize(questionPages.getSize())
-                .totalPages(questionPages.getTotalPages())
-                .totalElement(questionPages.getTotalElements())
-                .data(questionPages.getContent().stream()
-                        .map(questionMapper::toQuestionResponse)
-                        .toList()
-                )
-                .build();
+        return buildPagingResponse(questionPages);
     }
 
     @Override
@@ -275,10 +241,11 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     @Transactional
     public QuestionResponse updateQuestion(String questionId, UpdateQuestionRequest request) {
+        log.debug("QuestionService_updateQuestion_Updating question with id: {}", questionId);
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> {
-                    log.error("QuestionServiceImpl_updateQuestion_Question id {} not found", questionId);
-                    return new AppException(ErrorCode.QUESTION_NOT_FOUND);
+                    log.error("QuestionService_updateQuestion_Question not found with id: {}", questionId);
+                    return QuestionErrorCode.QUESTION_NOT_FOUND.toException();
                 });
 
         String userId = AuthUtils.getCurrentUserId();
@@ -293,17 +260,31 @@ public class QuestionServiceImpl implements QuestionService {
             question.getOptions().clear();
             
             // Add new options
-            List<QuestionOption> options = updateOptions(userId, question,  request.getOptions());
+            List<QuestionOption> options = updateOptions(userId, question, request.getOptions());
             question.setOptions(options);
         }
 
-        return questionMapper.toQuestionResponse(questionRepository.save(question));
+        QuestionResponse response = questionMapper.toQuestionResponse(questionRepository.save(question));
+        log.debug("QuestionService_updateQuestion_Question updated successfully with id: {}", questionId);
+        return response;
     }
 
     @Override
     @Transactional
     public void deleteQuestion(String questionId) {
+        log.debug("QuestionService_deleteQuestion_Deleting question with id: {}", questionId);
+        if (questionId == null || questionId.isBlank()) {
+            log.error("QuestionService_deleteQuestion_Question ID is required");
+            throw QuestionErrorCode.QUESTION_ID_REQUIRED.toException();
+        }
+
+        if (!questionRepository.existsById(questionId)) {
+            log.error("QuestionService_deleteQuestion_Question not found with id: {}", questionId);
+            throw QuestionErrorCode.QUESTION_NOT_FOUND.toException();
+        }
+
         questionRepository.deleteById(questionId);
+        log.debug("QuestionService_deleteQuestion_Question deleted successfully with id: {}", questionId);
     }
 
     private List<QuestionOption> createOptions(String userId, Question question, List<CreateQuestionOptionRequest> requests) {

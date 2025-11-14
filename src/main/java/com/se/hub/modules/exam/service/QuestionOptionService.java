@@ -1,4 +1,4 @@
-package com.se.hub.modules.exam.service.api;
+package com.se.hub.modules.exam.service;
 
 import com.se.hub.modules.exam.dto.request.CreateQuestionOptionRequest;
 import com.se.hub.modules.exam.dto.request.UpdateQuestionOptionRequest;
@@ -50,3 +50,4 @@ public interface QuestionOptionService {
      */
     void deleteOptionsByQuestionId(String questionId);
 }
+

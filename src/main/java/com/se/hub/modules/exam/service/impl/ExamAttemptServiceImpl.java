@@ -13,10 +13,11 @@ import com.se.hub.modules.exam.entity.Exam;
 import com.se.hub.modules.exam.entity.ExamAttempt;
 import com.se.hub.modules.exam.entity.Question;
 import com.se.hub.modules.exam.entity.QuestionOption;
+import com.se.hub.modules.exam.exception.ExamErrorCode;
 import com.se.hub.modules.exam.mapper.ExamAttemptMapper;
 import com.se.hub.modules.exam.repository.ExamAttemptRepository;
 import com.se.hub.modules.exam.repository.ExamRepository;
-import com.se.hub.modules.exam.service.api.ExamAttemptService;
+import com.se.hub.modules.exam.service.ExamAttemptService;
 import com.se.hub.modules.profile.entity.Profile;
 import com.se.hub.modules.profile.repository.ProfileRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -35,6 +36,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Exam Attempt Service Implementation
+ * 
+ * Virtual Thread Best Practice:
+ * - This service uses synchronous blocking I/O operations (JPA repository calls)
+ * - Virtual threads automatically handle blocking operations efficiently
+ * - No need to use CompletableFuture or reactive APIs
+ * - Each method call will run on a virtual thread, allowing high concurrency
+ * - Database operations are blocking but virtual threads handle them efficiently
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -46,32 +57,48 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
     ProfileRepository profileRepository;
     ExamAttemptMapper examAttemptMapper;
     ObjectMapper objectMapper = new ObjectMapper();
+
+    /**
+     * Helper method to build PagingResponse from Page<ExamAttempt>
+     * Reduces code duplication across get methods
+     */
+    private PagingResponse<ExamResultResponse> buildPagingResponse(Page<ExamAttempt> attempts) {
+        return PagingResponse.<ExamResultResponse>builder()
+                .currentPage(attempts.getNumber() + GlobalVariable.PAGE_SIZE_INDEX)
+                .totalPages(attempts.getTotalPages())
+                .pageSize(attempts.getSize())
+                .totalElement(attempts.getTotalElements())
+                .data(attempts.getContent().stream()
+                        .map(this::toExamResultResponseSimple)
+                        .toList())
+                .build();
+    }
     
     @Override
     @Transactional
     public ExamResultResponse submitExam(SubmitExamRequest request) {
-        log.info("ExamAttemptServiceImpl_submitExam_Submitting exam with examId: {}", request.getExamId());
+        log.debug("ExamAttemptService_submitExam_Submitting exam with examId: {}", request.getExamId());
         
         // 1. Validate and get exam
         Exam exam = examRepository.findById(request.getExamId())
                 .orElseThrow(() -> {
-                    log.error("ExamAttemptServiceImpl_submitExam_Exam not found: {}", request.getExamId());
-                    return new AppException(ErrorCode.EXAM_NOT_FOUND);
+                    log.error("ExamAttemptService_submitExam_Exam not found: {}", request.getExamId());
+                    return ExamErrorCode.EXAM_NOT_FOUND.toException();
                 });
         
         // 2. Get current user's profile
         String userId = AuthUtils.getCurrentUserId();
         Profile profile = profileRepository.findByUserId(userId)
                 .orElseThrow(() -> {
-                    log.error("ExamAttemptServiceImpl_submitExam_Profile not found for userId: {}", userId);
-                    return new AppException(ErrorCode.DATA_NOT_FOUND);
+                    log.error("ExamAttemptService_submitExam_Profile not found for userId: {}", userId);
+                    return new AppException(ErrorCode.PROFILE_NOT_FOUND);
                 });
         
         // 3. Get all questions for the exam
         List<Question> questions = new ArrayList<>(exam.getQuestions());
         if (questions.isEmpty()) {
-            log.error("ExamAttemptServiceImpl_submitExam_Exam has no questions: {}", request.getExamId());
-            throw new AppException(ErrorCode.DATA_INVALID);
+            log.error("ExamAttemptService_submitExam_Exam has no questions: {}", request.getExamId());
+            throw ExamErrorCode.EXAM_QUESTIONS_INVALID.toException();
         }
         
         // 4. Calculate score
@@ -100,8 +127,8 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
         try {
             submittedAnswersJson = objectMapper.writeValueAsString(request.getAnswers());
         } catch (JsonProcessingException e) {
-            log.error("ExamAttemptServiceImpl_submitExam_Error converting answers to JSON", e);
-            throw new AppException(ErrorCode.DATA_INVALID);
+            log.error("ExamAttemptService_submitExam_Error converting answers to JSON", e);
+            throw ExamErrorCode.EXAM_QUESTIONS_INVALID.toException();
         }
         
         // 6. Save exam attempt
@@ -120,18 +147,21 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
         attempt.setUpdateBy(userId);
         
         ExamAttempt savedAttempt = examAttemptRepository.save(attempt);
-        log.info("ExamAttemptServiceImpl_submitExam_Saved exam attempt: {}", savedAttempt.getId());
+        log.debug("ExamAttemptService_submitExam_Saved exam attempt: {}", savedAttempt.getId());
         
         // 7. Build result response
         ExamResultResponse response = examAttemptMapper.toExamResultResponse(savedAttempt);
         response.setPercentage(calculatePercentage(earnedScore, totalScore));
         response.setQuestionResults(questionResults);
         
+        log.debug("ExamAttemptService_submitExam_Exam submitted successfully with score: {}/{}", earnedScore, totalScore);
         return response;
     }
     
     @Override
     public PagingResponse<ExamResultResponse> getAttemptHistory(String profileId, PagingRequest request) {
+        log.debug("ExamAttemptService_getAttemptHistory_Fetching attempt history for profile: {} with page: {}, size: {}", 
+                profileId, request.getPage(), request.getPageSize());
         Pageable pageable = PageRequest.of(
                 request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
                 request.getPageSize(),
@@ -139,21 +169,14 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
         );
         
         Page<ExamAttempt> attemptPages = examAttemptRepository.findByProfileIdOrderByCreateDateDesc(profileId, pageable);
-        
-        return PagingResponse.<ExamResultResponse>builder()
-                .currentPage(request.getPage())
-                .pageSize(attemptPages.getSize())
-                .totalPages(attemptPages.getTotalPages())
-                .totalElement(attemptPages.getTotalElements())
-                .data(attemptPages.getContent().stream()
-                        .map(this::toExamResultResponseSimple)
-                        .toList())
-                .build();
+        return buildPagingResponse(attemptPages);
     }
     
     @Override
     @Transactional(readOnly = true)
     public PagingResponse<ExamResultResponse> getAttemptHistoryByExam(String examId, PagingRequest request) {
+        log.debug("ExamAttemptService_getAttemptHistoryByExam_Fetching attempt history for exam: {} with page: {}, size: {}", 
+                examId, request.getPage(), request.getPageSize());
         Pageable pageable = PageRequest.of(
                 request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
                 request.getPageSize(),
@@ -161,23 +184,15 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
         );
         
         Page<ExamAttempt> attemptPages = examAttemptRepository.findByExamIdOrderByCreateDateDesc(examId, pageable);
-        
-        return PagingResponse.<ExamResultResponse>builder()
-                .currentPage(request.getPage())
-                .pageSize(attemptPages.getSize())
-                .totalPages(attemptPages.getTotalPages())
-                .totalElement(attemptPages.getTotalElements())
-                .data(attemptPages.getContent().stream()
-                        .map(this::toExamResultResponseSimple)
-                        .toList())
-                .build();
+        return buildPagingResponse(attemptPages);
     }
     
     @Override
     public ExamResultResponse getAttemptById(String attemptId) {
+        log.debug("ExamAttemptService_getAttemptById_Fetching attempt with id: {}", attemptId);
         ExamAttempt attempt = examAttemptRepository.findById(attemptId)
                 .orElseThrow(() -> {
-                    log.error("ExamAttemptServiceImpl_getAttemptById_Attempt not found: {}", attemptId);
+                    log.error("ExamAttemptService_getAttemptById_Attempt not found: {}", attemptId);
                     return new AppException(ErrorCode.DATA_NOT_FOUND);
                 });
         
@@ -186,6 +201,8 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
     
     @Override
     public PagingResponse<ExamResultResponse> getAllAttempts(PagingRequest request) {
+        log.debug("ExamAttemptService_getAllAttempts_Fetching all attempts with page: {}, size: {}", 
+                request.getPage(), request.getPageSize());
         Pageable pageable = PageRequest.of(
                 request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
                 request.getPageSize(),
@@ -193,16 +210,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
         );
         
         Page<ExamAttempt> attemptPages = examAttemptRepository.findAll(pageable);
-        
-        return PagingResponse.<ExamResultResponse>builder()
-                .currentPage(request.getPage())
-                .pageSize(attemptPages.getSize())
-                .totalPages(attemptPages.getTotalPages())
-                .totalElement(attemptPages.getTotalElements())
-                .data(attemptPages.getContent().stream()
-                        .map(this::toExamResultResponseSimple)
-                        .toList())
-                .build();
+        return buildPagingResponse(attemptPages);
     }
     
     /**
@@ -280,7 +288,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
                     details.add(detail);
                 }
             } catch (JsonProcessingException e) {
-                log.error("ExamAttemptServiceImpl_toExamResultResponseWithDetails_Error parsing JSON", e);
+                log.error("ExamAttemptService_toExamResultResponseWithDetails_Error parsing JSON", e);
             }
         }
         

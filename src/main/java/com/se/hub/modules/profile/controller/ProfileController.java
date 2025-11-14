@@ -1,11 +1,14 @@
 package com.se.hub.modules.profile.controller;
 
+import com.se.hub.common.constant.BaseFieldConstant;
+import com.se.hub.common.constant.MessageCodeConstant;
 import com.se.hub.common.constant.MessageConstant;
+import com.se.hub.common.constant.PaginationConstants;
 import com.se.hub.common.controller.BaseController;
 import com.se.hub.common.dto.request.PagingRequest;
+import com.se.hub.common.dto.request.SortRequest;
 import com.se.hub.common.dto.response.GenericResponse;
 import com.se.hub.common.dto.response.PagingResponse;
-import org.springframework.http.ResponseEntity;
 import com.se.hub.modules.profile.constant.profile.ProfileControllerConstants;
 import com.se.hub.modules.profile.dto.request.CreateDefaultProfileRequest;
 import com.se.hub.modules.profile.dto.request.UpdateProfileRequest;
@@ -22,14 +25,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = ProfileControllerConstants.TAG_NAME, description = ProfileControllerConstants.TAG_DESCRIPTION)
 @RequestMapping("/profile")
@@ -78,10 +76,22 @@ public class ProfileController extends BaseController {
             @ApiResponse(responseCode = "400", description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
             @ApiResponse(responseCode = "500", description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
     })
-    public ResponseEntity<GenericResponse<PagingResponse<ProfileResponse>>> getAllProfiles(PagingRequest pagingRequest) {
-        log.debug("Getting all profiles with paging: page={}, size={}", pagingRequest.getPage(), pagingRequest.getPageSize());
-        PagingResponse<ProfileResponse> data = profileService.getAllProfiles(pagingRequest);
-        return success(data);
+    public ResponseEntity<GenericResponse<PagingResponse<ProfileResponse>>> getAllProfiles(
+            @RequestParam(value = PaginationConstants.PARAM_PAGE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE) int page,
+            @RequestParam(value = PaginationConstants.PARAM_SIZE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE) int size,
+            @RequestParam(required = false, defaultValue = BaseFieldConstant.CREATE_DATE) String field,
+            @RequestParam(required = false, defaultValue = PaginationConstants.DESC) String direction
+    ) {
+        log.debug("Getting all profiles with paging: page={}, size={}", page, size);
+        
+        PagingRequest request = PagingRequest.builder()
+                .page(page)
+                .pageSize(size)
+                .sortRequest(new SortRequest(direction, field))
+                .build();
+        
+        PagingResponse<ProfileResponse> data = profileService.getAllProfiles(request);
+        return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
     }
 
         @GetMapping("/my-profile")

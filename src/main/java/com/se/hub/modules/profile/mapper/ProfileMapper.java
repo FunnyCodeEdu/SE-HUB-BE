@@ -17,11 +17,17 @@ public interface ProfileMapper {
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "user.role", target = "userRole", qualifiedByName = "mapRoleToSet")
     @Mapping(source = "user.status", target = "userStatus")
+    @Mapping(target = "verified", expression = "java(profile.isVerified())")
+    @Mapping(target = "blocked", expression = "java(profile.isBlocked())")
+    @Mapping(target = "active", expression = "java(profile.isActive())")
     ProfileResponse toProfileResponse(Profile profile);
 
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "user.role", target = "userRole", qualifiedByName = "mapRoleToSet")
     @Mapping(source = "user.status", target = "userStatus")
+    @Mapping(target = "verified", expression = "java(profile.isVerified())")
+    @Mapping(target = "blocked", expression = "java(profile.isBlocked())")
+    @Mapping(target = "active", expression = "java(profile.isActive())")
     List<ProfileResponse> toListProfileResponse(List<Profile> profiles);
 
     void updateProfileFromRequest(@MappingTarget Profile profile, UpdateProfileRequest request);

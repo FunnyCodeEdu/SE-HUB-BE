@@ -10,6 +10,7 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Set;
 
 /**
@@ -26,11 +27,21 @@ public class ProfileResponse {
     String id;
     Instant createDate;
     Instant updatedDate;
+    String createdBy;
+    String updateBy;
     String fullName;
     String phoneNum;
     String email;
     String avtUrl;
     GenderEnums gender;
+    String bio;
+    String address;
+    String website;
+    String socialLinks;
+    LocalDate dateOfBirth;
+    String major;
+    String github;
+    String web;
 
     //profile status flags
     boolean verified;

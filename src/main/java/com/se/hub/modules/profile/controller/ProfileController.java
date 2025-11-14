@@ -4,6 +4,7 @@ import com.se.hub.common.constant.BaseFieldConstant;
 import com.se.hub.common.constant.MessageCodeConstant;
 import com.se.hub.common.constant.MessageConstant;
 import com.se.hub.common.constant.PaginationConstants;
+import com.se.hub.common.constant.ResponseCode;
 import com.se.hub.common.controller.BaseController;
 import com.se.hub.common.dto.request.PagingRequest;
 import com.se.hub.common.dto.request.SortRequest;
@@ -42,39 +43,39 @@ public class ProfileController extends BaseController {
     @PostMapping("/default")
     @Operation(summary = ProfileControllerConstants.CREATE_DEFAULT_OPERATION_SUMMARY, description = ProfileControllerConstants.CREATE_DEFAULT_OPERATION_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = ProfileControllerConstants.CREATE_DEFAULT_SUCCESS_RESPONSE),
-            @ApiResponse(responseCode = "400", description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
-            @ApiResponse(responseCode = "500", description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = ProfileControllerConstants.CREATE_DEFAULT_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
     })
-    public ResponseEntity<GenericResponse<String>> createDefaultProfile(@Valid @RequestBody CreateDefaultProfileRequest request) {
+    public ResponseEntity<GenericResponse<Void>> createDefaultProfile(@Valid @RequestBody CreateDefaultProfileRequest request) {
         log.info("Creating default profile for userId: {}", request.getUserId());
         profileService.createDefaultProfile(request);
         log.info("Default profile created successfully for userId: {}", request.getUserId());
-        return success(MessageConstant.CREATE_DATA_SUCCESS);
+        return success(null, MessageCodeConstant.M002_CREATED, MessageConstant.CREATED);
     }
 
     @PutMapping
     @Operation(summary = ProfileControllerConstants.UPDATE_OPERATION_SUMMARY, description = ProfileControllerConstants.UPDATE_OPERATION_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = ProfileControllerConstants.UPDATE_SUCCESS_RESPONSE),
-            @ApiResponse(responseCode = "400", description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
-            @ApiResponse(responseCode = "404", description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
-            @ApiResponse(responseCode = "500", description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = ProfileControllerConstants.UPDATE_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
     })
     public ResponseEntity<GenericResponse<ProfileResponse>> updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
         log.info("Updating profile");
         ProfileResponse data = profileService.updateProfile(request);
         log.debug("Profile updated successfully");
-        return success(data);
+        return success(data, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
     }
 
     @GetMapping
     @Operation(summary = ProfileControllerConstants.GET_ALL_OPERATION_SUMMARY, description = ProfileControllerConstants.GET_ALL_OPERATION_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = ProfileControllerConstants.GET_ALL_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = ProfileControllerConstants.GET_ALL_SUCCESS_RESPONSE),
             @ApiResponse(responseCode = "403", description = "Forbidden - Authentication required"),
-            @ApiResponse(responseCode = "400", description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
-            @ApiResponse(responseCode = "500", description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
     })
     public ResponseEntity<GenericResponse<PagingResponse<ProfileResponse>>> getAllProfiles(
             @RequestParam(value = PaginationConstants.PARAM_PAGE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE) int page,
@@ -94,46 +95,46 @@ public class ProfileController extends BaseController {
         return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
     }
 
-        @GetMapping("/my-profile")
+    @GetMapping("/my-profile")
     @Operation(summary = ProfileControllerConstants.GET_MY_PROFILE_OPERATION_SUMMARY, description = ProfileControllerConstants.GET_MY_PROFILE_OPERATION_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = ProfileControllerConstants.GET_MY_PROFILE_SUCCESS_RESPONSE),
-            @ApiResponse(responseCode = "404", description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
-            @ApiResponse(responseCode = "500", description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = ProfileControllerConstants.GET_MY_PROFILE_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
     })
     public ResponseEntity<GenericResponse<ProfileResponse>> getMyProfile() {
         log.debug("Getting current user's profile");
         ProfileResponse data = profileService.getMyProfile();
-        return success(data);
+        return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
     }
 
     @GetMapping("/{profileId}")
     @Operation(summary = ProfileControllerConstants.GET_BY_PROFILE_ID_OPERATION_SUMMARY, description = ProfileControllerConstants.GET_BY_PROFILE_ID_OPERATION_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = ProfileControllerConstants.GET_BY_PROFILE_ID_SUCCESS_RESPONSE),
-            @ApiResponse(responseCode = "404", description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
-            @ApiResponse(responseCode = "500", description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = ProfileControllerConstants.GET_BY_PROFILE_ID_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
     })
     public ResponseEntity<GenericResponse<ProfileResponse>> getDetailProfileByProfileId(
             @Parameter(description = ProfileControllerConstants.PROFILE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable @NotBlank(message = "Profile ID cannot be blank") String profileId) {
         log.debug("Getting profile by profileId: {}", profileId);
         ProfileResponse data = profileService.getDetailProfileByProfileId(profileId);
-        return success(data);
+        return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
     }
 
     @GetMapping("/user/{userId}")
     @Operation(summary = ProfileControllerConstants.GET_BY_USER_ID_OPERATION_SUMMARY, description = ProfileControllerConstants.GET_BY_USER_ID_OPERATION_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = ProfileControllerConstants.GET_BY_USER_ID_SUCCESS_RESPONSE),
-            @ApiResponse(responseCode = "404", description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
-            @ApiResponse(responseCode = "500", description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = ProfileControllerConstants.GET_BY_USER_ID_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
     })
     public ResponseEntity<GenericResponse<ProfileResponse>> getDetailProfileByUserId(
             @Parameter(description = ProfileControllerConstants.USER_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable @NotBlank(message = "User ID cannot be blank") String userId) {
         log.debug("Getting profile by userId: {}", userId);
         ProfileResponse data = profileService.getDetailProfileByUserId(userId);
-        return success(data);
+        return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
     }
 }

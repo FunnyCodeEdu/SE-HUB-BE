@@ -5,7 +5,6 @@ import com.se.hub.modules.exam.constant.question.QuestionErrorCodeConstants;
 import com.se.hub.modules.exam.enums.QuestionCategory;
 import com.se.hub.modules.exam.enums.QuestionDifficulty;
 import com.se.hub.modules.exam.enums.QuestionType;
-import com.se.hub.modules.lesson.enums.JLPTLevel;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.Valid;
@@ -49,9 +48,6 @@ public class UpdateQuestionRequest {
 
     @Enumerated(EnumType.STRING)
     QuestionCategory category;
-
-    @Enumerated(EnumType.STRING)
-    JLPTLevel jlptLevel;
 
     @Valid
     List<UpdateQuestionOptionRequest> options;

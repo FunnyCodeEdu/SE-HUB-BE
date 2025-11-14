@@ -13,7 +13,6 @@ public class QuestionMessageConstants {
     public static final String QUESTION_DIFFICULTY_INVALID_MESSAGE = "Question difficulty is invalid";
     public static final String QUESTION_SCORE_INVALID_MESSAGE = "Question score is invalid";
     public static final String QUESTION_CATEGORY_INVALID_MESSAGE = "Question category is invalid";
-    public static final String QUESTION_JLPT_LEVEL_INVALID_MESSAGE = "Question JLPT level is invalid";
 
     // API Response Messages
     public static final String API_QUESTION_CREATED_SUCCESS = "Question created successfully";
@@ -21,7 +20,6 @@ public class QuestionMessageConstants {
     public static final String API_QUESTION_RETRIEVED_BY_ID_SUCCESS = "Retrieved question by ID successfully";
     public static final String API_QUESTION_RETRIEVED_BY_CATEGORY_SUCCESS = "Retrieved questions by category successfully";
     public static final String API_QUESTION_RETRIEVED_BY_DIFFICULTY_SUCCESS = "Retrieved questions by difficulty successfully";
-    public static final String API_QUESTION_RETRIEVED_BY_JLPT_SUCCESS = "Retrieved questions by JLPT level successfully";
     public static final String API_QUESTION_RETRIEVED_BY_TYPE_SUCCESS = "Retrieved questions by type successfully";
     public static final String API_QUESTION_SEARCH_SUCCESS = "Search questions successfully";
     public static final String API_QUESTION_RANDOM_SUCCESS = "Retrieved random questions successfully";

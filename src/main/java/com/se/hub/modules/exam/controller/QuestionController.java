@@ -18,7 +18,6 @@ import com.se.hub.modules.exam.enums.QuestionCategory;
 import com.se.hub.modules.exam.enums.QuestionDifficulty;
 import com.se.hub.modules.exam.enums.QuestionType;
 import com.se.hub.modules.exam.service.QuestionService;
-import com.se.hub.modules.lesson.enums.JLPTLevel;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -147,29 +146,6 @@ public class QuestionController extends BaseController {
         return success(questionService.getQuestionsByDifficulty(difficulty, request), MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
     }
 
-    @GetMapping("/jlpt/{jlptLevel}")
-    @Operation(summary = "Get questions by JLPT level",
-            description = "Get questions filtered by JLPT level with pagination")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = ResponseCode.OK_200, description = QuestionMessageConstants.API_QUESTION_RETRIEVED_BY_JLPT_SUCCESS),
-            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = QuestionMessageConstants.API_BAD_REQUEST),
-            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = QuestionMessageConstants.API_INTERNAL_ERROR)
-    })
-    public ResponseEntity<GenericResponse<PagingResponse<QuestionResponse>>> getQuestionsByJlptLevel(
-            @PathVariable JLPTLevel jlptLevel,
-            @RequestParam(value = PaginationConstants.PARAM_PAGE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE) int page,
-            @RequestParam(value = PaginationConstants.PARAM_SIZE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE) int size,
-            @RequestParam(required = false, defaultValue = BaseFieldConstant.CREATE_DATE) String field,
-            @RequestParam(required = false, defaultValue = PaginationConstants.DESC) String direction
-            ) {
-        PagingRequest request = PagingRequest.builder()
-                .page(page)
-                .pageSize(size)
-                .sortRequest(new SortRequest(direction, field))
-                .build();
-        return success(questionService.getQuestionsByJlptLevel(jlptLevel, request), MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
-    }
-
     @GetMapping("/type/{questionType}")
     @Operation(summary = "Get questions by type",
             description = "Get questions filtered by question type with pagination")
@@ -227,11 +203,10 @@ public class QuestionController extends BaseController {
     public ResponseEntity<GenericResponse<List<QuestionResponse>>> getRandomQuestions(
             @RequestParam(required = false) QuestionCategory category,
             @RequestParam(required = false) QuestionDifficulty difficulty,
-            @RequestParam(required = false) JLPTLevel jlptLevel,
             @RequestParam(required = false) QuestionType questionType,
             @RequestParam(value = "limit", required = false, defaultValue = "10") int limit
             ) {
-        return success(questionService.getRandomQuestions(category, difficulty, jlptLevel, questionType, limit), 
+        return success(questionService.getRandomQuestions(category, difficulty, questionType, limit), 
                 MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
     }
 

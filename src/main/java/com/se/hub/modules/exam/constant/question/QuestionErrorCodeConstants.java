@@ -8,7 +8,6 @@ public class QuestionErrorCodeConstants {
     public static final String QUESTION_DIFFICULTY_INVALID = "QUESTION_DIFFICULTY_INVALID";
     public static final String QUESTION_SCORE_INVALID = "QUESTION_SCORE_INVALID";
     public static final String QUESTION_CATEGORY_INVALID = "QUESTION_CATEGORY_INVALID";
-    public static final String QUESTION_JLPT_LEVEL_INVALID = "QUESTION_JLPT_LEVEL_INVALID";
 
     private QuestionErrorCodeConstants() {}
 }

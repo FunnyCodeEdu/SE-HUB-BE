@@ -21,7 +21,6 @@ import com.se.hub.modules.exam.mapper.QuestionOptionMapper;
 import com.se.hub.modules.exam.repository.QuestionOptionRepository;
 import com.se.hub.modules.exam.repository.QuestionRepository;
 import com.se.hub.modules.exam.service.QuestionService;
-import com.se.hub.modules.lesson.enums.JLPTLevel;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -146,20 +145,6 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public PagingResponse<QuestionResponse> getQuestionsByJlptLevel(JLPTLevel jlptLevel, PagingRequest request) {
-        log.debug("QuestionService_getQuestionsByJlptLevel_Fetching questions by JLPT level: {} with page: {}, size: {}", 
-                jlptLevel, request.getPage(), request.getPageSize());
-        Pageable pageable = PageRequest.of(
-                request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
-                request.getPageSize(),
-                PagingUtil.createSort(request)
-        );
-
-        Page<Question> questionPages = questionRepository.findByJlptLevel(jlptLevel, pageable);
-        return buildPagingResponse(questionPages);
-    }
-
-    @Override
     public PagingResponse<QuestionResponse> getQuestionsByType(QuestionType questionType, PagingRequest request) {
         log.debug("QuestionService_getQuestionsByType_Fetching questions by type: {} with page: {}, size: {}", 
                 questionType, request.getPage(), request.getPageSize());
@@ -176,7 +161,6 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public PagingResponse<QuestionResponse> getQuestionsByCriteria(QuestionCategory category,
                                                                    QuestionDifficulty difficulty,
-                                                                   JLPTLevel jlptLevel,
                                                                    QuestionType questionType,
                                                                    PagingRequest request) {
         log.debug("QuestionService_getQuestionsByCriteria_Fetching questions by criteria with page: {}, size: {}", 
@@ -187,7 +171,7 @@ public class QuestionServiceImpl implements QuestionService {
                 PagingUtil.createSort(request)
         );
 
-        Page<Question> questionPages = questionRepository.findByCriteria(category, difficulty, jlptLevel, questionType, pageable);
+        Page<Question> questionPages = questionRepository.findByCriteria(category, difficulty, questionType, pageable);
         return buildPagingResponse(questionPages);
     }
 
@@ -222,13 +206,11 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public List<QuestionResponse> getRandomQuestions(QuestionCategory category,
                                                     QuestionDifficulty difficulty,
-                                                    JLPTLevel jlptLevel,
                                                     QuestionType questionType,
                                                     int limit) {
         List<Question> questions = questionRepository.findRandomQuestions(
                 category != null ? category.name() : null,
                 difficulty != null ? difficulty.name() : null,
-                jlptLevel != null ? jlptLevel.name() : null,
                 questionType != null ? questionType.name() : null,
                 limit
         );

@@ -148,7 +148,6 @@ public enum ErrorCode {
     QUESTION_DIFFICULTY_INVALID("QUESTION_1003", "Question difficulty is required", HttpStatus.BAD_REQUEST),
     QUESTION_SCORE_INVALID("QUESTION_1004", "Question score must be within allowed range", HttpStatus.BAD_REQUEST),
     QUESTION_CATEGORY_INVALID("QUESTION_1005", "Question category is required", HttpStatus.BAD_REQUEST),
-    QUESTION_JLPT_LEVEL_INVALID("QUESTION_1006", "Question JLPT level is required", HttpStatus.BAD_REQUEST),
 
     //====== QUESTION OPTION ======
     QUESTION_OPTION_NOT_FOUND("QOPTION_1000", "Question option not found", HttpStatus.NOT_FOUND),

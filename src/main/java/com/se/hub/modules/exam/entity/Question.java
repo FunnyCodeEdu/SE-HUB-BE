@@ -6,7 +6,6 @@ import com.se.hub.modules.exam.constant.question.QuestionErrorCodeConstants;
 import com.se.hub.modules.exam.enums.QuestionCategory;
 import com.se.hub.modules.exam.enums.QuestionDifficulty;
 import com.se.hub.modules.exam.enums.QuestionType;
-import com.se.hub.modules.lesson.enums.JLPTLevel;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -78,13 +77,6 @@ public class Question extends BaseEntity {
             nullable = false,
             columnDefinition = QuestionConstants.CATEGORY_DEFINITION)
     QuestionCategory category;
-
-    @NotNull(message = QuestionErrorCodeConstants.QUESTION_JLPT_LEVEL_INVALID)
-    @Enumerated(EnumType.STRING)
-    @Column(name = QuestionConstants.COL_JLPT_LEVEL,
-            nullable = false,
-            columnDefinition = QuestionConstants.JLPT_LEVEL_DEFINITION)
-    JLPTLevel jlptLevel;
 
     @OneToMany(mappedBy = "question",
             fetch = FetchType.LAZY,

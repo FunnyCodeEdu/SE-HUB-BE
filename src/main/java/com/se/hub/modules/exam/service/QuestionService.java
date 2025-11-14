@@ -8,7 +8,6 @@ import com.se.hub.modules.exam.dto.response.QuestionResponse;
 import com.se.hub.modules.exam.enums.QuestionCategory;
 import com.se.hub.modules.exam.enums.QuestionDifficulty;
 import com.se.hub.modules.exam.enums.QuestionType;
-import com.se.hub.modules.lesson.enums.JLPTLevel;
 
 import java.util.List;
 
@@ -44,12 +43,6 @@ public interface QuestionService {
     PagingResponse<QuestionResponse> getQuestionsByDifficulty(QuestionDifficulty difficulty, PagingRequest request);
 
     /**
-     * Get questions by JLPT level
-     * @author catsocute
-     */
-    PagingResponse<QuestionResponse> getQuestionsByJlptLevel(JLPTLevel jlptLevel, PagingRequest request);
-
-    /**
      * Get questions by question type
      * @author catsocute
      */
@@ -61,7 +54,6 @@ public interface QuestionService {
      */
     PagingResponse<QuestionResponse> getQuestionsByCriteria(QuestionCategory category,
                                                            QuestionDifficulty difficulty,
-                                                           JLPTLevel jlptLevel,
                                                            QuestionType questionType,
                                                            PagingRequest request);
 
@@ -83,7 +75,6 @@ public interface QuestionService {
      */
     List<QuestionResponse> getRandomQuestions(QuestionCategory category,
                                              QuestionDifficulty difficulty,
-                                             JLPTLevel jlptLevel,
                                              QuestionType questionType,
                                              int limit);
 

@@ -11,14 +11,12 @@ public class QuestionConstants {
     public static final String COL_DIFFICULTY = "difficulty";
     public static final String COL_SCORE = "score";
     public static final String COL_CATEGORY = "category";
-    public static final String COL_JLPT_LEVEL = "jlptLevel";
 
     //===== COLUMN DEFINITIONS ======
     public static final String CONTENT_DEFINITION = "TEXT";
     public static final String QUESTION_TYPE_DEFINITION = "VARCHAR(30)";
     public static final String DIFFICULTY_DEFINITION = "VARCHAR(30)";
     public static final String CATEGORY_DEFINITION = "VARCHAR(30)";
-    public static final String JLPT_LEVEL_DEFINITION = "VARCHAR(10)";
 
     //===== VALIDATION LIMITS ======
     public static final int CONTENT_MIN_LENGTH = 1;

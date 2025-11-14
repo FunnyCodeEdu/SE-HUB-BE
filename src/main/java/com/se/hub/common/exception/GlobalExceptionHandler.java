@@ -11,6 +11,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.Objects;
 
@@ -68,6 +69,20 @@ public class GlobalExceptionHandler extends RuntimeException{
                         .build())
                 .build();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(genericResponse);
+    }
+
+    //handling File Upload Size Exceeded
+    @ExceptionHandler(value = MaxUploadSizeExceededException.class)
+    public ResponseEntity<GenericResponse<Object>> handlingMaxUploadSizeExceededException(MaxUploadSizeExceededException exception) {
+        log.error("GlobalExceptionHandler_handlingMaxUploadSizeExceededException_Maximum upload size exceeded: {}", exception.getMessage());
+        GenericResponse<Object> genericResponse = GenericResponse.builder()
+                .isSuccess(ApiConstant.FAILURE)
+                .message(MessageDTO.builder()
+                        .messageCode(ErrorCode.FILE_UPLOAD_SIZE_EXCEEDED.getCode())
+                        .messageDetail(ErrorCode.FILE_UPLOAD_SIZE_EXCEEDED.getMessage())
+                        .build())
+                .build();
+        return ResponseEntity.status(ErrorCode.FILE_UPLOAD_SIZE_EXCEEDED.getHttpStatusCode()).body(genericResponse);
     }
 
     //handling Denied Access

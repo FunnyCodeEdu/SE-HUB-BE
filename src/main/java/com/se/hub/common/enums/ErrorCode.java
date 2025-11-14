@@ -17,6 +17,9 @@ public enum ErrorCode {
     DATA_EXISTED("ERROR_1002", "Data already exists", HttpStatus.CONFLICT),
     DATA_INVALID("ERROR_1003", "Data invalid", HttpStatus.BAD_REQUEST),
 
+    // ==== FILE UPLOAD ERRORS ====
+    FILE_UPLOAD_SIZE_EXCEEDED("FILE_1000", "File size exceeds maximum allowed size of 10MB", HttpStatus.PAYLOAD_TOO_LARGE),
+
     // ==== AUTHENTICATION ERRORS ====
     AUTH_UNAUTHENTICATED("AUTH_1000", "Unauthenticated", HttpStatus.UNAUTHORIZED),
     AUTH_MISSING_TOKEN("AUTH_1001", "Client missing token", HttpStatus.BAD_REQUEST),

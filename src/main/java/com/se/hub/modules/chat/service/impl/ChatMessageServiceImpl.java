@@ -168,24 +168,30 @@ public class ChatMessageServiceImpl implements ChatMessageService {
             .flatMap(Set::stream)
             .collect(Collectors.toSet());
         
-        // Broadcast to room (room-based)
-        String roomName = "conversation:" + conversationId;
+        // Broadcast to room via /chat namespace (room-based)
+        String roomName = "chat_room:" + conversationId;
         
         try {
-            socketIOServer.getRoomOperations(roomName).getClients().forEach(client -> {
-                if (sessionIds.contains(client.getSessionId().toString())) {
-                    // Map message to response for each client (Profile fetch is handled in mapper)
-                    ChatMessageResponse response = chatMessageMapper.toChatMessageResponse(message);
-                    Object clientUserId = client.get(USER_ID_KEY);
-                    if (clientUserId != null) {
-                        response.setIsMe(clientUserId.toString().equals(senderUserId));
+            // Get /chat namespace
+            com.corundumstudio.socketio.SocketIONamespace chatNamespace = socketIOServer.getNamespace("/chat");
+            if (chatNamespace != null) {
+                chatNamespace.getRoomOperations(roomName).getClients().forEach(client -> {
+                    if (sessionIds.contains(client.getSessionId().toString())) {
+                        // Map message to response for each client (Profile fetch is handled in mapper)
+                        ChatMessageResponse response = chatMessageMapper.toChatMessageResponse(message);
+                        Object clientUserId = client.get(USER_ID_KEY);
+                        if (clientUserId != null) {
+                            response.setIsMe(clientUserId.toString().equals(senderUserId));
+                        }
+                        client.sendEvent(SocketEvent.CHAT_MESSAGE, response);
                     }
-                    client.sendEvent(SocketEvent.CHAT_MESSAGE, response);
-                }
-            });
-            log.debug("ChatMessageServiceImpl_broadcastToRoom_Broadcasted message to room: {}", roomName);
+                });
+                log.debug("ChatMessageServiceImpl_broadcastToRoom_Broadcasted message to /chat namespace room: {}", roomName);
+            } else {
+                log.warn("ChatMessageServiceImpl_broadcastToRoom_/chat namespace not found");
+            }
         } catch (Exception e) {
-            log.error("ChatMessageServiceImpl_broadcastToRoom_Error broadcasting to room: {}", roomName, e);
+            log.error("ChatMessageServiceImpl_broadcastToRoom_Error broadcasting to /chat namespace room: {}", roomName, e);
             // Don't throw exception - message is already saved
         }
     }

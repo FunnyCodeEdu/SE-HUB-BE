@@ -66,13 +66,6 @@ public class UpdateProfileRequest {
             message = ProfileErrorCodeConstants.ADDRESS_SIZE_INVALID)
     String address;
 
-    @Schema(description = "Website URL", example = "https://example.com")
-    @Size(max = ProfileConstants.URL_MAX_LENGTH,
-            message = ProfileErrorCodeConstants.WEBSITE_SIZE_INVALID)
-    @Pattern(regexp = ProfileConstants.URL_PATTERN,
-            message = ProfileErrorCodeConstants.WEBSITE_PATTERN_INVALID)
-    String website;
-
     @Schema(description = "Date of birth", example = "1990-01-01")
     LocalDate dateOfBirth;
 
@@ -80,20 +73,6 @@ public class UpdateProfileRequest {
     @Size(max = ProfileConstants.MAJOR_MAX,
             message = ProfileErrorCodeConstants.MAJOR_SIZE_INVALID)
     String major;
-
-    @Schema(description = "GitHub profile URL", example = "https://github.com/username")
-    @Size(max = ProfileConstants.URL_MAX_LENGTH,
-            message = ProfileErrorCodeConstants.GITHUB_SIZE_INVALID)
-    @Pattern(regexp = ProfileConstants.URL_PATTERN,
-            message = ProfileErrorCodeConstants.GITHUB_PATTERN_INVALID)
-    String github;
-
-    @Schema(description = "Personal website URL", example = "https://mywebsite.com")
-    @Size(max = ProfileConstants.URL_MAX_LENGTH,
-            message = ProfileErrorCodeConstants.WEB_SIZE_INVALID)
-    @Pattern(regexp = ProfileConstants.URL_PATTERN,
-            message = ProfileErrorCodeConstants.WEB_PATTERN_INVALID)
-    String web;
 
     @Schema(description = "Verified status", example = "true")
     Boolean verified;

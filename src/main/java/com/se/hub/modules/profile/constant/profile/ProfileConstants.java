@@ -17,12 +17,9 @@ public class ProfileConstants {
     public static final String USER_LEVEL_ID = "userLevelId";
     public static final String BIO = "bio";
     public static final String ADDRESS = "address";
-    public static final String WEBSITE = "website";
     public static final String DATE_OF_BIRTH = "dateOfBirth";
     public static final String MAJOR = "major";
     public static final String USERNAME = "username";
-    public static final String GITHUB = "github";
-    public static final String WEB = "web";
 
     //===== COLUMN DEFINITIONS ======
     public static final String FULL_NAME_DEFINITION = "VARCHAR(50)";

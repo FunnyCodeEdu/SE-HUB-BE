@@ -36,11 +36,8 @@ public class ProfileResponse {
     GenderEnums gender;
     String bio;
     String address;
-    String website;
     LocalDate dateOfBirth;
     String major;
-    String github;
-    String web;
 
     //profile status flags
     boolean verified;

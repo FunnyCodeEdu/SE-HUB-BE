@@ -87,13 +87,6 @@ public class Profile extends BaseEntity {
             message = ProfileErrorCodeConstants.ADDRESS_SIZE_INVALID)
     String address;
 
-    @Column(name = ProfileConstants.WEBSITE)
-    @Size(max = ProfileConstants.URL_MAX_LENGTH,
-            message = ProfileErrorCodeConstants.WEBSITE_SIZE_INVALID)
-    @Pattern(regexp = ProfileConstants.URL_PATTERN,
-            message = ProfileErrorCodeConstants.WEBSITE_PATTERN_INVALID)
-    String website;
-
     @Column(name = ProfileConstants.DATE_OF_BIRTH)
     java.time.LocalDate dateOfBirth;
 
@@ -106,20 +99,6 @@ public class Profile extends BaseEntity {
     @Size(max = ProfileConstants.USERNAME_MAX,
             message = ProfileErrorCodeConstants.USERNAME_SIZE_INVALID)
     String username;
-
-    @Column(name = ProfileConstants.GITHUB)
-    @Size(max = ProfileConstants.URL_MAX_LENGTH,
-            message = ProfileErrorCodeConstants.GITHUB_SIZE_INVALID)
-    @Pattern(regexp = ProfileConstants.URL_PATTERN,
-            message = ProfileErrorCodeConstants.GITHUB_PATTERN_INVALID)
-    String github;
-
-    @Column(name = ProfileConstants.WEB)
-    @Size(max = ProfileConstants.URL_MAX_LENGTH,
-            message = ProfileErrorCodeConstants.WEB_SIZE_INVALID)
-    @Pattern(regexp = ProfileConstants.URL_PATTERN,
-            message = ProfileErrorCodeConstants.WEB_PATTERN_INVALID)
-    String web;
 
     @Column(name = ProfileConstants.IS_VERIFIED)
     boolean isVerified;

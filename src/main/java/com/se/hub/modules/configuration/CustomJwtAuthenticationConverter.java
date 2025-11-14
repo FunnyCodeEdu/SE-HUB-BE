@@ -28,51 +28,30 @@ public class CustomJwtAuthenticationConverter implements Converter<Jwt, JwtAuthe
 
     private final UserSyncService userSyncService;
 
+    private static final String ROLE_PREFIX = "ROLE_";
+
     @Override
     public JwtAuthenticationToken convert(Jwt jwt) {
-        // Get or create user from JWT (this loads user with role)
         User user = userSyncService.getOrCreateUser(jwt);
-        
-        // Get authorities from database (role only)
         Collection<GrantedAuthority> authorities = getAuthoritiesFromDatabase(user);
-        
-        // Ensure at least one authority exists (default to ROLE_USER if none)
+
         if (authorities.isEmpty()) {
-            log.warn("User {} has no authorities, assigning default ROLE_USER", user.getId());
             authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
         }
-        
-        log.info("User {} authenticated with authorities: {}", user.getId(), 
-                authorities.stream()
-                        .map(GrantedAuthority::getAuthority)
-                        .collect(Collectors.joining(", ")));
-        
-        // Create JwtAuthenticationToken with userId as name (for getCurrentUserId to work)
-        JwtAuthenticationToken token = new JwtAuthenticationToken(jwt, authorities);
-        // Note: The name will be set from JWT's "sub" claim by default
-        // We need to ensure userId is accessible via getName() for AuthUtils compatibility
-        return token;
+        return new JwtAuthenticationToken(jwt, authorities);
     }
 
-    /**
-     * Get authorities from database user (role only)
-     */
     private Collection<GrantedAuthority> getAuthoritiesFromDatabase(User user) {
         Set<GrantedAuthority> authorities = new HashSet<>();
-        
-        // Add role as authority (format: ROLE_XXX)
         if (user.getRole() != null && user.getRole().getName() != null) {
             String roleName = user.getRole().getName();
-            // Ensure role name starts with ROLE_ prefix for Spring Security
-            if (!roleName.startsWith("ROLE_")) {
-                roleName = "ROLE_" + roleName;
+            if (!roleName.startsWith(ROLE_PREFIX)) {
+                roleName = ROLE_PREFIX + roleName;
             }
             authorities.add(new SimpleGrantedAuthority(roleName));
-            log.debug("Added role authority: {} for user {}", roleName, user.getId());
         } else {
             log.warn("User {} has no role assigned", user.getId());
         }
-        
         return authorities;
     }
 }

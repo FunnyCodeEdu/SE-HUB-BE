@@ -62,7 +62,7 @@ public class ProfileProgressServiceImpl implements ProfileProgressService {
     @Transactional
     public void updateDocsUploaded() {
         String userId =  getCurrentUserId();
-        userStatsRepository.updateUserStats(userId, 15, 0, 0, 1, 0, 0);
+        userStatsRepository.updateUserStats(userId, 100, 0, 0, 1, 0, 0);
         updateAchievements(userId);
     }
 

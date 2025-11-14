@@ -194,10 +194,21 @@ Client Disconnect
 
 ## 🔑 Key Components
 
+### **Redis Configuration**
+- **Config Class**: `common/config/RedisConfig.java`
+  - Configures `StringRedisTemplate` bean for string-based operations
+  - Configures `RedisTemplate<String, Object>` bean for generic operations
+  - Uses `StringRedisSerializer` for all keys and values
+  - Transaction support disabled for better performance
+- **Application Properties**: Redis connection config in `application.properties`
+  - Host, port, password, timeout
+  - Lettuce connection pool settings
+
 ### **Session Management (Redis)**
 - **Session Storage**: `user:session:{userId}` → Set<sessionId>
 - **Heartbeat**: `user:session:heartbeat:{userId}:{sessionId}` → timestamp (TTL 5 phút)
 - **TTL**: 24 giờ cho session, 5 phút cho heartbeat
+- **Service**: `SessionServiceImpl` uses `StringRedisTemplate` for Redis operations
 
 ### **Room Management (Socket.IO)**
 - **Room Name**: `conversation:{conversationId}`

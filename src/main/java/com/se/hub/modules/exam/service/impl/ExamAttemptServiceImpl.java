@@ -56,7 +56,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
     ExamRepository examRepository;
     ProfileRepository profileRepository;
     ExamAttemptMapper examAttemptMapper;
-    ObjectMapper objectMapper = new ObjectMapper();
+    ObjectMapper objectMapper;
 
     /**
      * Helper method to build PagingResponse from Page<ExamAttempt>

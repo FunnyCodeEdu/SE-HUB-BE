@@ -1,135 +1,67 @@
 package com.se.hub.common.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Redis Configuration
+ * Configures RedisTemplate and StringRedisTemplate for direct Redis operations
+ * Uses Lettuce as Redis client (default in Spring Boot 2.0+)
+ * Connection pooling is configured via application.properties (spring.data.redis.lettuce.pool.*)
  * 
- * Centralized Redis configuration for all modules
- * Provides RedisTemplate, StringRedisTemplate, and RedisMessageListenerContainer
- * 
- * Best Practices:
- * - Centralized configuration for better maintainability
- * - Optimized connection pooling via application.properties
- * - Consistent serialization strategy (String for keys, JSON for values)
- * - Dedicated thread pool for Redis message listeners
- * - Transaction support enabled
+ * Virtual Thread Best Practice:
+ * - Redis operations are blocking I/O
+ * - Virtual threads automatically handle blocking operations efficiently
+ * - Lettuce supports both blocking and reactive modes
+ * - Connection pooling (commons-pool2) improves performance under high load
  */
 @Configuration
 public class RedisConfig {
 
-    @Value("${spring.data.redis.listener.task-executor.core-pool-size:5}")
-    private int listenerCorePoolSize;
-
-    @Value("${spring.data.redis.listener.task-executor.max-pool-size:10}")
-    private int listenerMaxPoolSize;
-
-    @Value("${spring.data.redis.listener.task-executor.queue-capacity:100}")
-    private int listenerQueueCapacity;
-
-    @Value("${spring.data.redis.listener.subscription-executor.core-pool-size:5}")
-    private int subscriptionCorePoolSize;
-
-    @Value("${spring.data.redis.listener.subscription-executor.max-pool-size:10}")
-    private int subscriptionMaxPoolSize;
-
     /**
-     * StringRedisTemplate for string-based operations
-     * Used by Notification and Chat modules for simple key-value operations
+     * StringRedisTemplate Bean
+     * Used for string-based Redis operations (session management, simple key-value)
+     * Uses LettuceConnectionFactory with connection pooling (configured in application.properties)
+     * Virtual Thread Best Practice:
+     * - Redis operations are blocking I/O
+     * - Virtual threads automatically handle blocking operations efficiently
+     * - Connection pool (max-active=20, max-idle=10, min-idle=2) handles concurrent requests
      */
     @Bean
-    public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory connectionFactory) {
-        StringRedisTemplate template = new StringRedisTemplate();
-        template.setConnectionFactory(connectionFactory);
-        template.setEnableTransactionSupport(true);
+    public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
+        StringRedisTemplate template = new StringRedisTemplate(redisConnectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new StringRedisSerializer());
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(new StringRedisSerializer());
+        template.setEnableTransactionSupport(false); // Disable transaction for better performance
         return template;
     }
 
     /**
-     * RedisTemplate for object-based operations
-     * Uses JSON serialization for complex objects
+     * RedisTemplate Bean (generic)
+     * Used for complex object serialization if needed
+     * Uses LettuceConnectionFactory with connection pooling
+     * Virtual Thread Best Practice:
+     * - Redis operations are blocking I/O
+     * - Virtual threads automatically handle blocking operations efficiently
+     * - Connection pool manages connections efficiently across virtual threads
      */
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-        template.setEnableTransactionSupport(true);
-        
-        // Key serialization: String
+        template.setConnectionFactory(redisConnectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new StringRedisSerializer());
         template.setHashKeySerializer(new StringRedisSerializer());
-        
-        // Value serialization: JSON
-        GenericJackson2JsonRedisSerializer jsonSerializer = new GenericJackson2JsonRedisSerializer();
-        template.setValueSerializer(jsonSerializer);
-        template.setHashValueSerializer(jsonSerializer);
-        
-        // Default serializer for operations without explicit type
-        template.setDefaultSerializer(jsonSerializer);
-        
+        template.setHashValueSerializer(new StringRedisSerializer());
+        template.setEnableTransactionSupport(false); // Disable transaction for better performance
         template.afterPropertiesSet();
         return template;
-    }
-
-    /**
-     * RedisMessageListenerContainer for Pub/Sub operations
-     * Configured with dedicated thread pools for optimal performance
-     */
-    @Bean
-    public RedisMessageListenerContainer redisMessageListenerContainer(
-            RedisConnectionFactory connectionFactory) {
-        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-        container.setConnectionFactory(connectionFactory);
-        
-        // Task executor for message processing
-        ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
-        taskExecutor.setCorePoolSize(listenerCorePoolSize);
-        taskExecutor.setMaxPoolSize(listenerMaxPoolSize);
-        taskExecutor.setQueueCapacity(listenerQueueCapacity);
-        taskExecutor.setThreadNamePrefix("redis-listener-");
-        taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        taskExecutor.setWaitForTasksToCompleteOnShutdown(true);
-        taskExecutor.setAwaitTerminationSeconds(30);
-        taskExecutor.initialize();
-        container.setTaskExecutor(taskExecutor);
-        
-        // Subscription executor for channel subscription management
-        ThreadPoolTaskExecutor subscriptionExecutor = new ThreadPoolTaskExecutor();
-        subscriptionExecutor.setCorePoolSize(subscriptionCorePoolSize);
-        subscriptionExecutor.setMaxPoolSize(subscriptionMaxPoolSize);
-        subscriptionExecutor.setQueueCapacity(listenerQueueCapacity);
-        subscriptionExecutor.setThreadNamePrefix("redis-subscription-");
-        subscriptionExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        subscriptionExecutor.setWaitForTasksToCompleteOnShutdown(true);
-        subscriptionExecutor.setAwaitTerminationSeconds(30);
-        subscriptionExecutor.initialize();
-        container.setSubscriptionExecutor(subscriptionExecutor);
-        
-        // Max waiting time for subscription registration (milliseconds)
-        container.setMaxSubscriptionRegistrationWaitingTime(5000);
-        
-        return container;
-    }
-
-    /**
-     * ObjectMapper for JSON serialization/deserialization
-     * Used by Notification module for converting objects to/from JSON
-     */
-    @Bean
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper();
     }
 }
 

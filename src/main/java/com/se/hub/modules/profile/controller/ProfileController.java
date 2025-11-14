@@ -84,7 +84,7 @@ public class ProfileController extends BaseController {
         return success(data);
     }
 
-    @GetMapping("/my-profile")
+        @GetMapping("/my-profile")
     @Operation(summary = ProfileControllerConstants.GET_MY_PROFILE_OPERATION_SUMMARY, description = ProfileControllerConstants.GET_MY_PROFILE_OPERATION_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = ProfileControllerConstants.GET_MY_PROFILE_SUCCESS_RESPONSE),

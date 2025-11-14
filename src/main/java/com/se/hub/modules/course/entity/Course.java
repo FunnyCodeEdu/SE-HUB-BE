@@ -80,7 +80,7 @@ public class Course extends BaseEntity {
             columnDefinition = CourseConstants.IMG_URL_DEFINITION)
     String imgUrl;
 
-    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = CourseConstants.TABLE_COURSE, fetch = FetchType.LAZY)
     Set<Lesson> lessons;
 
     @ManyToMany(fetch = FetchType.LAZY)

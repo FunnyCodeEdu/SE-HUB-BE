@@ -70,8 +70,8 @@ public class BlogController extends BaseController {
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<PagingResponse<BlogResponse>>> getBlogs(
-            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(value = PaginationConstants.PARAM_PAGE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE) int page,
+            @RequestParam(value = PaginationConstants.PARAM_SIZE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE) int size,
             @RequestParam(required = false, defaultValue = BaseFieldConstant.CREATE_DATE) String field,
             @RequestParam(required = false, defaultValue = PaginationConstants.DESC) String direction
     ) {
@@ -107,8 +107,8 @@ public class BlogController extends BaseController {
     })
     public ResponseEntity<GenericResponse<PagingResponse<BlogResponse>>> getBlogsByAuthorId(
             @PathVariable String authorId,
-            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(value = PaginationConstants.PARAM_PAGE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE) int page,
+            @RequestParam(value = PaginationConstants.PARAM_SIZE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE) int size,
             @RequestParam(required = false, defaultValue = BaseFieldConstant.CREATE_DATE) String field,
             @RequestParam(required = false, defaultValue = PaginationConstants.DESC) String direction
     ) {
@@ -161,8 +161,8 @@ public class BlogController extends BaseController {
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<PagingResponse<BlogResponse>>> getPopularBlogs(
-            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(value = PaginationConstants.PARAM_PAGE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE) int page,
+            @RequestParam(value = PaginationConstants.PARAM_SIZE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE) int size,
             @RequestParam(required = false, defaultValue = BaseFieldConstant.CREATE_DATE) String field,
             @RequestParam(required = false, defaultValue = PaginationConstants.DESC) String direction
     ) {
@@ -186,8 +186,8 @@ public class BlogController extends BaseController {
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<PagingResponse<BlogResponse>>> getLikedBlogs(
-            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(value = PaginationConstants.PARAM_PAGE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE) int page,
+            @RequestParam(value = PaginationConstants.PARAM_SIZE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE) int size,
             @RequestParam(required = false, defaultValue = BaseFieldConstant.CREATE_DATE) String field,
             @RequestParam(required = false, defaultValue = PaginationConstants.DESC) String direction
     ) {
@@ -211,8 +211,8 @@ public class BlogController extends BaseController {
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<PagingResponse<BlogResponse>>> getLatestBlogs(
-            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(value = PaginationConstants.PARAM_PAGE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE) int page,
+            @RequestParam(value = PaginationConstants.PARAM_SIZE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE) int size,
             @RequestParam(required = false, defaultValue = BaseFieldConstant.CREATE_DATE) String field,
             @RequestParam(required = false, defaultValue = PaginationConstants.DESC) String direction
     ) {

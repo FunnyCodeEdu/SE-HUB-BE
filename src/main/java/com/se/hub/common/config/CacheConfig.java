@@ -12,6 +12,8 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Cache Configuration
@@ -23,27 +25,52 @@ import java.time.Duration;
  * - Use Redis for distributed caching in microservices
  * - Configure appropriate TTL (Time To Live) for each cache
  * - Use JSON serialization for better compatibility
+ * - Cache-specific TTL configurations for different data types
+ * - Transaction support enabled for cache consistency
  */
 @Configuration
 @EnableCaching
 public class CacheConfig {
 
+    // Default TTL: 1 hour - suitable for most cache entries
     private static final Duration DEFAULT_TTL = Duration.ofHours(1);
+    
+    // Cache-specific TTL configurations
+    // Individual blog entries: 2 hours (less frequently updated)
+    private static final Duration BLOG_TTL = Duration.ofHours(2);
+    
+    // Blog lists (blogs, popular, latest): 30 minutes (more frequently updated)
+    private static final Duration BLOG_LIST_TTL = Duration.ofMinutes(30);
 
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
-        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+        // Default cache configuration
+        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(DEFAULT_TTL)
                 .serializeKeysWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new GenericJackson2JsonRedisSerializer()))
-                .disableCachingNullValues();
+                .disableCachingNullValues()
+                .prefixCacheNameWith("cache:"); // Prefix to avoid key conflicts
+
+        // Cache-specific configurations
+        Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
+        
+        // Blog cache: longer TTL for individual blog entries
+        cacheConfigurations.put("blog", defaultConfig.entryTtl(BLOG_TTL));
+        
+        // Blog list caches: shorter TTL for frequently updated lists
+        cacheConfigurations.put("blogs", defaultConfig.entryTtl(BLOG_LIST_TTL));
+        cacheConfigurations.put("blogsByAuthor", defaultConfig.entryTtl(BLOG_LIST_TTL));
+        cacheConfigurations.put("popularBlogs", defaultConfig.entryTtl(BLOG_LIST_TTL));
+        cacheConfigurations.put("likedBlogs", defaultConfig.entryTtl(BLOG_LIST_TTL));
+        cacheConfigurations.put("latestBlogs", defaultConfig.entryTtl(BLOG_LIST_TTL));
 
         return RedisCacheManager.builder(redisConnectionFactory)
-                .cacheDefaults(config)
+                .cacheDefaults(defaultConfig)
+                .withInitialCacheConfigurations(cacheConfigurations)
                 .transactionAware()
                 .build();
     }
 }
-

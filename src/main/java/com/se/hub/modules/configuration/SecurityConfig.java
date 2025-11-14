@@ -160,7 +160,9 @@ public class SecurityConfig {
             "https://sehub.ftes.vn",
             "https://apisehub.ftes.vn",  // For Swagger UI on production
             "http://localhost:*",  // For local development (all ports)
-            "http://127.0.0.1:*"   // For local development (all ports)
+            "https://localhost:*", // For local development with HTTPS (all ports)
+            "http://127.0.0.1:*",  // For local development (all ports)
+            "https://127.0.0.1:*"  // For local development with HTTPS (all ports)
         ));
         corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
         corsConfiguration.setAllowedHeaders(Arrays.asList("*"));

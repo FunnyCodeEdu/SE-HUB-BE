@@ -376,9 +376,9 @@ public class BlogServiceImpl implements BlogService {
                     .blog(blog)
                     .user(profile)
                     .isLike(true)
-                    .createdBy(userId)
-                    .updateBy(userId)
                     .build();
+            reaction.setCreatedBy(userId);
+            reaction.setUpdateBy(userId);
             blogReactionRepository.save(reaction);
             blogRepository.incrementReactionCount(blogId, 1);
             log.debug("BlogService_likeBlog_Created new like reaction for blog id {}", blogId);
@@ -440,9 +440,9 @@ public class BlogServiceImpl implements BlogService {
                     .blog(blog)
                     .user(profile)
                     .isLike(false)
-                    .createdBy(userId)
-                    .updateBy(userId)
                     .build();
+            reaction.setCreatedBy(userId);
+            reaction.setUpdateBy(userId);
             blogReactionRepository.save(reaction);
             blogRepository.incrementReactionCount(blogId, -1);
             log.debug("BlogService_dislikeBlog_Created new dislike reaction for blog id {}", blogId);

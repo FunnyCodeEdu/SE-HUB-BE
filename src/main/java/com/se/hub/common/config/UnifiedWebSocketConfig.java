@@ -46,6 +46,11 @@ public class UnifiedWebSocketConfig {
         config.setPort(websocketPort);
         config.setAllowCustomRequests(true);
         
+        // Set context path for Socket.IO - allows access via /socket.io path
+        // This enables access via same domain (e.g., https://apisehub.ftes.vn/socket.io)
+        // instead of requiring separate port (e.g., wss://apisehub.ftes.vn:9092)
+        config.setContext("/socket.io");
+        
         // Connection timeout settings
         config.setUpgradeTimeout(10000);
         config.setPingTimeout(60000);
@@ -69,8 +74,10 @@ public class UnifiedWebSocketConfig {
         config.setRandomSession(true);
         
         SocketIOServer server = new SocketIOServer(config);
-        log.info("UnifiedWebSocketConfig_unifiedSocketIOServer_Unified WebSocket Gateway configured on {}:{} with bossThreads={}, workerThreads={}", 
+        log.info("UnifiedWebSocketConfig_unifiedSocketIOServer_Unified WebSocket Gateway configured on {}:{} with context=/socket.io, bossThreads={}, workerThreads={}", 
                 websocketHost, websocketPort, bossThreads, actualWorkerThreads);
+        log.info("UnifiedWebSocketConfig_unifiedSocketIOServer_WebSocket accessible via: http://{}:{}/socket.io", 
+                websocketHost, websocketPort);
         return server;
     }
 

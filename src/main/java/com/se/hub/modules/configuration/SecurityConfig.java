@@ -80,6 +80,8 @@ public class SecurityConfig {
     };
 
     private static final String[] WHITELIST_ENDPOINTS = {
+            // WebSocket/Socket.IO endpoints - allow all methods for WebSocket upgrade
+            "/socket.io/**",
             "/api/v3/api-docs",
             "/api/v3/api-docs/**",
             "/api/swagger-ui.html",

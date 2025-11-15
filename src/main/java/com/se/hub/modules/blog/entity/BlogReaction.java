@@ -48,7 +48,6 @@ public class BlogReaction extends BaseEntity {
 
     @Column(name = BlogConstants.COL_IS_LIKE,
             nullable = false)
-    @Builder.Default
     Boolean isLike = true;
 }
 

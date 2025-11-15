@@ -1,7 +1,7 @@
 [
   {
-    "achievementType": "SHOSHAKUSHA_BEGINNER",
-    "description": "Hoàn thành những bước đầu tiên trong việc học tiếng Nhật",
+    "achievementType": "FRESH_DEV",
+    "description": "Bắt đầu hành trình học CNTT trên SE Forum",
     "minExamsDone": 0,
     "minPoints": 100,
     "minCmtCount": 0,
@@ -10,8 +10,8 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "GAKUSHUUSHA_LEARNER",
-    "description": "Kiên trì học và đạt được một lượng điểm đáng kể",
+    "achievementType": "ACTIVE_LEARNER",
+    "description": "Học đều đặn và đạt điểm tích lũy đáng kể",
     "minExamsDone": 0,
     "minPoints": 500,
     "minCmtCount": 0,
@@ -20,8 +20,8 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "JOUKYUUSHA_ADVANCED_LEARNER",
-    "description": "Trình độ cao, tích cực học tập mỗi ngày",
+    "achievementType": "ADVANCED_CONTRIBUTOR",
+    "description": "Thành viên tích cực, học tập mỗi ngày",
     "minExamsDone": 0,
     "minPoints": 1000,
     "minCmtCount": 0,
@@ -30,8 +30,8 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "TATSUJIN_MASTER",
-    "description": "Bậc thầy, học viên xuất sắc vượt trội",
+    "achievementType": "ELITE_ENGINEER",
+    "description": "Thành viên xuất sắc với lượng điểm vượt trội",
     "minExamsDone": 0,
     "minPoints": 5000,
     "minCmtCount": 0,
@@ -40,7 +40,7 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "TEST_EXPLORER",
+    "achievementType": "FIRST_CHALLENGER",
     "description": "Hoàn thành bài kiểm tra đầu tiên",
     "minExamsDone": 1,
     "minPoints": 0,
@@ -50,7 +50,7 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "DILIGENT_STUDENT",
+    "achievementType": "HARDWORKING_CODER",
     "description": "Hoàn thành 5 bài kiểm tra",
     "minExamsDone": 5,
     "minPoints": 0,
@@ -60,7 +60,7 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "EXAM_SAMURAI",
+    "achievementType": "EXAM_GRINDER",
     "description": "Hoàn thành 20 bài kiểm tra",
     "minExamsDone": 20,
     "minPoints": 0,
@@ -70,7 +70,7 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "ULTIMATE_SENSEI",
+    "achievementType": "TEST_GRANDMASTER",
     "description": "Thầy giáo rồi, không còn gì để thi nữa!",
     "minExamsDone": 50,
     "minPoints": 0,
@@ -80,7 +80,7 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "CHATTERBOX",
+    "achievementType": "DISCUSSION_STARTER",
     "description": "Viết 5 bình luận đầu tiên",
     "minExamsDone": 0,
     "minPoints": 0,
@@ -90,7 +90,7 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "HELPFUL_MEMBER",
+    "achievementType": "HELPFUL_RESPONDER",
     "description": "Đưa ra những bình luận hữu ích cho cộng đồng",
     "minExamsDone": 0,
     "minPoints": 0,
@@ -100,8 +100,8 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "COMMUNITY_BUILDER",
-    "description": "Người đóng góp lớn trong cộng đồng học tiếng Nhật",
+    "achievementType": "CORE_CONTRIBUTOR",
+    "description": "Người đóng góp lớn trong cộng đồng SE Forum",
     "minExamsDone": 0,
     "minPoints": 0,
     "minCmtCount": 50,
@@ -110,7 +110,7 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "LEGENDARY_COMMENTER",
+    "achievementType": "LEGENDARY_RESPONDER",
     "description": "Huyền thoại trong việc chia sẻ kiến thức",
     "minExamsDone": 0,
     "minPoints": 0,
@@ -120,7 +120,7 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "RESOURCE_CONTRIBUTOR",
+    "achievementType": "RESOURCE_UPLOADER",
     "description": "Upload tài liệu đầu tiên",
     "minExamsDone": 0,
     "minPoints": 0,
@@ -130,8 +130,8 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "KNOWLEDGE_SHARER",
-    "description": "Đóng góp 5 tài liệu học tiếng Nhật",
+    "achievementType": "DOC_CONTRIBUTOR",
+    "description": "Đóng góp 5 tài liệu cho cộng đồng",
     "minExamsDone": 0,
     "minPoints": 0,
     "minCmtCount": 0,
@@ -140,8 +140,8 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "CONTENT_CREATOR",
-    "description": "Chia sẻ 15 tài liệu có giá trị",
+    "achievementType": "PRO_RESOURCE_CREATOR",
+    "description": "Chia sẻ 15 tài liệu chất lượng",
     "minExamsDone": 0,
     "minPoints": 0,
     "minCmtCount": 0,
@@ -150,7 +150,7 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "LIBRARY_SENSEI",
+    "achievementType": "ARCHIVE_MASTER",
     "description": "Người dẫn đầu trong việc cung cấp tài liệu",
     "minExamsDone": 0,
     "minPoints": 0,
@@ -160,7 +160,7 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "BLOGGER",
+    "achievementType": "FIRST_BLOGGER",
     "description": "Viết bài blog đầu tiên",
     "minExamsDone": 0,
     "minPoints": 0,
@@ -170,7 +170,7 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "STORY_TELLER",
+    "achievementType": "INSIGHT_WRITER",
     "description": "Chia sẻ 5 bài viết hữu ích",
     "minExamsDone": 0,
     "minPoints": 0,
@@ -180,8 +180,8 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "SENSEI_BLOGGER",
-    "description": "Blogger dạy tiếng Nhật xuất sắc",
+    "achievementType": "TECH_BLOGGER",
+    "description": "Blogger chuyên môn xuất sắc",
     "minExamsDone": 0,
     "minPoints": 0,
     "minCmtCount": 0,
@@ -200,7 +200,7 @@
     "minBlogShared": 0
   },
   {
-    "achievementType": "SUPPORTER",
+    "achievementType": "SHARE_SUPPORTER",
     "description": "Chia sẻ 3 bài viết hữu ích cho cộng đồng",
     "minExamsDone": 0,
     "minPoints": 0,
@@ -210,8 +210,8 @@
     "minBlogShared": 3
   },
   {
-    "achievementType": "PROMOTER",
-    "description": "Tích cực lan tỏa kiến thức học tiếng Nhật",
+    "achievementType": "COMMUNITY_PROMOTER",
+    "description": "Tích cực lan tỏa kiến thức trong cộng đồng",
     "minExamsDone": 0,
     "minPoints": 0,
     "minCmtCount": 0,
@@ -220,8 +220,8 @@
     "minBlogShared": 10
   },
   {
-    "achievementType": "AMBASSADOR",
-    "description": "Đại sứ cộng đồng học tiếng Nhật",
+    "achievementType": "COMMUNITY_AMBASSADOR",
+    "description": "Đại sứ cộng đồng SE Forum",
     "minExamsDone": 0,
     "minPoints": 0,
     "minCmtCount": 0,
@@ -230,8 +230,8 @@
     "minBlogShared": 25
   },
   {
-    "achievementType": "EVANGELIST",
-    "description": "Người truyền cảm hứng và tri thức",
+    "achievementType": "COMMUNITY_EVANGELIST",
+    "description": "Người truyền cảm hứng và tri thức cho cộng đồng",
     "minExamsDone": 0,
     "minPoints": 0,
     "minCmtCount": 0,
@@ -241,7 +241,7 @@
   },
   {
     "achievementType": "WELL_ROUNDED_LEARNER",
-    "description": "Người học toàn diện và tích cực",
+    "description": "Thành viên toàn diện và tích cực",
     "minExamsDone": 50,
     "minPoints": 1000,
     "minCmtCount": 0,
@@ -251,7 +251,7 @@
   },
   {
     "achievementType": "COMMUNITY_HERO",
-    "description": "Người đóng góp vĩ đại cho cộng đồng",
+    "description": "Người đóng góp vĩ đại cho cộng đồng SE Forum",
     "minExamsDone": 0,
     "minPoints": 500,
     "minCmtCount": 50,

@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -34,14 +35,25 @@ public class AchievementServiceImpl implements AchievementService {
     AchievementRepository achievementRepository;
     AchievementMapper achievementMapper;
 
+    /**
+     * Create a new achievement.
+     * Virtual Thread Best Practice: Uses @Transactional with synchronous blocking I/O operations.
+     * Virtual threads yield during each database operation, enabling high concurrency.
+     */
     @Override
+    @Transactional
     public AchievementResponse createAchievement(CreateAchievementRequest request) {
+        log.debug("AchievementServiceImpl_createAchievement_Creating new achievement: {}", request.getAchievementType());
+        
         //check for achievement existed
         if(achievementRepository.existsByAchievementType(request.getAchievementType())) {
+            log.error("AchievementServiceImpl_createAchievement_Achievement type already exists: {}", request.getAchievementType());
             throw new AppException(ErrorCode.ACHIEVEMENT_TYPE_EXISTED);
         }
         Achievement achievement = achievementMapper.toAchievement(request);
-        return achievementMapper.toAchievementResponse(achievementRepository.save(achievement));
+        AchievementResponse response = achievementMapper.toAchievementResponse(achievementRepository.save(achievement));
+        log.debug("AchievementServiceImpl_createAchievement_Achievement created successfully with id: {}", response.getId());
+        return response;
     }
 
     @Override

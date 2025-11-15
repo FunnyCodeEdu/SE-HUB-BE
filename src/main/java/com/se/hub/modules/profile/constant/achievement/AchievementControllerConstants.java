@@ -2,6 +2,9 @@ package com.se.hub.modules.profile.constant.achievement;
 
 public class AchievementControllerConstants {
     
+    // ===== CREATE OPERATION =====
+    public static final String CREATE_SUCCESS_RESPONSE = "Achievement created successfully";
+    
     // ===== GET ALL OPERATION =====
     public static final String GET_ALL_SUCCESS_RESPONSE = "Achievements retrieved successfully";
     

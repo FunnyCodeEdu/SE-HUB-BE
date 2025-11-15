@@ -11,6 +11,7 @@ import com.se.hub.common.dto.request.SortRequest;
 import com.se.hub.common.dto.response.GenericResponse;
 import com.se.hub.common.dto.response.PagingResponse;
 import com.se.hub.modules.profile.constant.achievement.AchievementControllerConstants;
+import com.se.hub.modules.profile.dto.request.CreateAchievementRequest;
 import com.se.hub.modules.profile.dto.request.UpdateAchievementRequest;
 import com.se.hub.modules.profile.dto.response.AchievementResponse;
 import com.se.hub.modules.profile.enums.AchievementEnums;
@@ -24,9 +25,11 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,8 +42,23 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Validated
 public class AchievementController extends BaseController {
     AchievementService achievementService;
+
+    @PostMapping
+    @Operation(summary = "Create new achievement",
+            description = "Create a new achievement in the system")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = AchievementControllerConstants.CREATE_SUCCESS_RESPONSE,
+                    useReturnTypeSchema = true),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = AchievementControllerConstants.BAD_REQUEST_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = AchievementControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<AchievementResponse>> createAchievement(@Valid @RequestBody CreateAchievementRequest request) {
+        AchievementResponse achievementResponse = achievementService.createAchievement(request);
+        return success(achievementResponse, MessageCodeConstant.M002_CREATED, MessageConstant.CREATED);
+    }
 
     @GetMapping
     @Operation(summary = "Get all achievements",

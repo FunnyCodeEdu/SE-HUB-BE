@@ -13,7 +13,9 @@ import com.se.hub.common.dto.response.PagingResponse;
 import com.se.hub.modules.profile.constant.profile.ProfileControllerConstants;
 import com.se.hub.modules.profile.dto.request.CreateDefaultProfileRequest;
 import com.se.hub.modules.profile.dto.request.UpdateProfileRequest;
+import com.se.hub.modules.profile.dto.response.FollowCountResponse;
 import com.se.hub.modules.profile.dto.response.ProfileResponse;
+import com.se.hub.modules.profile.service.api.FollowService;
 import com.se.hub.modules.profile.service.api.ProfileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -39,6 +41,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class ProfileController extends BaseController {
     ProfileService profileService;
+    FollowService followService;
 
     @PostMapping("/default")
     @Operation(summary = ProfileControllerConstants.CREATE_DEFAULT_OPERATION_SUMMARY, description = ProfileControllerConstants.CREATE_DEFAULT_OPERATION_DESCRIPTION)
@@ -135,6 +138,148 @@ public class ProfileController extends BaseController {
             @PathVariable @NotBlank(message = "User ID cannot be blank") String userId) {
         log.debug("Getting profile by userId: {}", userId);
         ProfileResponse data = profileService.getDetailProfileByUserId(userId);
+        return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
+    }
+
+    @PostMapping("/follow/{userId}")
+    @Operation(summary = ProfileControllerConstants.FOLLOW_USER_OPERATION_SUMMARY, description = ProfileControllerConstants.FOLLOW_USER_OPERATION_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = ProfileControllerConstants.FOLLOW_USER_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<String>> followUser(
+            @Parameter(description = "ID của user muốn follow", required = true)
+            @PathVariable @NotBlank(message = "User ID cannot be blank") String userId) {
+        log.info("Following user: {}", userId);
+        followService.followUser(userId);
+        log.info("Successfully followed user: {}", userId);
+        return success("Follow thành công", MessageCodeConstant.M002_CREATED, MessageConstant.CREATED);
+    }
+
+    @DeleteMapping("/follow/{userId}")
+    @Operation(summary = ProfileControllerConstants.UNFOLLOW_USER_OPERATION_SUMMARY, description = ProfileControllerConstants.UNFOLLOW_USER_OPERATION_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = ProfileControllerConstants.UNFOLLOW_USER_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<String>> unfollowUser(
+            @Parameter(description = "ID của user muốn unfollow", required = true)
+            @PathVariable @NotBlank(message = "User ID cannot be blank") String userId) {
+        log.info("Unfollowing user: {}", userId);
+        followService.unfollowUser(userId);
+        log.info("Successfully unfollowed user: {}", userId);
+        return success("Unfollow thành công", MessageCodeConstant.M004_DELETED, MessageConstant.DELETED);
+    }
+
+    @GetMapping("/follow/{userId}/check")
+    @Operation(summary = ProfileControllerConstants.CHECK_FOLLOW_OPERATION_SUMMARY, description = ProfileControllerConstants.CHECK_FOLLOW_OPERATION_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = ProfileControllerConstants.CHECK_FOLLOW_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<Boolean>> checkFollow(
+            @Parameter(description = "ID của user cần kiểm tra", required = true)
+            @PathVariable @NotBlank(message = "User ID cannot be blank") String userId) {
+        log.debug("Checking if following user: {}", userId);
+        boolean isFollowing = followService.isFollowing(userId);
+        return success(isFollowing, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
+    }
+
+    @GetMapping("/following")
+    @Operation(summary = ProfileControllerConstants.GET_FOLLOWING_OPERATION_SUMMARY, description = ProfileControllerConstants.GET_FOLLOWING_OPERATION_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = ProfileControllerConstants.GET_FOLLOWING_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<PagingResponse<ProfileResponse>>> getFollowing(
+            @RequestParam(value = PaginationConstants.PARAM_PAGE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE) int page,
+            @RequestParam(value = PaginationConstants.PARAM_SIZE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE) int size) {
+        log.debug("Getting following list: page={}, size={}", page, size);
+        PagingResponse<ProfileResponse> data = followService.getFollowing(page, size);
+        return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
+    }
+
+    @GetMapping("/followers")
+    @Operation(summary = ProfileControllerConstants.GET_FOLLOWERS_OPERATION_SUMMARY, description = ProfileControllerConstants.GET_FOLLOWERS_OPERATION_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = ProfileControllerConstants.GET_FOLLOWERS_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<PagingResponse<ProfileResponse>>> getFollowers(
+            @RequestParam(value = PaginationConstants.PARAM_PAGE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE) int page,
+            @RequestParam(value = PaginationConstants.PARAM_SIZE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE) int size) {
+        log.debug("Getting followers list: page={}, size={}", page, size);
+        PagingResponse<ProfileResponse> data = followService.getFollowers(page, size);
+        return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
+    }
+
+    @GetMapping("/user/{userId}/following")
+    @Operation(summary = "Get following list by user ID", description = "Get list of users that a specific user is following")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = ProfileControllerConstants.GET_FOLLOWING_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<PagingResponse<ProfileResponse>>> getFollowingByUserId(
+            @Parameter(description = ProfileControllerConstants.USER_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable @NotBlank(message = "User ID cannot be blank") String userId,
+            @RequestParam(value = PaginationConstants.PARAM_PAGE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE) int page,
+            @RequestParam(value = PaginationConstants.PARAM_SIZE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE) int size) {
+        log.debug("Getting following list for user {}: page={}, size={}", userId, page, size);
+        PagingResponse<ProfileResponse> data = followService.getFollowingByUserId(userId, page, size);
+        return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
+    }
+
+    @GetMapping("/user/{userId}/followers")
+    @Operation(summary = "Get followers list by user ID", description = "Get list of users that follow a specific user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = ProfileControllerConstants.GET_FOLLOWERS_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<PagingResponse<ProfileResponse>>> getFollowersByUserId(
+            @Parameter(description = ProfileControllerConstants.USER_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable @NotBlank(message = "User ID cannot be blank") String userId,
+            @RequestParam(value = PaginationConstants.PARAM_PAGE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE) int page,
+            @RequestParam(value = PaginationConstants.PARAM_SIZE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE) int size) {
+        log.debug("Getting followers list for user {}: page={}, size={}", userId, page, size);
+        PagingResponse<ProfileResponse> data = followService.getFollowersByUserId(userId, page, size);
+        return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
+    }
+
+    @GetMapping("/follow/count")
+    @Operation(summary = "Get follow count for current user", description = "Get number of followers and following for current user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = "Follow count retrieved successfully"),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<FollowCountResponse>> getFollowCount() {
+        log.debug("Getting follow count for current user");
+        FollowCountResponse data = followService.getFollowCount();
+        return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
+    }
+
+    @GetMapping("/user/{userId}/follow/count")
+    @Operation(summary = "Get follow count by user ID", description = "Get number of followers and following for a specific user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = "Follow count retrieved successfully"),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<FollowCountResponse>> getFollowCountByUserId(
+            @Parameter(description = ProfileControllerConstants.USER_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable @NotBlank(message = "User ID cannot be blank") String userId) {
+        log.debug("Getting follow count for user: {}", userId);
+        FollowCountResponse data = followService.getFollowCountByUserId(userId);
         return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
     }
 }

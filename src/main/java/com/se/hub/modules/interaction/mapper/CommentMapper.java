@@ -16,7 +16,7 @@ public interface CommentMapper {
     @Mapping(target = "replies", ignore = true)
     Comment toComment(CreateCommentRequest request);
     
-    @Mapping(target = "authorId", source = "author.id")
+    @Mapping(target = "authorId", source = "author.user.id")
     @Mapping(target = "authorName", source = "author.fullName")
     @Mapping(target = "authorAvatar", source = "author.avtUrl")
     @Mapping(target = "parentCommentId", source = "parentComment.id")

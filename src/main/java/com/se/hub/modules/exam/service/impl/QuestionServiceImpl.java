@@ -31,6 +31,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -238,8 +239,11 @@ public class QuestionServiceImpl implements QuestionService {
 
         // Update question options if provided
         if (request.getOptions() != null && !request.getOptions().isEmpty()) {
-            // Delete existing options
-            question.getOptions().clear();
+            // Delete existing options from database
+            questionOptionRepository.deleteByQuestionId(questionId);
+            
+            // Clear the collection in memory (create new ArrayList to avoid immutable collection issue)
+            question.setOptions(new ArrayList<>());
             
             // Add new options
             List<QuestionOption> options = updateOptions(userId, question, request.getOptions());

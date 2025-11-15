@@ -108,7 +108,7 @@ public class CommentController extends BaseController {
 
     @GetMapping("/target/{targetType}/{targetId}")
     @Operation(summary = "Get comments by target",
-            description = "Get list of all comments (including replies) for a specific target with pagination")
+            description = "Get list of parent comments (excluding replies) for a specific target with pagination. Replies are included in the replies field of each parent comment.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = ResponseCode.OK_200, description = InteractionMessageConstants.API_COMMENT_RETRIEVED_BY_TARGET_SUCCESS),
             @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = InteractionMessageConstants.API_BAD_REQUEST),

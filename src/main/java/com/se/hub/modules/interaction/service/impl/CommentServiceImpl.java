@@ -124,6 +124,8 @@ public class CommentServiceImpl implements CommentService {
 
     /**
      * Get comments by target type and target ID.
+     * Returns only parent comments (excluding replies) to avoid duplication.
+     * Replies are included in the replies field of each parent comment.
      * Virtual Thread Best Practice: Uses synchronous blocking I/O operations.
      * Virtual threads yield during database queries, enabling high concurrency.
      */
@@ -146,7 +148,8 @@ public class CommentServiceImpl implements CommentService {
         );
 
         // Blocking I/O - virtual thread yields here
-        Page<Comment> comments = commentRepository.findByTargetTypeAndTargetId(type, targetId, pageable);
+        // Only get parent comments to avoid duplication with replies
+        Page<Comment> comments = commentRepository.findByTargetTypeAndTargetIdAndParentCommentIsNull(type, targetId, pageable);
         return buildPagingResponseWithReactions(comments);
     }
 

@@ -1,6 +1,5 @@
 package com.se.hub.modules.blog.service.impl;
 
-import com.se.hub.common.constant.GlobalVariable;
 import com.se.hub.common.dto.request.PagingRequest;
 import com.se.hub.common.dto.response.PagingResponse;
 import com.se.hub.common.enums.ErrorCode;
@@ -26,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -117,11 +115,7 @@ public class BlogServiceImpl implements BlogService {
     public PagingResponse<BlogResponse> getBlogsByAuthorId(String authorId, PagingRequest request) {
         log.debug("BlogService_getBlogsByAuthorId_Fetching blogs for author: {} with page: {}, size: {}", 
                 authorId, request.getPage(), request.getPageSize());
-        Pageable pageable = PageRequest.of(
-                request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
-                request.getPageSize(),
-                PagingUtil.createSort(request)
-        );
+        Pageable pageable = PagingUtil.createPageable(request);
 
         Page<Blog> blogs = blogRepository.findAllByAuthor_Id(authorId, pageable);
         return buildPagingResponse(blogs);
@@ -133,11 +127,7 @@ public class BlogServiceImpl implements BlogService {
     public PagingResponse<BlogResponse> getBlogs(PagingRequest request) {
         log.debug("BlogService_getBlogs_Fetching blogs with page: {}, size: {}", 
                 request.getPage(), request.getPageSize());
-        Pageable pageable = PageRequest.of(
-                request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
-                request.getPageSize(),
-                PagingUtil.createSort(request)
-        );
+        Pageable pageable = PagingUtil.createPageable(request);
 
         Page<Blog> blogs = blogRepository.findAll(pageable);
         return buildPagingResponse(blogs);
@@ -202,11 +192,7 @@ public class BlogServiceImpl implements BlogService {
         log.debug("BlogService_getMostPopularBlogs_Fetching most popular blogs with page: {}, size: {}", 
                 request.getPage(), request.getPageSize());
 
-        Pageable pageable = PageRequest.of(
-                request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
-                request.getPageSize(),
-                PagingUtil.createSort(request)
-        );
+        Pageable pageable = PagingUtil.createPageable(request);
 
         Page<Blog> blogs = blogRepository.findMostPopularBlogs(pageable);
         log.debug("BlogService_getMostPopularBlogs_Found {} popular blogs", blogs.getTotalElements());
@@ -220,11 +206,7 @@ public class BlogServiceImpl implements BlogService {
         log.debug("BlogService_getMostLikedBlogs_Fetching most liked blogs with page: {}, size: {}", 
                 request.getPage(), request.getPageSize());
 
-        Pageable pageable = PageRequest.of(
-                request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
-                request.getPageSize(),
-                PagingUtil.createSort(request)
-        );
+        Pageable pageable = PagingUtil.createPageable(request);
 
         Page<Blog> blogs = blogRepository.findMostLikedBlogs(pageable);
         log.debug("BlogService_getMostLikedBlogs_Found {} liked blogs", blogs.getTotalElements());
@@ -238,11 +220,7 @@ public class BlogServiceImpl implements BlogService {
         log.debug("BlogService_getLatestBlogs_Fetching latest blogs with page: {}, size: {}", 
                 request.getPage(), request.getPageSize());
 
-        Pageable pageable = PageRequest.of(
-                request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
-                request.getPageSize(),
-                PagingUtil.createSort(request)
-        );
+        Pageable pageable = PagingUtil.createPageable(request);
 
         Page<Blog> blogs = blogRepository.findLatestBlogs(pageable);
         log.debug("BlogService_getLatestBlogs_Found {} latest blogs", blogs.getTotalElements());

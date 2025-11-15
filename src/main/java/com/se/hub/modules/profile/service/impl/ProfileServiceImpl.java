@@ -57,15 +57,66 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     @Transactional
     public void createDefaultProfile(CreateDefaultProfileRequest request) {
+        log.info("Creating default profile for userId: {}", request.getUserId());
+        
         // Load user from database
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.error("User not found with userId: {}", request.getUserId());
+                    return new AppException(ErrorCode.DATA_NOT_FOUND);
+                });
         
-        //validation
-        validateUserForProfileCreation(user);
-
-        // Create default profile with user stats
-        createDefaultProfileIfNotExists(user);
+        // Validation: Check if user is current user
+        String currentUserId = AuthUtils.getCurrentUserId();
+        String userId = user.getId();
+        
+        if (userId == null || !userId.equals(currentUserId)) {
+            log.warn("User {} attempted to create profile for different user {}", currentUserId, userId);
+            throw new AppException(ErrorCode.DATA_NOT_FOUND);
+        }
+        
+        // Check if profile already exists
+        if (profileRepository.existsByUserId(userId)) {
+            log.warn("Profile already exists for userId: {}", userId);
+            throw new AppException(ErrorCode.DATA_EXISTED);
+        }
+        
+        // Get default user level (COPPER)
+        UserLevel userLevel = userLevelRepository.findByLevel(LevelEnums.COPPER)
+                .orElseThrow(() -> {
+                    log.error("Cannot find default user level: {}", LevelEnums.COPPER);
+                    return new AppException(ErrorCode.DATA_NOT_FOUND);
+                });
+        
+        // Build default profile
+        Profile profile = Profile.builder()
+                .avtUrl(ProfileConstants.DEFAULT_AVT_URL)
+                .fullName(null) // Null is allowed by validation, empty string is not
+                .email(null) // Email will be set later by user if needed
+                .gender(GenderEnums.OTHER)
+                .isVerified(false)
+                .isBlocked(false)
+                .isActive(true)
+                .level(userLevel)
+                .user(user)
+                .build();
+        
+        // Normalize empty strings to null before saving to avoid validation errors
+        normalizeProfileStrings(profile);
+        
+        // Save profile first to generate ID
+        profile = profileRepository.save(profile);
+        
+        // Create user stats with saved profile
+        CreateUserStatsRequest createUserStatsRequest = CreateUserStatsRequest.builder()
+                .profile(profile)
+                .build();
+        UserStats userStats = userStatsService.createUserStats(createUserStatsRequest);
+        
+        // Set user stats to profile
+        profile.setUserStats(userStats);
+        
+        log.info("Default profile created successfully for userId: {}", userId);
     }
 
     @Override
@@ -73,20 +124,36 @@ public class ProfileServiceImpl implements ProfileService {
     public ProfileResponse updateProfile(UpdateProfileRequest request) {
         log.info("Updating profile for current user");
         String currentUserId = AuthUtils.getCurrentUserId();
-        Profile profile = getProfileByCurrentUser();
         
-        // Authorization check: user can only update their own profile
-        if (!profile.getUser().getId().equals(currentUserId)) {
-            log.warn("User {} attempted to update profile {} which belongs to user {}", 
-                    currentUserId, profile.getId(), profile.getUser().getId());
-            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
-        }
+        // Get or create profile for current user
+        Profile profile = profileRepository.findByUserId(currentUserId)
+                .orElseGet(() -> {
+                    log.info("Profile not found for current user {}. Creating new profile before update.", currentUserId);
+                    User user = userRepository.findById(currentUserId)
+                            .orElseThrow(() -> new AppException(ErrorCode.DATA_NOT_FOUND));
+                    return createDefaultProfileIfNotExists(user);
+                });
         
+        // Update profile from request
         profileMapper.updateProfileFromRequest(profile, request);
+        
         // Normalize empty strings to null before saving to avoid validation errors
         normalizeProfileStrings(profile);
+        
+        // Final validation check before save
+        if (profile.getFullName() != null) {
+            String trimmed = profile.getFullName().trim();
+            if (trimmed.length() < ProfileConstants.FULL_NAME_MIN) {
+                log.warn("FullName has length < {} in updateProfile, setting to null. Value: '{}' (length: {})", 
+                        ProfileConstants.FULL_NAME_MIN, profile.getFullName(), trimmed.length());
+                profile.setFullName(null);
+            } else {
+                profile.setFullName(trimmed);
+            }
+        }
+        
         Profile savedProfile = profileRepository.save(profile);
-        log.debug("Profile updated successfully");
+        log.debug("Profile updated successfully for userId: {}", currentUserId);
         return profileMapper.toProfileResponse(savedProfile);
     }
 
@@ -366,19 +433,6 @@ public class ProfileServiceImpl implements ProfileService {
         return null;
     }
 
-    private void validateUserForProfileCreation(User user) {
-        String currentUserId = AuthUtils.getCurrentUserId();
-        String userId = user.getId();
-
-        if (userId == null || !userId.equals(currentUserId)) {
-            throw new AppException(ErrorCode.DATA_NOT_FOUND);
-        }
-
-        if (profileRepository.existsByUserId(userId)) {
-            throw new AppException(ErrorCode.DATA_EXISTED);
-        }
-    }
-
     private UserLevel getDefaultUserLevel() {
         return userLevelRepository.findByLevel(LevelEnums.COPPER)
                 .orElseThrow(() -> {
@@ -477,12 +531,4 @@ public class ProfileServiceImpl implements ProfileService {
         return userStatsService.createUserStats(createUserStatsRequest);
     }
 
-    private Profile getProfileByCurrentUser() {
-        String currentUserId = AuthUtils.getCurrentUserId();
-        return profileRepository.findByUserId(currentUserId)
-                .orElseThrow(() -> {
-                    log.error("Cannot find profile by userId: {}", currentUserId);
-                    return new AppException(ErrorCode.DATA_NOT_FOUND);
-                });
-    }
 }

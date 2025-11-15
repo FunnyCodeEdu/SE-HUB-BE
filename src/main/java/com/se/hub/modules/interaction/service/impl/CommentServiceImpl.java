@@ -10,8 +10,10 @@ import com.se.hub.modules.auth.utils.AuthUtils;
 import com.se.hub.modules.interaction.dto.request.CreateCommentRequest;
 import com.se.hub.modules.interaction.dto.request.UpdateCommentRequest;
 import com.se.hub.modules.interaction.dto.response.CommentResponse;
+import com.se.hub.modules.interaction.dto.response.ReactionInfo;
 import com.se.hub.modules.interaction.entity.Comment;
 import com.se.hub.modules.interaction.enums.TargetType;
+import com.se.hub.modules.interaction.service.api.ReactionService;
 import com.se.hub.modules.interaction.exception.InteractionErrorCode;
 import com.se.hub.modules.interaction.mapper.CommentMapper;
 import com.se.hub.modules.interaction.repository.CommentRepository;
@@ -27,6 +29,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Comment Service Implementation
@@ -46,6 +51,7 @@ public class CommentServiceImpl implements CommentService {
     CommentRepository commentRepository;
     CommentMapper commentMapper;
     ProfileRepository profileRepository;
+    ReactionService reactionService;
 
     /**
      * Create a new comment.
@@ -97,11 +103,13 @@ public class CommentServiceImpl implements CommentService {
     public CommentResponse getById(String commentId) {
         log.debug("CommentServiceImpl_getById_Fetching comment with id: {}", commentId);
         // Blocking I/O - virtual thread yields here
-        return commentMapper.toCommentResponse(commentRepository.findById(commentId)
+        Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> {
                     log.error("CommentServiceImpl_getById_Comment id {} not found", commentId);
                     return InteractionErrorCode.COMMENT_NOT_FOUND.toException();
-                }));
+                });
+        
+        return toCommentResponseWithReaction(comment);
     }
 
     /**
@@ -129,17 +137,7 @@ public class CommentServiceImpl implements CommentService {
 
         // Blocking I/O - virtual thread yields here
         Page<Comment> comments = commentRepository.findByTargetTypeAndTargetId(type, targetId, pageable);
-
-        return PagingResponse.<CommentResponse>builder()
-                .currentPage(comments.getNumber())
-                .totalPages(comments.getTotalPages())
-                .pageSize(comments.getSize())
-                .totalElement(comments.getTotalElements())
-                .data(comments.getContent().stream()
-                        .map(commentMapper::toCommentResponse)
-                        .toList()
-                )
-                .build();
+        return buildPagingResponseWithReactions(comments);
     }
 
     /**
@@ -167,17 +165,7 @@ public class CommentServiceImpl implements CommentService {
 
         // Blocking I/O - virtual thread yields here
         Page<Comment> comments = commentRepository.findByTargetTypeAndTargetIdAndParentCommentIsNull(type, targetId, pageable);
-
-        return PagingResponse.<CommentResponse>builder()
-                .currentPage(comments.getNumber())
-                .totalPages(comments.getTotalPages())
-                .pageSize(comments.getSize())
-                .totalElement(comments.getTotalElements())
-                .data(comments.getContent().stream()
-                        .map(commentMapper::toCommentResponse)
-                        .toList()
-                )
-                .build();
+        return buildPagingResponseWithReactions(comments);
     }
 
     /**
@@ -197,17 +185,7 @@ public class CommentServiceImpl implements CommentService {
 
         // Blocking I/O - virtual thread yields here
         Page<Comment> comments = commentRepository.findByParentCommentId(parentCommentId, pageable);
-
-        return PagingResponse.<CommentResponse>builder()
-                .currentPage(comments.getNumber())
-                .totalPages(comments.getTotalPages())
-                .pageSize(comments.getSize())
-                .totalElement(comments.getTotalElements())
-                .data(comments.getContent().stream()
-                        .map(commentMapper::toCommentResponse)
-                        .toList()
-                )
-                .build();
+        return buildPagingResponseWithReactions(comments);
     }
 
     /**
@@ -227,17 +205,7 @@ public class CommentServiceImpl implements CommentService {
 
         // Blocking I/O - virtual thread yields here
         Page<Comment> comments = commentRepository.findByAuthorId(authorId, pageable);
-
-        return PagingResponse.<CommentResponse>builder()
-                .currentPage(comments.getNumber())
-                .totalPages(comments.getTotalPages())
-                .pageSize(comments.getSize())
-                .totalElement(comments.getTotalElements())
-                .data(comments.getContent().stream()
-                        .map(commentMapper::toCommentResponse)
-                        .toList()
-                )
-                .build();
+        return buildPagingResponseWithReactions(comments);
     }
 
     /**
@@ -257,17 +225,7 @@ public class CommentServiceImpl implements CommentService {
 
         // Blocking I/O - virtual thread yields here
         Page<Comment> comments = commentRepository.findAll(pageable);
-
-        return PagingResponse.<CommentResponse>builder()
-                .currentPage(comments.getNumber())
-                .totalPages(comments.getTotalPages())
-                .pageSize(comments.getSize())
-                .totalElement(comments.getTotalElements())
-                .data(comments.getContent().stream()
-                        .map(commentMapper::toCommentResponse)
-                        .toList()
-                )
-                .build();
+        return buildPagingResponseWithReactions(comments);
     }
 
     /**
@@ -313,6 +271,65 @@ public class CommentServiceImpl implements CommentService {
         
         commentRepository.deleteById(commentId);
         log.debug("CommentServiceImpl_deleteCommentById_Comment deleted successfully with id: {}", commentId);
+    }
+
+    /* ========================  HELPER METHODS  ======================== */
+
+    /**
+     * Build PagingResponse from Page<Comment> with reactions populated.
+     * Virtual Thread Best Practice: Uses synchronous blocking I/O operations.
+     * Virtual threads yield during database queries, enabling high concurrency.
+     */
+    private PagingResponse<CommentResponse> buildPagingResponseWithReactions(Page<Comment> comments) {
+        List<Comment> commentList = comments.getContent();
+        String currentUserId = AuthUtils.getCurrentUserId();
+        
+        // Batch check reactions for all comments
+        List<String> commentIds = commentList.stream().map(Comment::getId).toList();
+        Map<String, ReactionInfo> reactionsMap = reactionService
+                .getReactionsForTargets(TargetType.COMMENT, commentIds, currentUserId);
+
+        return PagingResponse.<CommentResponse>builder()
+                .currentPage(comments.getNumber())
+                .totalPages(comments.getTotalPages())
+                .pageSize(comments.getSize())
+                .totalElement(comments.getTotalElements())
+                .data(commentList.stream()
+                        .map(comment -> toCommentResponseWithReaction(comment, reactionsMap.get(comment.getId())))
+                        .toList()
+                )
+                .build();
+    }
+
+    /**
+     * Convert Comment to CommentResponse with reaction info.
+     * Virtual Thread Best Practice: Uses synchronous blocking I/O operations.
+     */
+    private CommentResponse toCommentResponseWithReaction(Comment comment) {
+        String currentUserId = AuthUtils.getCurrentUserId();
+        Map<String, ReactionInfo> reactionsMap = reactionService
+                .getReactionsForTargets(TargetType.COMMENT, List.of(comment.getId()), currentUserId);
+        ReactionInfo reactionInfo = reactionsMap.getOrDefault(
+                comment.getId(),
+                ReactionInfo.builder().userReacted(false).type(null).build()
+        );
+        return toCommentResponseWithReaction(comment, reactionInfo);
+    }
+
+    /**
+     * Convert Comment to CommentResponse with provided reaction info.
+     */
+    private CommentResponse toCommentResponseWithReaction(Comment comment, ReactionInfo reactionInfo) {
+        CommentResponse response = commentMapper.toCommentResponse(comment);
+        if (reactionInfo != null) {
+            response.setReactions(reactionInfo);
+        } else {
+            response.setReactions(ReactionInfo.builder()
+                    .userReacted(false)
+                    .type(null)
+                    .build());
+        }
+        return response;
     }
 }
 

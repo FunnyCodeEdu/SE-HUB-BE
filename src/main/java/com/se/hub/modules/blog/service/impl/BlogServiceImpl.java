@@ -11,11 +11,13 @@ import com.se.hub.modules.blog.dto.request.CreateBlogRequest;
 import com.se.hub.modules.blog.dto.request.UpdateBlogRequest;
 import com.se.hub.modules.blog.dto.response.BlogResponse;
 import com.se.hub.modules.blog.entity.Blog;
-import com.se.hub.modules.blog.entity.BlogReaction;
 import com.se.hub.modules.blog.mapper.BlogMapper;
+import com.se.hub.modules.interaction.dto.response.ReactionInfo;
+import com.se.hub.modules.interaction.enums.ReactionType;
+import com.se.hub.modules.interaction.enums.TargetType;
+import com.se.hub.modules.interaction.service.api.ReactionService;
 import com.se.hub.modules.blog.constant.BlogCacheConstants;
 import com.se.hub.modules.blog.repository.BlogRepository;
-import com.se.hub.modules.blog.repository.BlogReactionRepository;
 import com.se.hub.modules.blog.service.BlogService;
 import com.se.hub.modules.profile.entity.Profile;
 import com.se.hub.modules.profile.repository.ProfileRepository;
@@ -34,6 +36,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Blog Service Implementation
  * 
@@ -50,10 +55,10 @@ import org.springframework.transaction.annotation.Transactional;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class BlogServiceImpl implements BlogService {
     BlogRepository blogRepository;
-    BlogReactionRepository blogReactionRepository;
     ProfileRepository profileRepository;
     BlogMapper blogMapper;
     ProfileProgressService profileProgressService;
+    ReactionService reactionService;
 
     /**
      * Helper method to build PagingResponse from Page<Blog>
@@ -61,34 +66,77 @@ public class BlogServiceImpl implements BlogService {
      */
     private PagingResponse<BlogResponse> buildPagingResponse(Page<Blog> blogs) {
         String currentUserId = AuthUtils.getCurrentUserId();
+        List<Blog> blogList = blogs.getContent();
+        
+        // Batch check reactions for all blogs
+        List<String> blogIds = blogList.stream().map(Blog::getId).toList();
+        Map<String, ReactionInfo> reactionsMap = reactionService
+                .getReactionsForTargets(TargetType.BLOG, blogIds, currentUserId);
+        
         return PagingResponse.<BlogResponse>builder()
                 .currentPage(blogs.getNumber())
                 .totalPages(blogs.getTotalPages())
                 .pageSize(blogs.getSize())
                 .totalElement(blogs.getTotalElements())
-                .data(blogs.getContent().stream()
-                        .map(blog -> toBlogResponseWithIsLiked(blog, currentUserId))
+                .data(blogList.stream()
+                        .map(blog -> toBlogResponseWithReaction(blog, reactionsMap.get(blog.getId())))
                         .toList()
                 )
                 .build();
     }
 
     /**
-     * Convert Blog to BlogResponse with isLiked field
+     * Convert Blog to BlogResponse with reaction info
      */
-    private BlogResponse toBlogResponseWithIsLiked(Blog blog, String userId) {
+    private BlogResponse toBlogResponseWithReaction(Blog blog, ReactionInfo reactionInfo) {
         BlogResponse response = blogMapper.toBlogResponse(blog);
-        if (userId != null && !userId.isBlank()) {
-            Profile profile = profileRepository.findByUserId(userId).orElse(null);
-            if (profile != null) {
-                blogReactionRepository.findByBlog_IdAndUser_Id(blog.getId(), profile.getId())
-                        .ifPresentOrElse(
-                                reaction -> response.setIsLiked(reaction.getIsLike()),
-                                () -> response.setIsLiked(null)
-                        );
-            }
+        if (reactionInfo != null) {
+            response.setReactions(reactionInfo);
+        } else {
+            response.setReactions(ReactionInfo.builder()
+                    .userReacted(false)
+                    .type(null)
+                    .build());
         }
         return response;
+    }
+
+    /**
+     * Convert Blog to BlogResponse with reaction info (single blog)
+     */
+    private BlogResponse toBlogResponseWithReaction(Blog blog, String userId) {
+        BlogResponse response = blogMapper.toBlogResponse(blog);
+        ReactionInfo reactionInfo = reactionService.getReactionsForTargets(
+                TargetType.BLOG, 
+                List.of(blog.getId()), 
+                userId
+        ).get(blog.getId());
+        
+        if (reactionInfo != null) {
+            response.setReactions(reactionInfo);
+        } else {
+            response.setReactions(ReactionInfo.builder()
+                    .userReacted(false)
+                    .type(null)
+                    .build());
+        }
+        return response;
+    }
+
+    /**
+     * Update blog reaction count from Reaction table.
+     * Virtual Thread Best Practice: Uses synchronous blocking I/O operations.
+     * Virtual threads yield during database queries, enabling high concurrency.
+     */
+    private void updateBlogReactionCount(Blog blog) {
+        // Blocking I/O - virtual thread yields here
+        long likeCount = reactionService.getReactionCount(TargetType.BLOG, blog.getId(), ReactionType.LIKE);
+        // Blocking I/O - virtual thread yields here
+        long dislikeCount = reactionService.getReactionCount(TargetType.BLOG, blog.getId(), ReactionType.DISLIKE);
+        int totalReactionCount = (int) (likeCount - dislikeCount);
+        blog.setReactionCount(totalReactionCount);
+        // Blocking I/O - virtual thread yields here
+        blogRepository.save(blog);
     }
 
     @Override
@@ -140,7 +188,7 @@ public class BlogServiceImpl implements BlogService {
         }
         
         String currentUserId = AuthUtils.getCurrentUserId();
-        return toBlogResponseWithIsLiked(blog, currentUserId);
+        return toBlogResponseWithReaction(blog, currentUserId);
     }
 
     @Override
@@ -336,7 +384,6 @@ public class BlogServiceImpl implements BlogService {
     }, allEntries = true)
     public BlogResponse likeBlog(String blogId) {
         log.debug("BlogService_likeBlog_Liking blog with id: {}", blogId);
-        String userId = AuthUtils.getCurrentUserId();
         
         Blog blog = blogRepository.findById(blogId)
                 .orElseThrow(() -> {
@@ -349,43 +396,16 @@ public class BlogServiceImpl implements BlogService {
             throw BlogErrorCode.BLOG_NOT_FOUND.toException();
         }
 
-        Profile profile = profileRepository.findByUserId(userId)
-                .orElseThrow(() -> {
-                    log.error("BlogService_likeBlog_Profile not found for user: {}", userId);
-                    return new AppException(ErrorCode.PROFILE_NOT_FOUND);
-                });
-
-        BlogReaction existingReaction = blogReactionRepository
-                .findByBlog_IdAndUser_Id(blogId, profile.getId())
-                .orElse(null);
-
-        if (existingReaction != null) {
-            if (Boolean.TRUE.equals(existingReaction.getIsLike())) {
-                log.debug("BlogService_likeBlog_User already liked this blog");
-                // Already liked, return current state
-            } else {
-                // Change from dislike to like
-                existingReaction.setIsLike(true);
-                blogReactionRepository.save(existingReaction);
-                blogRepository.incrementReactionCount(blogId, 2); // +1 for like, +1 to cancel dislike
-                log.debug("BlogService_likeBlog_Changed dislike to like for blog id {}", blogId);
-            }
-        } else {
-            // Create new like reaction
-            BlogReaction reaction = BlogReaction.builder()
-                    .blog(blog)
-                    .user(profile)
-                    .isLike(true)
-                    .build();
-            reaction.setCreatedBy(userId);
-            reaction.setUpdateBy(userId);
-            blogReactionRepository.save(reaction);
-            blogRepository.incrementReactionCount(blogId, 1);
-            log.debug("BlogService_likeBlog_Created new like reaction for blog id {}", blogId);
-        }
-
+        // Use ReactionService to toggle like reaction
+        reactionService.toggleReactionWithCount(TargetType.BLOG, blogId, ReactionType.LIKE);
+        
+        // Update reaction count from Reaction table
+        updateBlogReactionCount(blog);
+        
+        log.debug("BlogService_likeBlog_Reaction toggled for blog id {}", blogId);
+        
         String currentUserId = AuthUtils.getCurrentUserId();
-        return toBlogResponseWithIsLiked(blogRepository.findById(blogId).orElse(blog), currentUserId);
+        return toBlogResponseWithReaction(blogRepository.findById(blogId).orElse(blog), currentUserId);
     }
 
     @Override
@@ -400,7 +420,6 @@ public class BlogServiceImpl implements BlogService {
     }, allEntries = true)
     public BlogResponse dislikeBlog(String blogId) {
         log.debug("BlogService_dislikeBlog_Disliking blog with id: {}", blogId);
-        String userId = AuthUtils.getCurrentUserId();
         
         Blog blog = blogRepository.findById(blogId)
                 .orElseThrow(() -> {
@@ -413,43 +432,16 @@ public class BlogServiceImpl implements BlogService {
             throw BlogErrorCode.BLOG_NOT_FOUND.toException();
         }
 
-        Profile profile = profileRepository.findByUserId(userId)
-                .orElseThrow(() -> {
-                    log.error("BlogService_dislikeBlog_Profile not found for user: {}", userId);
-                    return new AppException(ErrorCode.PROFILE_NOT_FOUND);
-                });
-
-        BlogReaction existingReaction = blogReactionRepository
-                .findByBlog_IdAndUser_Id(blogId, profile.getId())
-                .orElse(null);
-
-        if (existingReaction != null) {
-            if (Boolean.FALSE.equals(existingReaction.getIsLike())) {
-                log.debug("BlogService_dislikeBlog_User already disliked this blog");
-                // Already disliked, return current state
-            } else {
-                // Change from like to dislike
-                existingReaction.setIsLike(false);
-                blogReactionRepository.save(existingReaction);
-                blogRepository.incrementReactionCount(blogId, -2); // -1 for like, -1 for dislike
-                log.debug("BlogService_dislikeBlog_Changed like to dislike for blog id {}", blogId);
-            }
-        } else {
-            // Create new dislike reaction
-            BlogReaction reaction = BlogReaction.builder()
-                    .blog(blog)
-                    .user(profile)
-                    .isLike(false)
-                    .build();
-            reaction.setCreatedBy(userId);
-            reaction.setUpdateBy(userId);
-            blogReactionRepository.save(reaction);
-            blogRepository.incrementReactionCount(blogId, -1);
-            log.debug("BlogService_dislikeBlog_Created new dislike reaction for blog id {}", blogId);
-        }
-
+        // Use ReactionService to toggle dislike reaction
+        reactionService.toggleReactionWithCount(TargetType.BLOG, blogId, ReactionType.DISLIKE);
+        
+        // Update reaction count from Reaction table
+        updateBlogReactionCount(blog);
+        
+        log.debug("BlogService_dislikeBlog_Reaction toggled for blog id {}", blogId);
+        
         String currentUserId = AuthUtils.getCurrentUserId();
-        return toBlogResponseWithIsLiked(blogRepository.findById(blogId).orElse(blog), currentUserId);
+        return toBlogResponseWithReaction(blogRepository.findById(blogId).orElse(blog), currentUserId);
     }
 
     @Override
@@ -464,7 +456,6 @@ public class BlogServiceImpl implements BlogService {
     }, allEntries = true)
     public BlogResponse removeReaction(String blogId) {
         log.debug("BlogService_removeReaction_Removing reaction from blog with id: {}", blogId);
-        String userId = AuthUtils.getCurrentUserId();
         
         Blog blog = blogRepository.findById(blogId)
                 .orElseThrow(() -> {
@@ -472,25 +463,30 @@ public class BlogServiceImpl implements BlogService {
                     return BlogErrorCode.BLOG_NOT_FOUND.toException();
                 });
 
-        Profile profile = profileRepository.findByUserId(userId)
-                .orElseThrow(() -> {
-                    log.error("BlogService_removeReaction_Profile not found for user: {}", userId);
-                    return new AppException(ErrorCode.PROFILE_NOT_FOUND);
-                });
-
-        BlogReaction existingReaction = blogReactionRepository
-                .findByBlog_IdAndUser_Id(blogId, profile.getId())
-                .orElse(null);
-
-        if (existingReaction != null) {
-            int delta = Boolean.TRUE.equals(existingReaction.getIsLike()) ? -1 : 1;
-            blogReactionRepository.delete(existingReaction);
-            blogRepository.incrementReactionCount(blogId, delta);
-            log.debug("BlogService_removeReaction_Removed reaction from blog id {}", blogId);
+        // Check if user has reacted, then toggle to remove
+        boolean hasReacted = reactionService.hasUserReacted(TargetType.BLOG, blogId);
+        if (hasReacted) {
+            // Get current reaction type and toggle it off
+            String userId = AuthUtils.getCurrentUserId();
+            Map<String, ReactionInfo> reactionsMap = reactionService.getReactionsForTargets(
+                    TargetType.BLOG, 
+                    List.of(blogId), 
+                    userId
+            );
+            ReactionInfo currentReaction = reactionsMap.get(blogId);
+            if (currentReaction != null && currentReaction.getType() != null) {
+                // Toggle the same reaction type to remove it
+                reactionService.toggleReactionWithCount(TargetType.BLOG, blogId, currentReaction.getType());
+            }
         }
-
+        
+        // Update reaction count from Reaction table
+        updateBlogReactionCount(blog);
+        
+        log.debug("BlogService_removeReaction_Removed reaction from blog id {}", blogId);
+        
         String currentUserId = AuthUtils.getCurrentUserId();
-        return toBlogResponseWithIsLiked(blogRepository.findById(blogId).orElse(blog), currentUserId);
+        return toBlogResponseWithReaction(blogRepository.findById(blogId).orElse(blog), currentUserId);
     }
 
     @Override
@@ -531,7 +527,7 @@ public class BlogServiceImpl implements BlogService {
         log.debug("BlogService_approveBlog_Blog approved successfully with id: {}", blogId);
         
         String currentUserId = AuthUtils.getCurrentUserId();
-        return toBlogResponseWithIsLiked(savedBlog, currentUserId);
+        return toBlogResponseWithReaction(savedBlog, currentUserId);
     }
 
     @Override
@@ -560,7 +556,7 @@ public class BlogServiceImpl implements BlogService {
                     return BlogErrorCode.BLOG_NOT_FOUND.toException();
                 });
 
-        if (Boolean.FALSE.equals(blog.getIsApproved()) && blog.getIsApproved() != null) {
+        if (Boolean.FALSE.equals(blog.getIsApproved())) {
             log.warn("BlogService_rejectBlog_Blog {} is already rejected", blogId);
             throw BlogErrorCode.BLOG_ALREADY_REJECTED.toException();
         }
@@ -572,7 +568,7 @@ public class BlogServiceImpl implements BlogService {
         log.debug("BlogService_rejectBlog_Blog rejected successfully with id: {}", blogId);
         
         String currentUserId = AuthUtils.getCurrentUserId();
-        return toBlogResponseWithIsLiked(savedBlog, currentUserId);
+        return toBlogResponseWithReaction(savedBlog, currentUserId);
     }
 
     @Override

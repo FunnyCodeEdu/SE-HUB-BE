@@ -31,6 +31,7 @@ public class CommentResponse {
     String content;
     String parentCommentId;
     List<CommentResponse> replies;
+    ReactionInfo reactions;
     Instant createDate;
     Instant updatedDate;
     String createdBy;

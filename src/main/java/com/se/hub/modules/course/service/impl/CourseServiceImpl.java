@@ -9,6 +9,9 @@ import com.se.hub.modules.course.dto.request.CreateCourseRequest;
 import com.se.hub.modules.course.dto.request.UpdateCourseRequest;
 import com.se.hub.modules.course.dto.response.CourseResponse;
 import com.se.hub.modules.course.entity.Course;
+import com.se.hub.modules.interaction.dto.response.ReactionInfo;
+import com.se.hub.modules.interaction.enums.TargetType;
+import com.se.hub.modules.interaction.service.api.ReactionService;
 import com.se.hub.modules.course.exception.CourseErrorCode;
 import com.se.hub.modules.course.mapper.CourseMapper;
 import com.se.hub.modules.course.repository.CourseRepository;
@@ -23,6 +26,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -30,15 +36,32 @@ import org.springframework.transaction.annotation.Transactional;
 public class CourseServiceImpl implements CourseService {
     CourseRepository courseRepository;
     CourseMapper courseMapper;
+    ReactionService reactionService;
 
     private PagingResponse<CourseResponse> buildPagingResponse(Page<Course> courses) {
+        List<Course> courseList = courses.getContent();
+        String currentUserId = AuthUtils.getCurrentUserId();
+        
+        // Batch check reactions for all courses
+        List<String> courseIds = courseList.stream().map(Course::getId).toList();
+        Map<String, ReactionInfo> reactionsMap = reactionService
+                .getReactionsForTargets(TargetType.COURSE, courseIds, currentUserId);
+        
         return PagingResponse.<CourseResponse>builder()
                 .currentPage(courses.getNumber())
                 .totalPages(courses.getTotalPages())
                 .pageSize(courses.getSize())
                 .totalElement(courses.getTotalElements())
-                .data(courses.getContent().stream()
-                        .map(courseMapper::toCourseResponse)
+                .data(courseList.stream()
+                        .map(course -> {
+                            CourseResponse response = courseMapper.toCourseResponse(course);
+                            ReactionInfo reactionInfo = reactionsMap.getOrDefault(
+                                    course.getId(),
+                                    ReactionInfo.builder().userReacted(false).type(null).build()
+                            );
+                            response.setReactions(reactionInfo);
+                            return response;
+                        })
                         .toList()
                 )
                 .build();
@@ -67,11 +90,22 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public CourseResponse getById(String courseId) {
         log.debug("CourseService_getById_Fetching course with id: {}", courseId);
-        return courseMapper.toCourseResponse(courseRepository.findById(courseId)
+        Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> {
                     log.error("CourseService_getById_Course not found with id: {}", courseId);
                     return CourseErrorCode.COURSE_NOT_FOUND.toException();
-                }));
+                });
+        
+        CourseResponse response = courseMapper.toCourseResponse(course);
+        String currentUserId = AuthUtils.getCurrentUserId();
+        Map<String, ReactionInfo> reactionsMap = reactionService
+                .getReactionsForTargets(TargetType.COURSE, List.of(courseId), currentUserId);
+        ReactionInfo reactionInfo = reactionsMap.getOrDefault(
+                courseId,
+                ReactionInfo.builder().userReacted(false).type(null).build()
+        );
+        response.setReactions(reactionInfo);
+        return response;
     }
 
     @Override

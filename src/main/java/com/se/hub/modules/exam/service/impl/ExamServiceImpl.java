@@ -15,6 +15,9 @@ import com.se.hub.modules.exam.dto.request.RemoveQuestionsFromExamRequest;
 import com.se.hub.modules.exam.dto.request.UpdateExamRequest;
 import com.se.hub.modules.exam.dto.response.ExamResponse;
 import com.se.hub.modules.exam.entity.Exam;
+import com.se.hub.modules.interaction.dto.response.ReactionInfo;
+import com.se.hub.modules.interaction.enums.TargetType;
+import com.se.hub.modules.interaction.service.api.ReactionService;
 import com.se.hub.modules.exam.entity.Question;
 import com.se.hub.modules.exam.exception.ExamErrorCode;
 import com.se.hub.modules.exam.mapper.ExamMapper;
@@ -33,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -54,19 +58,36 @@ public class ExamServiceImpl implements ExamService {
     QuestionRepository questionRepository;
     CourseRepository courseRepository;
     ExamMapper examMapper;
+    ReactionService reactionService;
 
     /**
      * Helper method to build PagingResponse from Page<Exam>
      * Reduces code duplication across get methods
      */
     private PagingResponse<ExamResponse> buildPagingResponse(Page<Exam> exams) {
+        List<Exam> examList = exams.getContent();
+        String currentUserId = AuthUtils.getCurrentUserId();
+        
+        // Batch check reactions for all exams
+        List<String> examIds = examList.stream().map(Exam::getId).toList();
+        Map<String, ReactionInfo> reactionsMap = reactionService
+                .getReactionsForTargets(TargetType.EXAM, examIds, currentUserId);
+        
         return PagingResponse.<ExamResponse>builder()
                 .currentPage(exams.getNumber() + GlobalVariable.PAGE_SIZE_INDEX)
                 .totalPages(exams.getTotalPages())
                 .pageSize(exams.getSize())
                 .totalElement(exams.getTotalElements())
-                .data(exams.getContent().stream()
-                        .map(examMapper::toExamResponse)
+                .data(examList.stream()
+                        .map(exam -> {
+                            ExamResponse response = examMapper.toExamResponse(exam);
+                            ReactionInfo reactionInfo = reactionsMap.getOrDefault(
+                                    exam.getId(),
+                                    ReactionInfo.builder().userReacted(false).type(null).build()
+                            );
+                            response.setReactions(reactionInfo);
+                            return response;
+                        })
                         .toList()
                 )
                 .build();
@@ -106,11 +127,22 @@ public class ExamServiceImpl implements ExamService {
     @Override
     public ExamResponse getById(String examId) {
         log.debug("ExamService_getById_Fetching exam with id: {}", examId);
-        return examMapper.toExamResponse(examRepository.findById(examId)
+        Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> {
                     log.error("ExamService_getById_Exam not found with id: {}", examId);
                     return ExamErrorCode.EXAM_NOT_FOUND.toException();
-                }));
+                });
+        
+        ExamResponse response = examMapper.toExamResponse(exam);
+        String currentUserId = AuthUtils.getCurrentUserId();
+        Map<String, ReactionInfo> reactionsMap = reactionService
+                .getReactionsForTargets(TargetType.EXAM, List.of(examId), currentUserId);
+        ReactionInfo reactionInfo = reactionsMap.getOrDefault(
+                examId,
+                ReactionInfo.builder().userReacted(false).type(null).build()
+        );
+        response.setReactions(reactionInfo);
+        return response;
     }
 
     @Override

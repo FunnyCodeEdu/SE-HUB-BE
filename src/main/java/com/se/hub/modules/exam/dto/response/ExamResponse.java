@@ -1,6 +1,7 @@
 package com.se.hub.modules.exam.dto.response;
 
 import com.se.hub.modules.exam.enums.ExamType;
+import com.se.hub.modules.interaction.dto.response.ReactionInfo;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,6 +29,7 @@ public class ExamResponse {
     String courseId;
 
     Set<QuestionResponse> questions;
+    ReactionInfo reactions;
 
     Instant createDate;
     Instant updatedDate;

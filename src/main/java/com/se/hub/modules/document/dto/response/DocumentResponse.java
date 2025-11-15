@@ -1,6 +1,7 @@
 package com.se.hub.modules.document.dto.response;
 
 import com.se.hub.modules.course.dto.response.CourseResponse;
+import com.se.hub.modules.interaction.dto.response.ReactionInfo;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,6 +31,7 @@ public class DocumentResponse {
     Long fileSize;
     String fileUrl;
     Boolean isApproved;
+    ReactionInfo reactions;
     Instant createDate;
     Instant updatedDate;
 }

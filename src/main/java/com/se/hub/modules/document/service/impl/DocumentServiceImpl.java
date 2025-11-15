@@ -11,6 +11,9 @@ import com.se.hub.modules.document.dto.request.CreateDocumentRequest;
 import com.se.hub.modules.document.dto.request.UpdateDocumentRequest;
 import com.se.hub.modules.document.dto.response.DocumentResponse;
 import com.se.hub.modules.document.entity.Document;
+import com.se.hub.modules.interaction.dto.response.ReactionInfo;
+import com.se.hub.modules.interaction.enums.TargetType;
+import com.se.hub.modules.interaction.service.api.ReactionService;
 import com.se.hub.modules.document.exception.DocumentErrorCode;
 import com.se.hub.modules.document.mapper.DocumentMapper;
 import com.se.hub.modules.document.repository.DocumentRepository;
@@ -32,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Document Service Implementation
@@ -52,18 +56,35 @@ public class DocumentServiceImpl implements DocumentService {
     CourseRepository courseRepository;
     DocumentMapper documentMapper;
     GoogleDriveService googleDriveService;
+    ReactionService reactionService;
 
     /**
      * Helper method to build PagingResponse from Page<Document>
      */
     private PagingResponse<DocumentResponse> buildPagingResponse(Page<Document> documents) {
+        List<Document> documentList = documents.getContent();
+        String currentUserId = AuthUtils.getCurrentUserId();
+        
+        // Batch check reactions for all documents
+        List<String> documentIds = documentList.stream().map(Document::getId).toList();
+        Map<String, ReactionInfo> reactionsMap = reactionService
+                .getReactionsForTargets(TargetType.DOCUMENT, documentIds, currentUserId);
+        
         return PagingResponse.<DocumentResponse>builder()
                 .currentPage(documents.getNumber())
                 .totalPages(documents.getTotalPages())
                 .pageSize(documents.getSize())
                 .totalElement(documents.getTotalElements())
-                .data(documents.getContent().stream()
-                        .map(documentMapper::toDocumentResponse)
+                .data(documentList.stream()
+                        .map(document -> {
+                            DocumentResponse response = documentMapper.toDocumentResponse(document);
+                            ReactionInfo reactionInfo = reactionsMap.getOrDefault(
+                                    document.getId(),
+                                    ReactionInfo.builder().userReacted(false).type(null).build()
+                            );
+                            response.setReactions(reactionInfo);
+                            return response;
+                        })
                         .toList()
                 )
                 .build();
@@ -136,7 +157,16 @@ public class DocumentServiceImpl implements DocumentService {
             throw DocumentErrorCode.DOCUMENT_UNAPPROVED.toException();
         }
 
-        return documentMapper.toDocumentResponse(document);
+        DocumentResponse response = documentMapper.toDocumentResponse(document);
+        String currentUserId = AuthUtils.getCurrentUserId();
+        Map<String, ReactionInfo> reactionsMap = reactionService
+                .getReactionsForTargets(TargetType.DOCUMENT, List.of(documentId), currentUserId);
+        ReactionInfo reactionInfo = reactionsMap.getOrDefault(
+                documentId,
+                ReactionInfo.builder().userReacted(false).type(null).build()
+        );
+        response.setReactions(reactionInfo);
+        return response;
     }
 
     @Override
@@ -181,8 +211,21 @@ public class DocumentServiceImpl implements DocumentService {
     public List<DocumentResponse> getLatestDocuments() {
         log.debug("DocumentService_getLatestDocuments_Fetching latest documents");
         List<Document> documents = documentRepository.findTop4ByIsApprovedTrueOrderByCreateDateDesc();
+        String currentUserId = AuthUtils.getCurrentUserId();
+        List<String> documentIds = documents.stream().map(Document::getId).toList();
+        Map<String, ReactionInfo> reactionsMap = reactionService
+                .getReactionsForTargets(TargetType.DOCUMENT, documentIds, currentUserId);
+        
         return documents.stream()
-                .map(documentMapper::toDocumentResponse)
+                .map(document -> {
+                    DocumentResponse response = documentMapper.toDocumentResponse(document);
+                    ReactionInfo reactionInfo = reactionsMap.getOrDefault(
+                            document.getId(),
+                            ReactionInfo.builder().userReacted(false).type(null).build()
+                    );
+                    response.setReactions(reactionInfo);
+                    return response;
+                })
                 .toList();
     }
 
@@ -197,9 +240,25 @@ public class DocumentServiceImpl implements DocumentService {
         }
 
         List<Document> documents = documentRepository.findTop4ByIsApprovedTrueOrderByCreateDateDesc();
-        return documents.stream()
+        List<Document> filteredDocs = documents.stream()
                 .filter(doc -> !doc.getId().equals(documentId))
-                .map(documentMapper::toDocumentResponse)
+                .toList();
+        
+        String currentUserId = AuthUtils.getCurrentUserId();
+        List<String> documentIds = filteredDocs.stream().map(Document::getId).toList();
+        Map<String, ReactionInfo> reactionsMap = reactionService
+                .getReactionsForTargets(TargetType.DOCUMENT, documentIds, currentUserId);
+        
+        return filteredDocs.stream()
+                .map(document -> {
+                    DocumentResponse response = documentMapper.toDocumentResponse(document);
+                    ReactionInfo reactionInfo = reactionsMap.getOrDefault(
+                            document.getId(),
+                            ReactionInfo.builder().userReacted(false).type(null).build()
+                    );
+                    response.setReactions(reactionInfo);
+                    return response;
+                })
                 .toList();
     }
 

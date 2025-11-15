@@ -1,6 +1,7 @@
 package com.se.hub.modules.course.dto.response;
 
 import com.se.hub.modules.course.enums.Specialization;
+import com.se.hub.modules.interaction.dto.response.ReactionInfo;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,4 +33,5 @@ public class CourseResponse {
     String description;
     String shortDescription;
     String imgUrl;
+    ReactionInfo reactions;
 }

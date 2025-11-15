@@ -1,5 +1,6 @@
 package com.se.hub.modules.blog.dto.response;
 
+import com.se.hub.modules.interaction.dto.response.ReactionInfo;
 import com.se.hub.modules.profile.dto.response.ProfileResponse;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -26,7 +27,7 @@ public class BlogResponse {
     int reactionCount;
     Boolean allowComments;
     Boolean isApproved;
-    Boolean isLiked;
+    ReactionInfo reactions;
     Instant createDate;
     Instant updatedDate;
 }

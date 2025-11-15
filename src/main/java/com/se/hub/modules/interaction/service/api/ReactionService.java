@@ -1,9 +1,13 @@
 package com.se.hub.modules.interaction.service.api;
 
+import com.se.hub.modules.interaction.dto.response.ReactionInfo;
 import com.se.hub.modules.interaction.dto.response.ReactionResponse;
 import com.se.hub.modules.interaction.dto.response.ReactionToggleResult;
 import com.se.hub.modules.interaction.enums.ReactionType;
 import com.se.hub.modules.interaction.enums.TargetType;
+
+import java.util.List;
+import java.util.Map;
 
 public interface ReactionService {
 
@@ -52,5 +56,14 @@ public interface ReactionService {
      * Check if current user has reacted to target
      */
     boolean hasUserReacted(TargetType targetType, String targetId);
+
+    /**
+     * Get reactions info for multiple targets (batch check)
+     * @param targetType The target type (BLOG, COMMENT, etc.)
+     * @param targetIds List of target IDs
+     * @param userId User ID (can be null for anonymous users)
+     * @return Map of targetId to ReactionInfo
+     */
+    Map<String, ReactionInfo> getReactionsForTargets(TargetType targetType, List<String> targetIds, String userId);
 }
 

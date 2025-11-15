@@ -3,6 +3,7 @@ package com.se.hub.modules.interaction.service.impl;
 import com.se.hub.common.enums.ErrorCode;
 import com.se.hub.common.exception.AppException;
 import com.se.hub.modules.auth.utils.AuthUtils;
+import com.se.hub.modules.interaction.dto.response.ReactionInfo;
 import com.se.hub.modules.interaction.dto.response.ReactionResponse;
 import com.se.hub.modules.interaction.dto.response.ReactionToggleResult;
 import com.se.hub.modules.interaction.entity.Comment;
@@ -23,7 +24,11 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Reaction Service Implementation
@@ -245,6 +250,82 @@ public class ReactionServiceImpl implements ReactionService {
         } catch (IllegalArgumentException e) {
             log.error("ReactionServiceImpl_parseTargetType_Invalid target type: {}", targetTypeString);
             throw new AppException(ErrorCode.COMMENT_TARGET_TYPE_INVALID);
+        }
+    }
+
+    /**
+     * Get reactions info for multiple targets (batch check).
+     * Virtual Thread Best Practice: Uses synchronous blocking I/O operations.
+     * Virtual threads yield during database queries, enabling high concurrency.
+     */
+    @Override
+    public Map<String, ReactionInfo> getReactionsForTargets(TargetType targetType, List<String> targetIds, String userId) {
+        if (targetIds == null || targetIds.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        // If user not logged in, return all false
+        if (userId == null || userId.isBlank()) {
+            return targetIds.stream()
+                    .collect(Collectors.toMap(
+                            id -> id,
+                            id -> ReactionInfo.builder()
+                                    .userReacted(false)
+                                    .type(null)
+                                    .build()
+                    ));
+        }
+
+        try {
+            // Blocking I/O - virtual thread yields here
+            Profile user = profileRepository.findByUserId(userId)
+                    .orElse(null);
+
+            if (user == null) {
+                return targetIds.stream()
+                        .collect(Collectors.toMap(
+                                id -> id,
+                                id -> ReactionInfo.builder()
+                                        .userReacted(false)
+                                        .type(null)
+                                        .build()
+                        ));
+            }
+
+            // Blocking I/O - virtual thread yields here (batch query)
+            List<Reaction> reactions = reactionRepository
+                    .findByTargetTypeAndTargetIdInAndUser(targetType, targetIds, user);
+
+            Map<String, Reaction> reactionMap = reactions.stream()
+                    .collect(Collectors.toMap(Reaction::getTargetId, r -> r));
+
+            Map<String, ReactionInfo> result = new HashMap<>();
+            for (String targetId : targetIds) {
+                Reaction reaction = reactionMap.get(targetId);
+                if (reaction != null) {
+                    result.put(targetId, ReactionInfo.builder()
+                            .userReacted(true)
+                            .type(reaction.getReactionType())
+                            .build());
+                } else {
+                    result.put(targetId, ReactionInfo.builder()
+                            .userReacted(false)
+                            .type(null)
+                            .build());
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            log.debug("ReactionServiceImpl_getReactionsForTargets_Error checking user reactions: {}", e.getMessage());
+            // Return all false on error
+            return targetIds.stream()
+                    .collect(Collectors.toMap(
+                            id -> id,
+                            id -> ReactionInfo.builder()
+                                    .userReacted(false)
+                                    .type(null)
+                                    .build()
+                    ));
         }
     }
 

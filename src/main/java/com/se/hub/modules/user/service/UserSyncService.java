@@ -112,9 +112,8 @@ public class UserSyncService {
             return existingUser.get();
         }
         
-        // Get role from JWT scope - use getReference to get managed proxy without loading
-        List<String> scopes = jwt.getClaimAsStringList("scope");
-        String roleName = determineRoleNameFromScopes(scopes);
+        // Get role from JWT scope - handle both string and list formats
+        String roleName = determineRoleNameFromScope(jwt);
         com.se.hub.modules.user.entity.Role role = entityManager.getReference(
                 com.se.hub.modules.user.entity.Role.class, roleName); // Get managed reference
         
@@ -147,22 +146,46 @@ public class UserSyncService {
     }
     
     /**
-     * Determine role name from FTES JWT scopes
+     * Determine role name from FTES JWT scope
+     * Scope can be either a string (e.g., "ROLE_ADMIN", "ROLE_STUDENT") or a list
+     * Logic: If scope is "ROLE_ADMIN" → role = "ADMIN", otherwise → role = "USER"
      */
-    private String determineRoleNameFromScopes(List<String> scopes) {
-        if (scopes == null || scopes.isEmpty()) {
+    private String determineRoleNameFromScope(Jwt jwt) {
+        // Try to get scope as string first (most common format)
+        String scopeString = jwt.getClaimAsString("scope");
+        if (scopeString != null && !scopeString.trim().isEmpty()) {
+            // Check if scope is ROLE_ADMIN
+            if (scopeString.equalsIgnoreCase("ROLE_ADMIN") || scopeString.equalsIgnoreCase("ADMIN")) {
+                log.debug("Scope is ADMIN: {}", scopeString);
+                return "ADMIN";
+            }
+            // All other scopes (ROLE_STUDENT, ROLE_INSTRUCTOR, etc.) → USER
+            log.debug("Scope is not ADMIN, defaulting to USER: {}", scopeString);
             return "USER";
         }
-
-        // Check if any scope indicates admin role
-        boolean isAdmin = scopes.stream()
-                .anyMatch(scope -> scope != null && (
-                        scope.contains("ADMIN") || 
-                        scope.equalsIgnoreCase("ROLE_ADMIN") ||
-                        scope.equalsIgnoreCase("ADMIN")
-                ));
-
-        return isAdmin ? "ADMIN" : "USER";
+        
+        // Fallback: Try to get scope as list (for backward compatibility)
+        List<String> scopes = jwt.getClaimAsStringList("scope");
+        if (scopes != null && !scopes.isEmpty()) {
+            // Check if any scope indicates admin role
+            boolean isAdmin = scopes.stream()
+                    .anyMatch(scope -> scope != null && (
+                            scope.equalsIgnoreCase("ROLE_ADMIN") ||
+                            scope.equalsIgnoreCase("ADMIN") ||
+                            scope.contains("ADMIN")
+                    ));
+            
+            if (isAdmin) {
+                log.debug("Found ADMIN in scope list: {}", scopes);
+                return "ADMIN";
+            }
+            log.debug("No ADMIN found in scope list, defaulting to USER: {}", scopes);
+            return "USER";
+        }
+        
+        // No scope found → default to USER
+        log.debug("No scope found in JWT, defaulting to USER");
+        return "USER";
     }
 
 }

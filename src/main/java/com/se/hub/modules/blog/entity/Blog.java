@@ -70,6 +70,11 @@ public class Blog extends BaseEntity {
             nullable = false)
     Boolean allowComments;
 
+    @Builder.Default
+    @Column(name = BlogConstants.COL_IS_APPROVED,
+            nullable = false)
+    Boolean isApproved = false;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

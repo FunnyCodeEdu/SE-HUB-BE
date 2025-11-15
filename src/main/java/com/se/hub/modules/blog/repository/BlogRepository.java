@@ -15,33 +15,50 @@ import java.util.List;
 @Repository
 public interface BlogRepository extends JpaRepository<Blog, String>, JpaSpecificationExecutor<Blog> {
     Page<Blog> findAllByAuthor_Id(String authorId, Pageable pageable);
+    
+    /**
+     * Find all approved blogs by author ID
+     */
+    @Query("SELECT b FROM Blog b WHERE b.author.id = :authorId AND b.isApproved = true")
+    Page<Blog> findAllApprovedByAuthor_Id(@Param("authorId") String authorId, Pageable pageable);
+    
+    /**
+     * Find all approved blogs
+     */
+    @Query("SELECT b FROM Blog b WHERE b.isApproved = true")
+    Page<Blog> findAllApproved(Pageable pageable);
 
     /**
-     * Find most popular blogs sorted by view count
+     * Find most popular blogs sorted by view count (only approved)
      * Uses LEFT JOIN FETCH to optimize N+1 problem by eagerly loading author
      */
-    @Query("SELECT DISTINCT b FROM Blog b LEFT JOIN FETCH b.author ORDER BY b.viewCount DESC")
+    @Query("SELECT DISTINCT b FROM Blog b LEFT JOIN FETCH b.author WHERE b.isApproved = true ORDER BY b.viewCount DESC")
     Page<Blog> findMostPopularBlogs(Pageable pageable);
 
     /**
-     * Find most liked blogs sorted by reaction count
+     * Find most liked blogs sorted by reaction count (only approved)
      * Uses LEFT JOIN FETCH to optimize N+1 problem by eagerly loading author
      */
-    @Query("SELECT DISTINCT b FROM Blog b LEFT JOIN FETCH b.author ORDER BY b.reactionCount DESC")
+    @Query("SELECT DISTINCT b FROM Blog b LEFT JOIN FETCH b.author WHERE b.isApproved = true ORDER BY b.reactionCount DESC")
     Page<Blog> findMostLikedBlogs(Pageable pageable);
 
     /**
-     * Find latest blogs sorted by created date
+     * Find latest blogs sorted by created date (only approved)
      * Uses LEFT JOIN FETCH to optimize N+1 problem by eagerly loading author
      */
-    @Query("SELECT DISTINCT b FROM Blog b LEFT JOIN FETCH b.author ORDER BY b.createDate DESC")
+    @Query("SELECT DISTINCT b FROM Blog b LEFT JOIN FETCH b.author WHERE b.isApproved = true ORDER BY b.createDate DESC")
     Page<Blog> findLatestBlogs(Pageable pageable);
+    
+    /**
+     * Find all pending blogs (not approved)
+     */
+    Page<Blog> findAllByIsApprovedFalse(Pageable pageable);
 
     /**
-     * Find top N latest blogs
+     * Find top N latest blogs (only approved)
      * Uses LEFT JOIN FETCH to optimize N+1 problem by eagerly loading author
      */
-    @Query("SELECT DISTINCT b FROM Blog b LEFT JOIN FETCH b.author ORDER BY b.createDate DESC")
+    @Query("SELECT DISTINCT b FROM Blog b LEFT JOIN FETCH b.author WHERE b.isApproved = true ORDER BY b.createDate DESC")
     List<Blog> findTopNByOrderByCreatedDateDesc(Pageable pageable);
 
     /**

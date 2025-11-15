@@ -83,4 +83,46 @@ public interface BlogService {
      * @param delta positive for add comment, negative for delete comment
      */
     void incrementCommentCount(String blogId, int delta);
+
+    /**
+     * Like a blog
+     * @param blogId blog ID
+     * @return BlogResponse with updated reaction count
+     */
+    BlogResponse likeBlog(String blogId);
+
+    /**
+     * Dislike a blog
+     * @param blogId blog ID
+     * @return BlogResponse with updated reaction count
+     */
+    BlogResponse dislikeBlog(String blogId);
+
+    /**
+     * Remove reaction from a blog
+     * @param blogId blog ID
+     * @return BlogResponse with updated reaction count
+     */
+    BlogResponse removeReaction(String blogId);
+
+    /**
+     * Approve a blog (admin only)
+     * @param blogId blog ID
+     * @return BlogResponse
+     */
+    BlogResponse approveBlog(String blogId);
+
+    /**
+     * Reject a blog (admin only)
+     * @param blogId blog ID
+     * @return BlogResponse
+     */
+    BlogResponse rejectBlog(String blogId);
+
+    /**
+     * Get pending blogs (admin only)
+     * @param request paging request
+     * @return paging response with pending blogs
+     */
+    PagingResponse<BlogResponse> getPendingBlogs(PagingRequest request);
 }

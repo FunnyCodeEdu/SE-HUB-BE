@@ -180,7 +180,7 @@ public class BlogController extends BaseController {
     @Operation(summary = "Get most liked blogs",
             description = "Get list of most liked blogs sorted by reaction count with pagination")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_LIKED_SUCCESS, 
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_MOST_LIKED_SUCCESS, 
                     useReturnTypeSchema = true),
             @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = BlogMessageConstants.API_BAD_REQUEST),
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
@@ -257,5 +257,113 @@ public class BlogController extends BaseController {
         log.debug("BlogController_incrementReactionCount_Updating reaction count for blog id: {} with delta: {}", blogId, delta);
         blogService.incrementReactionCount(blogId, delta);
         return success(null, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
+    }
+
+    @PostMapping("/{blogId}/like")
+    @Operation(summary = "Like a blog",
+            description = "Like a blog. If already disliked, changes to like. If already liked, does nothing.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_LIKED_SUCCESS, 
+                    useReturnTypeSchema = true),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = BlogMessageConstants.BLOG_NOT_FOUND_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = BlogMessageConstants.API_BAD_REQUEST),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
+    })
+    public ResponseEntity<GenericResponse<BlogResponse>> likeBlog(@PathVariable String blogId) {
+        log.debug("BlogController_likeBlog_Liking blog id: {}", blogId);
+        BlogResponse response = blogService.likeBlog(blogId);
+        return success(response, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
+    }
+
+    @PostMapping("/{blogId}/dislike")
+    @Operation(summary = "Dislike a blog",
+            description = "Dislike a blog. If already liked, changes to dislike. If already disliked, does nothing.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_DISLIKED_SUCCESS, 
+                    useReturnTypeSchema = true),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = BlogMessageConstants.BLOG_NOT_FOUND_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = BlogMessageConstants.API_BAD_REQUEST),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
+    })
+    public ResponseEntity<GenericResponse<BlogResponse>> dislikeBlog(@PathVariable String blogId) {
+        log.debug("BlogController_dislikeBlog_Disliking blog id: {}", blogId);
+        BlogResponse response = blogService.dislikeBlog(blogId);
+        return success(response, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
+    }
+
+    @DeleteMapping("/{blogId}/reaction")
+    @Operation(summary = "Remove reaction from a blog",
+            description = "Remove like or dislike reaction from a blog")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_UNREACTED_SUCCESS, 
+                    useReturnTypeSchema = true),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = BlogMessageConstants.BLOG_NOT_FOUND_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = BlogMessageConstants.API_BAD_REQUEST),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
+    })
+    public ResponseEntity<GenericResponse<BlogResponse>> removeReaction(@PathVariable String blogId) {
+        log.debug("BlogController_removeReaction_Removing reaction from blog id: {}", blogId);
+        BlogResponse response = blogService.removeReaction(blogId);
+        return success(response, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
+    }
+
+    @PostMapping("/{blogId}/approve")
+    @Operation(summary = "Approve a blog (Admin only)",
+            description = "Approve a pending blog. Only admin can perform this action.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_APPROVED_SUCCESS, 
+                    useReturnTypeSchema = true),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = BlogMessageConstants.BLOG_NOT_FOUND_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.FORBIDDEN_403, description = BlogMessageConstants.BLOG_FORBIDDEN_OPERATION_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = BlogMessageConstants.API_BAD_REQUEST),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
+    })
+    public ResponseEntity<GenericResponse<BlogResponse>> approveBlog(@PathVariable String blogId) {
+        log.debug("BlogController_approveBlog_Approving blog id: {}", blogId);
+        BlogResponse response = blogService.approveBlog(blogId);
+        return success(response, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
+    }
+
+    @PostMapping("/{blogId}/reject")
+    @Operation(summary = "Reject a blog (Admin only)",
+            description = "Reject a pending blog. Only admin can perform this action.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_REJECTED_SUCCESS, 
+                    useReturnTypeSchema = true),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = BlogMessageConstants.BLOG_NOT_FOUND_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.FORBIDDEN_403, description = BlogMessageConstants.BLOG_FORBIDDEN_OPERATION_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = BlogMessageConstants.API_BAD_REQUEST),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
+    })
+    public ResponseEntity<GenericResponse<BlogResponse>> rejectBlog(@PathVariable String blogId) {
+        log.debug("BlogController_rejectBlog_Rejecting blog id: {}", blogId);
+        BlogResponse response = blogService.rejectBlog(blogId);
+        return success(response, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
+    }
+
+    @GetMapping("/pending")
+    @Operation(summary = "Get pending blogs (Admin only)",
+            description = "Get list of pending blogs that need approval. Only admin can access this endpoint.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = BlogMessageConstants.API_BLOG_PENDING_RETRIEVED_SUCCESS, 
+                    useReturnTypeSchema = true),
+            @ApiResponse(responseCode = ResponseCode.FORBIDDEN_403, description = BlogMessageConstants.BLOG_FORBIDDEN_OPERATION_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = BlogMessageConstants.API_BAD_REQUEST),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
+    })
+    public ResponseEntity<GenericResponse<PagingResponse<BlogResponse>>> getPendingBlogs(
+            @RequestParam(value = PaginationConstants.PARAM_PAGE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE) int page,
+            @RequestParam(value = PaginationConstants.PARAM_SIZE, required = false, defaultValue = PaginationConstants.DEFAULT_PAGE_SIZE) int size,
+            @RequestParam(required = false, defaultValue = BaseFieldConstant.CREATE_DATE) String field,
+            @RequestParam(required = false, defaultValue = PaginationConstants.DESC) String direction
+    ) {
+        log.debug("BlogController_getPendingBlogs_Fetching pending blogs with page: {}, size: {}", page, size);
+        PagingRequest request = PagingRequest.builder()
+                .page(page)
+                .pageSize(size)
+                .sortRequest(new SortRequest(direction, field))
+                .build();
+
+        return success(blogService.getPendingBlogs(request), MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
     }
 }

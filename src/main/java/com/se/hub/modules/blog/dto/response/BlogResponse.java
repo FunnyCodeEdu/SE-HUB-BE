@@ -25,6 +25,8 @@ public class BlogResponse {
     int cmtCount;
     int reactionCount;
     Boolean allowComments;
+    Boolean isApproved;
+    Boolean isLiked;
     Instant createDate;
     Instant updatedDate;
 }

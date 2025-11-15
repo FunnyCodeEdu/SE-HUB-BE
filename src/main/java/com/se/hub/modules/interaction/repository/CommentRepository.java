@@ -39,14 +39,14 @@ public interface CommentRepository extends JpaRepository<Comment, String> {
     Page<Comment> findByParentCommentId(String parentCommentId, Pageable pageable);
     
     /**
-     * Find comments by author
-     * @param authorId String
+     * Find comments by author (User ID)
+     * @param authorId String (User ID)
      * @param pageable Pageable
      * @return Page<Comment>
      */
     @Query("""
         SELECT c FROM Comment c
-        WHERE c.author.id = :authorId
+        WHERE c.author.user.id = :authorId
         """)
     Page<Comment> findByAuthorId(@Param("authorId") String authorId, Pageable pageable);
     

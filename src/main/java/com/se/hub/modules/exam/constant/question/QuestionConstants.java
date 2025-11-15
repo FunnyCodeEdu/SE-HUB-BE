@@ -11,6 +11,8 @@ public class QuestionConstants {
     public static final String COL_DIFFICULTY = "difficulty";
     public static final String COL_SCORE = "score";
     public static final String COL_CATEGORY = "category";
+    public static final String COL_NORMALIZED_TEXT = "normalized_text";
+    public static final String COL_CONTENT_HASH = "content_hash";
 
     //===== COLUMN DEFINITIONS ======
     public static final String CONTENT_DEFINITION = "TEXT";

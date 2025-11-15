@@ -16,6 +16,8 @@ import com.se.hub.modules.auth.utils.AuthUtils;
 import com.se.hub.modules.exam.constant.ExamMessageConstants;
 import com.se.hub.modules.exam.dto.request.AddQuestionsToExamRequest;
 import com.se.hub.modules.exam.dto.request.CreateExamRequest;
+import com.se.hub.modules.exam.dto.request.CreateExamWithQuestionsRequest;
+import com.se.hub.modules.exam.dto.request.CreateQuestionsRequest;
 import com.se.hub.modules.exam.dto.request.RemoveQuestionsFromExamRequest;
 import com.se.hub.modules.exam.dto.request.SubmitExamRequest;
 import com.se.hub.modules.exam.dto.request.UpdateExamRequest;
@@ -185,6 +187,36 @@ public class ExamController extends BaseController {
             @PathVariable String examId,
             @Valid @RequestBody RemoveQuestionsFromExamRequest request) {
         return success(examService.removeQuestions(examId, request), MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
+    }
+
+    @PostMapping("/{examId}/questions:create")
+    @Operation(summary = "Create questions and add to exam",
+            description = "Create multiple questions with duplicate checking and add them to an exam")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = "Questions created and added to exam successfully"),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = ExamMessageConstants.API_BAD_REQUEST),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = ExamMessageConstants.EXAM_NOT_FOUND_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ExamMessageConstants.API_INTERNAL_ERROR)
+    })
+    public ResponseEntity<GenericResponse<ExamResponse>> createQuestionsForExam(
+            @PathVariable String examId,
+            @Valid @RequestBody CreateQuestionsRequest request) {
+        return success(examService.createQuestionsForExam(examId, request.getQuestions()), 
+                MessageCodeConstant.M002_CREATED, MessageConstant.CREATED);
+    }
+
+    @PostMapping("/with-questions")
+    @Operation(summary = "Create exam with questions",
+            description = "Create an exam and multiple questions in one transaction with duplicate checking")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = "Exam and questions created successfully"),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = ExamMessageConstants.API_BAD_REQUEST),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ExamMessageConstants.API_INTERNAL_ERROR)
+    })
+    public ResponseEntity<GenericResponse<ExamResponse>> createExamWithQuestions(
+            @Valid @RequestBody CreateExamWithQuestionsRequest request) {
+        return success(examService.createExamWithQuestions(request.getExam(), request.getQuestions()), 
+                MessageCodeConstant.M002_CREATED, MessageConstant.CREATED);
     }
 
     // Exam submission and scoring endpoints

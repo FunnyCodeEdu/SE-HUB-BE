@@ -89,5 +89,13 @@ public interface QuestionService {
      * @author catsocute
      */
     void deleteQuestion(String questionId);
+    
+    /**
+     * Create multiple questions with duplicate checking
+     * @param requests List of question requests
+     * @param courseId Course ID to filter duplicate checking
+     * @return List of created or existing question IDs
+     */
+    List<String> createQuestions(List<CreateQuestionRequest> requests, String courseId);
 }
 

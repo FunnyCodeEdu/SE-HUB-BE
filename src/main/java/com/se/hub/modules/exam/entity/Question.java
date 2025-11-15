@@ -82,6 +82,15 @@ public class Question extends BaseEntity {
             fetch = FetchType.LAZY,
             cascade = CascadeType.REMOVE)
     List<QuestionOption> options;
+
+    @Column(name = QuestionConstants.COL_NORMALIZED_TEXT,
+            columnDefinition = "TEXT")
+    String normalizedText; // Normalized text for duplicate checking (not returned to user)
+
+    @Column(name = QuestionConstants.COL_CONTENT_HASH,
+            length = 64,
+            unique = true)
+    String contentHash; // SHA-256 hash of normalized text (not returned to user)
 }
 
 

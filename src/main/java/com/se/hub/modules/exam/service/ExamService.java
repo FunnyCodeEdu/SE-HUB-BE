@@ -4,9 +4,12 @@ import com.se.hub.common.dto.request.PagingRequest;
 import com.se.hub.common.dto.response.PagingResponse;
 import com.se.hub.modules.exam.dto.request.AddQuestionsToExamRequest;
 import com.se.hub.modules.exam.dto.request.CreateExamRequest;
+import com.se.hub.modules.exam.dto.request.CreateQuestionRequest;
 import com.se.hub.modules.exam.dto.request.RemoveQuestionsFromExamRequest;
 import com.se.hub.modules.exam.dto.request.UpdateExamRequest;
 import com.se.hub.modules.exam.dto.response.ExamResponse;
+
+import java.util.List;
 
 public interface ExamService {
     /**
@@ -57,5 +60,21 @@ public interface ExamService {
      * @author catsocute
      */
     ExamResponse removeQuestions(String examId, RemoveQuestionsFromExamRequest request);
+    
+    /**
+     * Create questions and add them to an exam
+     * @param examId Exam ID
+     * @param requests List of question requests
+     * @return ExamResponse with updated questions
+     */
+    ExamResponse createQuestionsForExam(String examId, List<CreateQuestionRequest> requests);
+    
+    /**
+     * Create exam with questions in one transaction
+     * @param examRequest Exam request
+     * @param questionRequests List of question requests
+     * @return ExamResponse with questions
+     */
+    ExamResponse createExamWithQuestions(CreateExamRequest examRequest, List<CreateQuestionRequest> questionRequests);
 }
 

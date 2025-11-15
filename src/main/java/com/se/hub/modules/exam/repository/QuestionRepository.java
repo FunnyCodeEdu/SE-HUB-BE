@@ -69,4 +69,19 @@ public interface QuestionRepository extends JpaRepository<Question, String> {
                                      @Param("difficulty") String difficulty,
                                      @Param("questionType") String questionType,
                                      @Param("limit") int limit);
+    
+    /**
+     * Find question by content hash
+     */
+    java.util.Optional<Question> findByContentHash(String contentHash);
+    
+    /**
+     * Find questions by content hash and course (through exam)
+     * This query finds questions that belong to exams in the same course
+     */
+    @Query("SELECT DISTINCT q FROM Question q " +
+           "JOIN Exam e ON q MEMBER OF e.questions " +
+           "WHERE q.contentHash = :contentHash AND e.course.id = :courseId")
+    java.util.Optional<Question> findByContentHashAndCourseId(@Param("contentHash") String contentHash, 
+                                                               @Param("courseId") String courseId);
 }

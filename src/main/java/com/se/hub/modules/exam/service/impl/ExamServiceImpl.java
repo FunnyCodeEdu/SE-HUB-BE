@@ -11,6 +11,7 @@ import com.se.hub.modules.course.entity.Course;
 import com.se.hub.modules.course.repository.CourseRepository;
 import com.se.hub.modules.exam.dto.request.AddQuestionsToExamRequest;
 import com.se.hub.modules.exam.dto.request.CreateExamRequest;
+import com.se.hub.modules.exam.dto.request.CreateQuestionRequest;
 import com.se.hub.modules.exam.dto.request.RemoveQuestionsFromExamRequest;
 import com.se.hub.modules.exam.dto.request.UpdateExamRequest;
 import com.se.hub.modules.exam.dto.response.ExamResponse;
@@ -24,6 +25,7 @@ import com.se.hub.modules.exam.mapper.ExamMapper;
 import com.se.hub.modules.exam.repository.ExamRepository;
 import com.se.hub.modules.exam.repository.QuestionRepository;
 import com.se.hub.modules.exam.service.ExamService;
+import com.se.hub.modules.exam.service.QuestionService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -59,6 +61,7 @@ public class ExamServiceImpl implements ExamService {
     CourseRepository courseRepository;
     ExamMapper examMapper;
     ReactionService reactionService;
+    QuestionService questionService;
 
     /**
      * Helper method to build PagingResponse from Page<Exam>
@@ -269,6 +272,66 @@ public class ExamServiceImpl implements ExamService {
         
         ExamResponse response = examMapper.toExamResponse(examRepository.save(exam));
         log.debug("ExamService_removeQuestions_Questions removed successfully from exam: {}", examId);
+        return response;
+    }
+    
+    @Override
+    @Transactional
+    public ExamResponse createQuestionsForExam(String examId, List<CreateQuestionRequest> requests) {
+        log.debug("ExamService_createQuestionsForExam_Creating {} questions for exam: {}", requests.size(), examId);
+        
+        Exam exam = examRepository.findById(examId)
+                .orElseThrow(() -> {
+                    log.error("ExamService_createQuestionsForExam_Exam not found with id: {}", examId);
+                    return ExamErrorCode.EXAM_NOT_FOUND.toException();
+                });
+        
+        // Get course ID from exam
+        String courseId = exam.getCourse() != null ? exam.getCourse().getId() : null;
+        
+        // Create questions with duplicate checking
+        List<String> questionIds = questionService.createQuestions(requests, courseId);
+        
+        // Add questions to exam
+        Set<Question> currentQuestions = exam.getQuestions() == null ? new HashSet<>() : exam.getQuestions();
+        List<Question> newQuestions = questionRepository.findAllById(questionIds);
+        currentQuestions.addAll(newQuestions);
+        exam.setQuestions(currentQuestions);
+        exam.setUpdateBy(AuthUtils.getCurrentUserId());
+        
+        ExamResponse response = examMapper.toExamResponse(examRepository.save(exam));
+        log.debug("ExamService_createQuestionsForExam_Questions created and added to exam: {}", examId);
+        return response;
+    }
+    
+    @Override
+    @Transactional
+    public ExamResponse createExamWithQuestions(CreateExamRequest examRequest, List<CreateQuestionRequest> questionRequests) {
+        log.debug("ExamService_createExamWithQuestions_Creating exam with {} questions", questionRequests.size());
+        
+        // Create exam first
+        ExamResponse examResponse = create(examRequest);
+        String examId = examResponse.getId();
+        
+        // Get course ID from exam request
+        String courseId = examRequest.getCourseId();
+        
+        // Create questions with duplicate checking
+        List<String> questionIds = questionService.createQuestions(questionRequests, courseId);
+        
+        // Add questions to exam
+        Exam exam = examRepository.findById(examId)
+                .orElseThrow(() -> {
+                    log.error("ExamService_createExamWithQuestions_Exam not found after creation: {}", examId);
+                    return ExamErrorCode.EXAM_NOT_FOUND.toException();
+                });
+        
+        Set<Question> questions = new HashSet<>(questionRepository.findAllById(questionIds));
+        exam.setQuestions(questions);
+        exam.setUpdateBy(AuthUtils.getCurrentUserId());
+        
+        ExamResponse response = examMapper.toExamResponse(examRepository.save(exam));
+        log.debug("ExamService_createExamWithQuestions_Exam and questions created successfully");
         return response;
     }
 }

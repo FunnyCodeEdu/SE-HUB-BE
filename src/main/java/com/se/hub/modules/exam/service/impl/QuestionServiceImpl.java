@@ -21,6 +21,7 @@ import com.se.hub.modules.exam.mapper.QuestionOptionMapper;
 import com.se.hub.modules.exam.repository.QuestionOptionRepository;
 import com.se.hub.modules.exam.repository.QuestionRepository;
 import com.se.hub.modules.exam.service.QuestionService;
+import com.se.hub.modules.exam.utils.QuestionHashUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -76,7 +77,21 @@ public class QuestionServiceImpl implements QuestionService {
     @Transactional
     public QuestionResponse createQuestion(CreateQuestionRequest request) {
         log.debug("QuestionService_createQuestion_Creating new question for user: {}", AuthUtils.getCurrentUserId());
+        
+        // Extract option contents for hash generation
+        List<String> optionContents = request.getOptions() != null 
+                ? request.getOptions().stream()
+                        .map(CreateQuestionOptionRequest::getContent)
+                        .toList()
+                : new ArrayList<>();
+        
+        // Generate hash from question content and options
+        String contentHash = QuestionHashUtil.generateQuestionHash(request.getContent(), optionContents);
+        String normalizedText = QuestionHashUtil.buildHashContent(request.getContent(), optionContents);
+        
         Question question = questionMapper.toQuestion(request);
+        question.setContentHash(contentHash);
+        question.setNormalizedText(normalizedText);
         String userId = AuthUtils.getCurrentUserId();
         question.setCreatedBy(userId);
         question.setUpdateBy(userId);
@@ -306,5 +321,70 @@ public class QuestionServiceImpl implements QuestionService {
                     return option;
                 })
                 .collect(Collectors.toCollection(ArrayList::new));
+    }
+    
+    @Override
+    @Transactional
+    public List<String> createQuestions(List<CreateQuestionRequest> requests, String courseId) {
+        log.debug("QuestionService_createQuestions_Creating {} questions for course: {}", requests.size(), courseId);
+        String userId = AuthUtils.getCurrentUserId();
+        List<String> questionIds = new ArrayList<>();
+        int newCount = 0;
+        int existingCount = 0;
+        
+        for (CreateQuestionRequest request : requests) {
+            // Extract option contents for hash generation
+            List<String> optionContents = request.getOptions() != null 
+                    ? request.getOptions().stream()
+                            .map(CreateQuestionOptionRequest::getContent)
+                            .toList()
+                    : new ArrayList<>();
+            
+            // Generate hash from question content and options
+            String contentHash = QuestionHashUtil.generateQuestionHash(request.getContent(), optionContents);
+            String normalizedText = QuestionHashUtil.buildHashContent(request.getContent(), optionContents);
+            
+            // Check if question already exists in this course
+            Question existingQuestion = null;
+            if (courseId != null && !courseId.trim().isEmpty()) {
+                existingQuestion = questionRepository.findByContentHashAndCourseId(contentHash, courseId)
+                        .orElse(null);
+            } else {
+                // If no course, check globally
+                existingQuestion = questionRepository.findByContentHash(contentHash)
+                        .orElse(null);
+            }
+            
+            if (existingQuestion != null) {
+                // Question already exists, use existing ID
+                log.debug("QuestionService_createQuestions_Question already exists with hash: {}, using ID: {}", 
+                        contentHash, existingQuestion.getId());
+                questionIds.add(existingQuestion.getId());
+                existingCount++;
+            } else {
+                // Create new question
+                Question question = questionMapper.toQuestion(request);
+                question.setContentHash(contentHash);
+                question.setNormalizedText(normalizedText);
+                question.setCreatedBy(userId);
+                question.setUpdateBy(userId);
+                
+                Question savedQuestion = questionRepository.save(question);
+                
+                // Create and save question options if provided
+                if (request.getOptions() != null && !request.getOptions().isEmpty()) {
+                    savedQuestion.setOptions(createOptions(userId, savedQuestion, request.getOptions()));
+                }
+                
+                questionIds.add(savedQuestion.getId());
+                newCount++;
+                log.debug("QuestionService_createQuestions_New question created with ID: {}", savedQuestion.getId());
+            }
+        }
+        
+        log.debug("QuestionService_createQuestions_Created {} questions ({} new, {} existing)", 
+                questionIds.size(), newCount, existingCount);
+        
+        return questionIds;
     }
 }

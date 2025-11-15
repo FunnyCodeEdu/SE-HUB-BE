@@ -4,6 +4,8 @@ import com.se.hub.common.dto.response.PagingResponse;
 import com.se.hub.modules.profile.dto.response.FollowCountResponse;
 import com.se.hub.modules.profile.dto.response.ProfileResponse;
 
+import java.util.List;
+
 public interface FollowService {
     
     /**
@@ -71,5 +73,11 @@ public interface FollowService {
      * @return FollowCountResponse with followersCount and followingCount
      */
     FollowCountResponse getFollowCountByUserId(String userId);
+    
+    /**
+     * Get mutual friends (users that both current user and they follow each other)
+     * @return List of ProfileResponse for mutual friends
+     */
+    List<ProfileResponse> getMutualFriends();
 }
 

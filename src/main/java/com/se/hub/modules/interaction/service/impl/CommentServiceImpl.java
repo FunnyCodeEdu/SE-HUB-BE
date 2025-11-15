@@ -18,8 +18,10 @@ import com.se.hub.modules.interaction.exception.InteractionErrorCode;
 import com.se.hub.modules.interaction.mapper.CommentMapper;
 import com.se.hub.modules.interaction.repository.CommentRepository;
 import com.se.hub.modules.interaction.service.api.CommentService;
+import com.se.hub.modules.notification.event.MentionEvent;
 import com.se.hub.modules.profile.entity.Profile;
 import com.se.hub.modules.profile.repository.ProfileRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -52,6 +54,7 @@ public class CommentServiceImpl implements CommentService {
     CommentMapper commentMapper;
     ProfileRepository profileRepository;
     ReactionService reactionService;
+    ApplicationEventPublisher eventPublisher;
 
     /**
      * Create a new comment.
@@ -89,7 +92,14 @@ public class CommentServiceImpl implements CommentService {
         comment.setUpdateBy(userId);
 
         // Blocking I/O - virtual thread yields here
-        CommentResponse response = commentMapper.toCommentResponse(commentRepository.save(comment));
+        Comment savedComment = commentRepository.save(comment);
+        CommentResponse response = commentMapper.toCommentResponse(savedComment);
+        
+        // Create notifications for mentioned users
+        if (request.getMentions() != null && !request.getMentions().isEmpty()) {
+            createMentionNotifications(savedComment, userId, request.getMentions());
+        }
+        
         log.debug("CommentServiceImpl_createComment_Comment created successfully with id: {}", response.getId());
         return response;
     }
@@ -330,6 +340,43 @@ public class CommentServiceImpl implements CommentService {
                     .build());
         }
         return response;
+    }
+    
+    /**
+     * Create mention notifications for mentioned users
+     */
+    private void createMentionNotifications(Comment comment, String mentionerUserId, Map<String, String> mentions) {
+        log.debug("CommentServiceImpl_createMentionNotifications_Creating notifications for {} mentions", mentions.size());
+        
+        for (Map.Entry<String, String> mention : mentions.entrySet()) {
+            String mentionedUserId = mention.getKey();
+            
+            // Skip if mentioning yourself
+            if (mentionedUserId.equals(mentionerUserId)) {
+                log.debug("CommentServiceImpl_createMentionNotifications_Skipping self-mention for user: {}", mentionedUserId);
+                continue;
+            }
+            
+            // Validate mentioned user exists
+            if (!profileRepository.existsByUserId(mentionedUserId)) {
+                log.warn("CommentServiceImpl_createMentionNotifications_Mentioned user not found: {}", mentionedUserId);
+                continue;
+            }
+            
+            // Publish mention event
+            MentionEvent mentionEvent = new MentionEvent(
+                    this,
+                    mentionedUserId,
+                    mentionerUserId,
+                    comment.getId(),
+                    comment.getContent(),
+                    comment.getTargetType().name(),
+                    comment.getTargetId()
+            );
+            
+            eventPublisher.publishEvent(mentionEvent);
+            log.debug("CommentServiceImpl_createMentionNotifications_Mention event published for user: {}", mentionedUserId);
+        }
     }
 }
 

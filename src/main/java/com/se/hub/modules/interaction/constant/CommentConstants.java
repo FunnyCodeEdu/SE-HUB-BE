@@ -10,6 +10,7 @@ public class CommentConstants {
     public static final String COL_TARGET_ID = "targetId";
     public static final String COL_CONTENT = "content";
     public static final String COL_PARENT_COMMENT = "parentCommentId";
+    public static final String COL_MENTIONS = "mentions";
 
     //===== COLUMN DEFINITIONS ======
     public static final String TARGET_TYPE_DEFINITION = "VARCHAR(20)";

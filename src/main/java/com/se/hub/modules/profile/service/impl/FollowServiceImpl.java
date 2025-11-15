@@ -222,5 +222,26 @@ public class FollowServiceImpl implements FollowService {
                 .followingCount(followingCount)
                 .build();
     }
+    
+    @Override
+    public List<ProfileResponse> getMutualFriends() {
+        String currentUserId = AuthUtils.getCurrentUserId();
+        
+        // Get mutual friends (users that both follow each other)
+        List<User> mutualFriends = followRepository.findMutualFriends(currentUserId);
+        
+        // Convert to ProfileResponse
+        return mutualFriends.stream()
+                .map(user -> {
+                    Profile profile = profileRepository.findByUserId(user.getId())
+                            .orElse(null);
+                    if (profile != null) {
+                        return profileMapper.toProfileResponse(profile);
+                    }
+                    return null;
+                })
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toList());
+    }
 }
 

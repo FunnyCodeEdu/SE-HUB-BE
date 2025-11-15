@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -45,5 +46,14 @@ public interface FollowRepository extends JpaRepository<Follow, String> {
      * Count how many followers a user has
      */
     long countByFollowing(User following);
+    
+    /**
+     * Get mutual friends (users that both current user and target user follow each other)
+     * Mutual friend = user A follows user B AND user B follows user A
+     */
+    @Query("SELECT DISTINCT f1.following FROM Follow f1 " +
+           "INNER JOIN Follow f2 ON f1.following.id = f2.follower.id " +
+           "WHERE f1.follower.id = :userId AND f2.following.id = :userId")
+    List<User> findMutualFriends(@Param("userId") String userId);
 }
 

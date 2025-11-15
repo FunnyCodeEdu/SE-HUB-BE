@@ -16,6 +16,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Map;
+
 @Getter
 @Setter
 @Builder
@@ -42,5 +44,7 @@ public class CreateCommentRequest {
     String content;
 
     String parentCommentId;
+
+    Map<String, String> mentions; // Map<userId, username> - Optional: danh sách user được mention
 }
 

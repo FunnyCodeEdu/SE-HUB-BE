@@ -11,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Comment response DTO
@@ -32,6 +33,7 @@ public class CommentResponse {
     String parentCommentId;
     List<CommentResponse> replies;
     ReactionInfo reactions;
+    Map<String, String> mentions; // Map<userId, username>
     Instant createDate;
     Instant updatedDate;
     String createdBy;

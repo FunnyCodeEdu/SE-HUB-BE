@@ -8,11 +8,13 @@ import com.se.hub.modules.interaction.enums.TargetType;
 import com.se.hub.modules.profile.entity.Profile;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -28,6 +30,7 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -81,5 +84,12 @@ public class Comment extends BaseEntity {
             cascade = CascadeType.ALL,
             fetch = FetchType.LAZY)
     List<Comment> replies;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @JoinTable(name = "comment_mentions",
+            joinColumns = @JoinColumn(name = "comment_id"))
+    @Column(name = "username")
+    @jakarta.persistence.MapKeyColumn(name = "user_id")
+    Map<String, String> mentions; // Map<userId, username>
 }
 

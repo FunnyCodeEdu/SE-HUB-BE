@@ -15,6 +15,8 @@ import com.se.hub.modules.interaction.dto.request.CreateCommentRequest;
 import com.se.hub.modules.interaction.dto.request.UpdateCommentRequest;
 import com.se.hub.modules.interaction.dto.response.CommentResponse;
 import com.se.hub.modules.interaction.service.api.CommentService;
+import com.se.hub.modules.profile.dto.response.ProfileResponse;
+import com.se.hub.modules.profile.service.api.FollowService;
 import com.se.hub.modules.profile.service.api.ProfileProgressService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -37,6 +39,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @Slf4j
 @Tag(name = "Comment Management",
         description = "Comment management API")
@@ -48,6 +52,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class CommentController extends BaseController {
     ProfileProgressService profileProgressService;
     CommentService commentService;
+    FollowService followService;
 
     @PostMapping
     @Operation(summary = "Create new comment",
@@ -225,6 +230,19 @@ public class CommentController extends BaseController {
     public ResponseEntity<GenericResponse<Void>> deleteComment(@PathVariable String commentId) {
         commentService.deleteCommentById(commentId);
         return success(null, MessageCodeConstant.M004_DELETED, MessageConstant.DELETED);
+    }
+
+    @GetMapping("/mutual-friends")
+    @Operation(summary = "Get mutual friends for tagging",
+            description = "Get list of mutual friends (users that both follow each other) for tagging in comments")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = "Mutual friends retrieved successfully"),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = InteractionMessageConstants.API_INTERNAL_ERROR)
+    })
+    public ResponseEntity<GenericResponse<List<ProfileResponse>>> getMutualFriends() {
+        log.debug("Getting mutual friends for tagging");
+        List<ProfileResponse> data = followService.getMutualFriends();
+        return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
     }
 }
 

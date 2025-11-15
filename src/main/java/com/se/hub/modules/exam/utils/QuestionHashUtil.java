@@ -32,13 +32,19 @@ public class QuestionHashUtil {
     
     /**
      * Get first N words from text
+     * If text has fewer than N words, returns all words
+     * Example: getFirstNWords("A B", 5) returns "A B" (only 2 words available)
      */
     private static String getFirstNWords(String text, int n) {
         if (text == null || text.trim().isEmpty()) {
             return "";
         }
         String[] words = text.split("\\s+");
+        // Lấy số từ tối đa có thể (nếu text có ít hơn N từ thì lấy hết)
         int wordsToTake = Math.min(n, words.length);
+        if (wordsToTake == 0) {
+            return "";
+        }
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < wordsToTake; i++) {
             if (i > 0) sb.append(" ");

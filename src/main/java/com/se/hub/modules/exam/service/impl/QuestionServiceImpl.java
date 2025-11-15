@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Question Service Implementation
@@ -245,9 +246,13 @@ public class QuestionServiceImpl implements QuestionService {
             // Clear the collection in memory (create new ArrayList to avoid immutable collection issue)
             question.setOptions(new ArrayList<>());
             
-            // Add new options
+            // Create and save new options
             List<QuestionOption> options = updateOptions(userId, question, request.getOptions());
-            question.setOptions(options);
+            // Save options to database before setting them on the question
+            List<QuestionOption> savedOptions = options.stream()
+                    .map(questionOptionRepository::save)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            question.setOptions(savedOptions);
         }
 
         QuestionResponse response = questionMapper.toQuestionResponse(questionRepository.save(question));
@@ -282,7 +287,7 @@ public class QuestionServiceImpl implements QuestionService {
                         option.setUpdateBy(userId);
                         return questionOptionRepository.save(option);
                     })
-                    .toList();
+                    .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private List<QuestionOption> updateOptions(String userId, Question question, List<UpdateQuestionOptionRequest> requests) {
@@ -300,6 +305,6 @@ public class QuestionServiceImpl implements QuestionService {
                     option.setUpdateBy(userId);
                     return option;
                 })
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 }

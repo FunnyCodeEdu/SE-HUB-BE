@@ -16,6 +16,7 @@ import com.se.hub.modules.interaction.service.api.ReactionService;
 import com.se.hub.modules.profile.entity.Profile;
 import com.se.hub.modules.profile.repository.ProfileRepository;
 import com.se.hub.modules.profile.repository.UserStatsRepository;
+import com.se.hub.modules.profile.service.api.ActivityService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -49,6 +50,7 @@ public class ReactionServiceImpl implements ReactionService {
     CommentRepository commentRepository;
     ProfileRepository profileRepository;
     UserStatsRepository userStatsRepository;
+    ActivityService activityService;
 
     /**
      * Toggle reaction (like/unlike) for a target.
@@ -169,6 +171,17 @@ public class ReactionServiceImpl implements ReactionService {
         boolean isAdded = toggleReaction(targetType, targetId, reactionType);
         // Blocking I/O - virtual thread yields here
         long count = getReactionCount(targetType, targetId, reactionType);
+
+        // Increment activity count if reaction was added and target is COMMENT
+        if (isAdded && targetType == TargetType.COMMENT && reactionType == ReactionType.LIKE) {
+            try {
+                Profile currentUser = getCurrentUser();
+                activityService.incrementActivity(currentUser.getId());
+            } catch (Exception e) {
+                log.warn("ReactionServiceImpl_toggleReactionWithCount_Failed to increment activity for comment like: {}", e.getMessage());
+                // Don't throw exception, activity tracking is not critical
+            }
+        }
 
         return ReactionToggleResult.builder()
                 .isAdded(isAdded)

@@ -13,6 +13,7 @@ import com.se.hub.modules.blog.dto.response.BlogResponse;
 import com.se.hub.modules.blog.entity.Blog;
 import com.se.hub.modules.blog.mapper.BlogMapper;
 import com.se.hub.modules.interaction.dto.response.ReactionInfo;
+import com.se.hub.modules.interaction.dto.response.ReactionToggleResult;
 import com.se.hub.modules.interaction.enums.ReactionType;
 import com.se.hub.modules.interaction.enums.TargetType;
 import com.se.hub.modules.interaction.repository.CommentRepository;
@@ -22,6 +23,7 @@ import com.se.hub.modules.blog.repository.BlogRepository;
 import com.se.hub.modules.blog.service.BlogService;
 import com.se.hub.modules.profile.entity.Profile;
 import com.se.hub.modules.profile.repository.ProfileRepository;
+import com.se.hub.modules.profile.service.api.ActivityService;
 import com.se.hub.modules.profile.service.api.ProfileProgressService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -59,6 +61,7 @@ public class BlogServiceImpl implements BlogService {
     ProfileRepository profileRepository;
     BlogMapper blogMapper;
     ProfileProgressService profileProgressService;
+    ActivityService activityService;
     ReactionService reactionService;
     CommentRepository commentRepository;
 
@@ -183,6 +186,9 @@ public class BlogServiceImpl implements BlogService {
         
         // Update user stats after blog creation
         profileProgressService.updatePostsUploaded();
+        
+        // Increment activity count for author
+        activityService.incrementActivity(author.getId());
         
         log.debug("BlogService_createBlog_Blog created successfully with id: {}", response.getId());
         return response;
@@ -430,14 +436,24 @@ public class BlogServiceImpl implements BlogService {
         }
 
         // Use ReactionService to toggle like reaction
-        reactionService.toggleReactionWithCount(TargetType.BLOG, blogId, ReactionType.LIKE);
+        ReactionToggleResult toggleResult = reactionService.toggleReactionWithCount(TargetType.BLOG, blogId, ReactionType.LIKE);
         
         // Update reaction count from Reaction table
         updateBlogReactionCount(blog);
         
+        // Increment activity count if reaction was added (not removed)
+        String currentUserId = AuthUtils.getCurrentUserId();
+        if (toggleResult.isAdded()) {
+            Profile currentUser = profileRepository.findByUserId(currentUserId)
+                    .orElseThrow(() -> {
+                        log.error("BlogService_likeBlog_Profile not found for user: {}", currentUserId);
+                        return new AppException(ErrorCode.PROFILE_NOT_FOUND);
+                    });
+            activityService.incrementActivity(currentUser.getId());
+        }
+        
         log.debug("BlogService_likeBlog_Reaction toggled for blog id {}", blogId);
         
-        String currentUserId = AuthUtils.getCurrentUserId();
         return toBlogResponseWithReaction(blogRepository.findById(blogId).orElse(blog), currentUserId);
     }
 

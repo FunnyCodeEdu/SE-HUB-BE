@@ -10,11 +10,15 @@ import com.se.hub.common.dto.request.PagingRequest;
 import com.se.hub.common.dto.request.SortRequest;
 import com.se.hub.common.dto.response.GenericResponse;
 import com.se.hub.common.dto.response.PagingResponse;
+import com.se.hub.modules.profile.constant.activity.ActivityControllerConstants;
 import com.se.hub.modules.profile.constant.profile.ProfileControllerConstants;
 import com.se.hub.modules.profile.dto.request.CreateDefaultProfileRequest;
 import com.se.hub.modules.profile.dto.request.UpdateProfileRequest;
+import com.se.hub.modules.profile.dto.response.ActivityResponse;
+import com.se.hub.modules.profile.dto.response.ContributionGraphResponse;
 import com.se.hub.modules.profile.dto.response.FollowCountResponse;
 import com.se.hub.modules.profile.dto.response.ProfileResponse;
+import com.se.hub.modules.profile.service.api.ActivityService;
 import com.se.hub.modules.profile.service.api.FollowService;
 import com.se.hub.modules.profile.service.api.ProfileService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,6 +46,7 @@ import org.springframework.web.bind.annotation.*;
 public class ProfileController extends BaseController {
     ProfileService profileService;
     FollowService followService;
+    ActivityService activityService;
 
     @PostMapping("/default")
     @Operation(summary = ProfileControllerConstants.CREATE_DEFAULT_OPERATION_SUMMARY, description = ProfileControllerConstants.CREATE_DEFAULT_OPERATION_DESCRIPTION)
@@ -280,6 +285,51 @@ public class ProfileController extends BaseController {
             @PathVariable @NotBlank(message = "User ID cannot be blank") String userId) {
         log.debug("Getting follow count for user: {}", userId);
         FollowCountResponse data = followService.getFollowCountByUserId(userId);
+        return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
+    }
+
+    @GetMapping("/{profileId}/activity")
+    @Operation(summary = ActivityControllerConstants.GET_ACTIVITY_OPERATION_SUMMARY,
+            description = ActivityControllerConstants.GET_ACTIVITY_OPERATION_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = ActivityControllerConstants.GET_ACTIVITY_SUCCESS_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<ActivityResponse>> getActivityByDate(
+            @Parameter(description = ActivityControllerConstants.PROFILE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable @NotBlank(message = "Profile ID cannot be blank") String profileId,
+            @Parameter(description = ActivityControllerConstants.DATE_PARAM_DESCRIPTION, required = false)
+            @RequestParam(required = false) java.time.LocalDate date) {
+        log.debug("Getting activity for profile {} on date {}", profileId, date);
+        
+        // Use current date if not provided
+        if (date == null) {
+            date = java.time.LocalDate.now();
+        }
+        
+        ActivityResponse data = activityService.getActivityByDate(profileId, date);
+        return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
+    }
+
+    @GetMapping("/{profileId}/contribution-graph")
+    @Operation(summary = "Get contribution graph",
+            description = "Get contribution graph data for a profile in GitHub contribution graph format")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = "Contribution graph retrieved successfully"),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<ContributionGraphResponse>> getContributionGraph(
+            @Parameter(description = ActivityControllerConstants.PROFILE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable @NotBlank(message = "Profile ID cannot be blank") String profileId,
+            @Parameter(description = "Year to get contribution graph for (default: current year)", required = false)
+            @RequestParam(required = false) Integer year) {
+        log.debug("Getting contribution graph for profile {} year {}", profileId, year);
+        
+        ContributionGraphResponse data = activityService.getContributionGraph(profileId, year);
         return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
     }
 }

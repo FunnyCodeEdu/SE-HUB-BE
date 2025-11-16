@@ -21,6 +21,7 @@ import com.se.hub.modules.interaction.service.api.CommentService;
 import com.se.hub.modules.notification.event.MentionEvent;
 import com.se.hub.modules.profile.entity.Profile;
 import com.se.hub.modules.profile.repository.ProfileRepository;
+import com.se.hub.modules.profile.service.api.ActivityService;
 import org.springframework.context.ApplicationEventPublisher;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +54,7 @@ public class CommentServiceImpl implements CommentService {
     CommentRepository commentRepository;
     CommentMapper commentMapper;
     ProfileRepository profileRepository;
+    ActivityService activityService;
     ReactionService reactionService;
     ApplicationEventPublisher eventPublisher;
 
@@ -94,6 +96,9 @@ public class CommentServiceImpl implements CommentService {
         // Blocking I/O - virtual thread yields here
         Comment savedComment = commentRepository.save(comment);
         CommentResponse response = commentMapper.toCommentResponse(savedComment);
+        
+        // Increment activity count for author (applies to both BLOG and EXAM comments)
+        activityService.incrementActivity(author.getId());
         
         // Create notifications for mentioned users
         if (request.getMentions() != null && !request.getMentions().isEmpty()) {

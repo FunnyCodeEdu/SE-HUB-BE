@@ -104,58 +104,31 @@ public class AnswerReportServiceImpl implements AnswerReportService {
 
     @Override
     @Transactional
-    public AnswerReportResponse approveAnswerReport(String reportId) {
-        log.debug("AnswerReportService_approveAnswerReport_Approving answer report with id: {}", reportId);
+    public AnswerReportResponse updateAnswerReportStatus(String reportId, AnswerReportStatus status) {
+        log.debug("AnswerReportService_updateAnswerReportStatus_Updating answer report status with id: {}, new status: {}", reportId, status);
 
         checkAdminPermission();
 
-        AnswerReport report = answerReportRepository.findById(reportId)
-                .orElseThrow(() -> {
-                    log.error("AnswerReportService_approveAnswerReport_Answer report not found with id: {}", reportId);
-                    return AnswerReportErrorCode.ANSWER_REPORT_NOT_FOUND.toException();
-                });
-
-        // Allow approve if status is PENDING or REJECTED (allow switching from reject to approve)
-        if (report.getStatus() != AnswerReportStatus.PENDING && report.getStatus() != AnswerReportStatus.REJECTED) {
-            log.error("AnswerReportService_approveAnswerReport_Answer report already approved with id: {}", reportId);
+        // Validate status - only allow APPROVED (treated as UPDATED) or REJECTED
+        if (status != AnswerReportStatus.APPROVED && status != AnswerReportStatus.REJECTED) {
+            log.error("AnswerReportService_updateAnswerReportStatus_Invalid status: {}. Only APPROVED or REJECTED allowed", status);
             throw AnswerReportErrorCode.ANSWER_REPORT_ALREADY_PROCESSED.toException();
         }
 
-        report.setStatus(AnswerReportStatus.APPROVED);
+        AnswerReport report = answerReportRepository.findById(reportId)
+                .orElseThrow(() -> {
+                    log.error("AnswerReportService_updateAnswerReportStatus_Answer report not found with id: {}", reportId);
+                    return AnswerReportErrorCode.ANSWER_REPORT_NOT_FOUND.toException();
+                });
+
+        // Allow update to any status (APPROVED or REJECTED) from any status
+        // This provides flexibility to switch between statuses
+        report.setStatus(status);
         report.setAdminId(AuthUtils.getCurrentUserId());
         report.setUpdateBy(AuthUtils.getCurrentUserId());
 
         AnswerReport savedReport = answerReportRepository.save(report);
-        log.debug("AnswerReportService_approveAnswerReport_Answer report approved successfully with id: {}", reportId);
-
-        return answerReportMapper.toAnswerReportResponse(savedReport);
-    }
-
-    @Override
-    @Transactional
-    public AnswerReportResponse rejectAnswerReport(String reportId) {
-        log.debug("AnswerReportService_rejectAnswerReport_Rejecting answer report with id: {}", reportId);
-
-        checkAdminPermission();
-
-        AnswerReport report = answerReportRepository.findById(reportId)
-                .orElseThrow(() -> {
-                    log.error("AnswerReportService_rejectAnswerReport_Answer report not found with id: {}", reportId);
-                    return AnswerReportErrorCode.ANSWER_REPORT_NOT_FOUND.toException();
-                });
-
-        // Allow reject if status is PENDING or APPROVED (allow switching from approve to reject)
-        if (report.getStatus() != AnswerReportStatus.PENDING && report.getStatus() != AnswerReportStatus.APPROVED) {
-            log.error("AnswerReportService_rejectAnswerReport_Answer report already rejected with id: {}", reportId);
-            throw AnswerReportErrorCode.ANSWER_REPORT_ALREADY_PROCESSED.toException();
-        }
-
-        report.setStatus(AnswerReportStatus.REJECTED);
-        report.setAdminId(AuthUtils.getCurrentUserId());
-        report.setUpdateBy(AuthUtils.getCurrentUserId());
-
-        AnswerReport savedReport = answerReportRepository.save(report);
-        log.debug("AnswerReportService_rejectAnswerReport_Answer report rejected successfully with id: {}", reportId);
+        log.debug("AnswerReportService_updateAnswerReportStatus_Answer report status updated successfully with id: {}, new status: {}", reportId, status);
 
         return answerReportMapper.toAnswerReportResponse(savedReport);
     }

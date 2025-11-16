@@ -12,6 +12,7 @@ import com.se.hub.common.dto.response.GenericResponse;
 import com.se.hub.common.dto.response.PagingResponse;
 import com.se.hub.modules.exam.constant.AnswerReportMessageConstants;
 import com.se.hub.modules.exam.dto.request.CreateAnswerReportRequest;
+import com.se.hub.modules.exam.dto.request.UpdateAnswerReportStatusRequest;
 import com.se.hub.modules.exam.dto.response.AnswerReportResponse;
 import com.se.hub.modules.exam.service.AnswerReportService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -83,37 +84,21 @@ public class AnswerReportController extends BaseController {
                 MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
     }
 
-    @PutMapping("/{reportId}/approve")
-    @Operation(summary = "Approve answer report (Admin only)",
-            description = "Approve an answer report (Admin only)")
+    @PutMapping("/{reportId}/status")
+    @Operation(summary = "Update answer report status (Admin only)",
+            description = "Update answer report status to APPROVED (treated as UPDATED) or REJECTED (Admin only)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = ResponseCode.OK_200, description = AnswerReportMessageConstants.API_ANSWER_REPORT_APPROVED_SUCCESS,
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = "Answer report status updated successfully",
                     useReturnTypeSchema = true),
             @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = AnswerReportMessageConstants.API_BAD_REQUEST),
             @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = AnswerReportMessageConstants.ANSWER_REPORT_NOT_FOUND_MESSAGE),
             @ApiResponse(responseCode = ResponseCode.FORBIDDEN_403, description = "Forbidden - Admin access required"),
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = AnswerReportMessageConstants.API_INTERNAL_ERROR)
     })
-    public ResponseEntity<GenericResponse<AnswerReportResponse>> approveAnswerReport(
-            @PathVariable String reportId) {
-        AnswerReportResponse response = answerReportService.approveAnswerReport(reportId);
-        return success(response, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
-    }
-
-    @PutMapping("/{reportId}/reject")
-    @Operation(summary = "Reject answer report (Admin only)",
-            description = "Reject an answer report (Admin only)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = ResponseCode.OK_200, description = AnswerReportMessageConstants.API_ANSWER_REPORT_REJECTED_SUCCESS,
-                    useReturnTypeSchema = true),
-            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = AnswerReportMessageConstants.API_BAD_REQUEST),
-            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = AnswerReportMessageConstants.ANSWER_REPORT_NOT_FOUND_MESSAGE),
-            @ApiResponse(responseCode = ResponseCode.FORBIDDEN_403, description = "Forbidden - Admin access required"),
-            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = AnswerReportMessageConstants.API_INTERNAL_ERROR)
-    })
-    public ResponseEntity<GenericResponse<AnswerReportResponse>> rejectAnswerReport(
-            @PathVariable String reportId) {
-        AnswerReportResponse response = answerReportService.rejectAnswerReport(reportId);
+    public ResponseEntity<GenericResponse<AnswerReportResponse>> updateAnswerReportStatus(
+            @PathVariable String reportId,
+            @Valid @RequestBody UpdateAnswerReportStatusRequest request) {
+        AnswerReportResponse response = answerReportService.updateAnswerReportStatus(reportId, request.getStatus());
         return success(response, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
     }
 }

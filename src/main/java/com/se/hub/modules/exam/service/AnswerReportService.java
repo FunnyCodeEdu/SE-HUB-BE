@@ -17,13 +17,9 @@ public interface AnswerReportService {
     PagingResponse<AnswerReportResponse> getAllAnswerReports(PagingRequest request);
 
     /**
-     * Approve answer report (admin only)
+     * Update answer report status (admin only)
+     * Can update status to APPROVED (treated as UPDATED) or REJECTED
      */
-    AnswerReportResponse approveAnswerReport(String reportId);
-
-    /**
-     * Reject answer report (admin only)
-     */
-    AnswerReportResponse rejectAnswerReport(String reportId);
+    AnswerReportResponse updateAnswerReportStatus(String reportId, AnswerReportStatus status);
 }
 

@@ -17,6 +17,7 @@ import com.se.hub.modules.exam.dto.request.UpdateExamRequest;
 import com.se.hub.modules.exam.dto.response.ExamResponse;
 import com.se.hub.modules.exam.dto.response.QuestionResponse;
 import com.se.hub.modules.exam.entity.Exam;
+import com.se.hub.modules.exam.entity.ExamAttempt;
 import com.se.hub.modules.interaction.dto.response.ReactionInfo;
 import com.se.hub.modules.interaction.enums.TargetType;
 import com.se.hub.modules.interaction.service.api.ReactionService;
@@ -24,6 +25,7 @@ import com.se.hub.modules.exam.entity.Question;
 import com.se.hub.modules.exam.exception.ExamErrorCode;
 import com.se.hub.modules.exam.mapper.ExamMapper;
 import com.se.hub.modules.exam.mapper.QuestionMapper;
+import com.se.hub.modules.exam.repository.ExamAttemptRepository;
 import com.se.hub.modules.exam.repository.ExamRepository;
 import com.se.hub.modules.exam.repository.QuestionRepository;
 import com.se.hub.modules.exam.service.ExamService;
@@ -65,6 +67,7 @@ public class ExamServiceImpl implements ExamService {
     QuestionMapper questionMapper;
     ReactionService reactionService;
     QuestionService questionService;
+    ExamAttemptRepository examAttemptRepository;
 
     /**
      * Helper method to build PagingResponse from Page<Exam>
@@ -215,9 +218,17 @@ public class ExamServiceImpl implements ExamService {
             throw ExamErrorCode.EXAM_ID_REQUIRED.toException();
         }
 
-        if (!examRepository.existsById(examId)) {
-            log.error("ExamService_deleteById_Exam not found with id: {}", examId);
-            throw ExamErrorCode.EXAM_NOT_FOUND.toException();
+        Exam exam = examRepository.findById(examId)
+                .orElseThrow(() -> {
+                    log.error("ExamService_deleteById_Exam not found with id: {}", examId);
+                    return ExamErrorCode.EXAM_NOT_FOUND.toException();
+                });
+
+        // Delete all exam attempts associated with this exam
+        List<ExamAttempt> attempts = examAttemptRepository.findByExamIdOrderByCreateDateDesc(examId, Pageable.unpaged()).getContent();
+        if (!attempts.isEmpty()) {
+            log.debug("ExamService_deleteById_Deleting {} exam attempts associated with exam", attempts.size());
+            examAttemptRepository.deleteAll(attempts);
         }
 
         examRepository.deleteById(examId);

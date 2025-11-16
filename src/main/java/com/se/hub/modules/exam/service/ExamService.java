@@ -8,6 +8,7 @@ import com.se.hub.modules.exam.dto.request.CreateQuestionRequest;
 import com.se.hub.modules.exam.dto.request.RemoveQuestionsFromExamRequest;
 import com.se.hub.modules.exam.dto.request.UpdateExamRequest;
 import com.se.hub.modules.exam.dto.response.ExamResponse;
+import com.se.hub.modules.exam.dto.response.QuestionResponse;
 
 import java.util.List;
 
@@ -76,5 +77,12 @@ public interface ExamService {
      * @return ExamResponse with questions
      */
     ExamResponse createExamWithQuestions(CreateExamRequest examRequest, List<CreateQuestionRequest> questionRequests);
+    
+    /**
+     * Get questions by exam ID
+     * @param examId Exam ID
+     * @return List of QuestionResponse
+     */
+    List<QuestionResponse> getQuestionsByExamId(String examId);
 }
 

@@ -15,6 +15,7 @@ import com.se.hub.modules.exam.dto.request.CreateQuestionRequest;
 import com.se.hub.modules.exam.dto.request.RemoveQuestionsFromExamRequest;
 import com.se.hub.modules.exam.dto.request.UpdateExamRequest;
 import com.se.hub.modules.exam.dto.response.ExamResponse;
+import com.se.hub.modules.exam.dto.response.QuestionResponse;
 import com.se.hub.modules.exam.entity.Exam;
 import com.se.hub.modules.interaction.dto.response.ReactionInfo;
 import com.se.hub.modules.interaction.enums.TargetType;
@@ -22,6 +23,7 @@ import com.se.hub.modules.interaction.service.api.ReactionService;
 import com.se.hub.modules.exam.entity.Question;
 import com.se.hub.modules.exam.exception.ExamErrorCode;
 import com.se.hub.modules.exam.mapper.ExamMapper;
+import com.se.hub.modules.exam.mapper.QuestionMapper;
 import com.se.hub.modules.exam.repository.ExamRepository;
 import com.se.hub.modules.exam.repository.QuestionRepository;
 import com.se.hub.modules.exam.service.ExamService;
@@ -60,6 +62,7 @@ public class ExamServiceImpl implements ExamService {
     QuestionRepository questionRepository;
     CourseRepository courseRepository;
     ExamMapper examMapper;
+    QuestionMapper questionMapper;
     ReactionService reactionService;
     QuestionService questionService;
 
@@ -333,6 +336,32 @@ public class ExamServiceImpl implements ExamService {
         ExamResponse response = examMapper.toExamResponse(examRepository.save(exam));
         log.debug("ExamService_createExamWithQuestions_Exam and questions created successfully");
         return response;
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<QuestionResponse> getQuestionsByExamId(String examId) {
+        log.debug("ExamService_getQuestionsByExamId_Fetching questions for exam: {}", examId);
+        Exam exam = examRepository.findById(examId)
+                .orElseThrow(() -> {
+                    log.error("ExamService_getQuestionsByExamId_Exam not found with id: {}", examId);
+                    return ExamErrorCode.EXAM_NOT_FOUND.toException();
+                });
+        
+        // Access questions to trigger lazy loading
+        Set<Question> questions = exam.getQuestions();
+        if (questions == null || questions.isEmpty()) {
+            log.debug("ExamService_getQuestionsByExamId_No questions found for exam: {}", examId);
+            return List.of();
+        }
+        
+        // Map questions to QuestionResponse
+        List<QuestionResponse> questionResponses = questions.stream()
+                .map(questionMapper::toQuestionResponse)
+                .toList();
+        
+        log.debug("ExamService_getQuestionsByExamId_Found {} questions for exam: {}", questionResponses.size(), examId);
+        return questionResponses;
     }
 }
 

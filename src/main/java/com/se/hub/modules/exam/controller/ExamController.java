@@ -23,6 +23,7 @@ import com.se.hub.modules.exam.dto.request.SubmitExamRequest;
 import com.se.hub.modules.exam.dto.request.UpdateExamRequest;
 import com.se.hub.modules.exam.dto.response.ExamResponse;
 import com.se.hub.modules.exam.dto.response.ExamResultResponse;
+import com.se.hub.modules.exam.dto.response.QuestionResponse;
 import com.se.hub.modules.exam.service.ExamAttemptService;
 import com.se.hub.modules.exam.service.ExamService;
 import com.se.hub.modules.profile.repository.ProfileRepository;
@@ -127,6 +128,18 @@ public class ExamController extends BaseController {
     })
     public ResponseEntity<GenericResponse<ExamResponse>> getById(@PathVariable String examId) {
         return success(examService.getById(examId), MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
+    }
+
+    @GetMapping("/{examId}/questions")
+    @Operation(summary = "Get questions by exam ID",
+            description = "Get list of questions for a specific exam")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = "Questions retrieved successfully"),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = ExamMessageConstants.EXAM_NOT_FOUND_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ExamMessageConstants.API_INTERNAL_ERROR)
+    })
+    public ResponseEntity<GenericResponse<List<QuestionResponse>>> getQuestionsByExamId(@PathVariable String examId) {
+        return success(examService.getQuestionsByExamId(examId), MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
     }
 
     @PutMapping("/{examId}")

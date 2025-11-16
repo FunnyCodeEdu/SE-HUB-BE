@@ -29,5 +29,15 @@ public interface AnswerReportRepository extends JpaRepository<AnswerReport, Stri
      * Find reports by question option ID
      */
     Page<AnswerReport> findByQuestionOptionId(String questionOptionId, Pageable pageable);
+
+    /**
+     * Delete all reports by question ID
+     */
+    void deleteByQuestionId(String questionId);
+
+    /**
+     * Delete all reports by question option ID
+     */
+    void deleteByQuestionOptionId(String questionOptionId);
 }
 

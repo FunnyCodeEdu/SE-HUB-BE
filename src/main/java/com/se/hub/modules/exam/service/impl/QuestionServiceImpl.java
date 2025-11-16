@@ -18,6 +18,7 @@ import com.se.hub.modules.exam.enums.QuestionType;
 import com.se.hub.modules.exam.exception.QuestionErrorCode;
 import com.se.hub.modules.exam.mapper.QuestionMapper;
 import com.se.hub.modules.exam.mapper.QuestionOptionMapper;
+import com.se.hub.modules.exam.repository.AnswerReportRepository;
 import com.se.hub.modules.exam.repository.QuestionOptionRepository;
 import com.se.hub.modules.exam.repository.QuestionRepository;
 import com.se.hub.modules.exam.service.QuestionService;
@@ -53,6 +54,7 @@ import java.util.stream.Collectors;
 public class QuestionServiceImpl implements QuestionService {
     QuestionRepository questionRepository;
     QuestionOptionRepository questionOptionRepository;
+    AnswerReportRepository answerReportRepository;
     QuestionMapper questionMapper;
     QuestionOptionMapper questionOptionMapper;
 
@@ -255,6 +257,18 @@ public class QuestionServiceImpl implements QuestionService {
 
         // Update question options if provided
         if (request.getOptions() != null && !request.getOptions().isEmpty()) {
+            // Fetch existing options to get their IDs for deleting related AnswerReports
+            List<QuestionOption> existingOptions = questionOptionRepository.findByQuestionId(questionId);
+            
+            // Delete all AnswerReports related to existing question options first
+            // This prevents foreign key constraint violation when deleting QuestionOption
+            if (!existingOptions.isEmpty()) {
+                log.debug("QuestionService_updateQuestion_Deleting answer reports for {} existing question options", existingOptions.size());
+                for (QuestionOption option : existingOptions) {
+                    answerReportRepository.deleteByQuestionOptionId(option.getId());
+                }
+            }
+            
             // Delete existing options from database
             questionOptionRepository.deleteByQuestionId(questionId);
             
@@ -289,6 +303,21 @@ public class QuestionServiceImpl implements QuestionService {
             throw QuestionErrorCode.QUESTION_NOT_FOUND.toException();
         }
 
+        // Delete all AnswerReports related to this question first
+        // This prevents foreign key constraint violation when deleting QuestionOption
+        log.debug("QuestionService_deleteQuestion_Deleting answer reports for question id: {}", questionId);
+        answerReportRepository.deleteByQuestionId(questionId);
+
+        // Fetch and delete all AnswerReports related to question options of this question
+        List<QuestionOption> questionOptions = questionOptionRepository.findByQuestionId(questionId);
+        if (!questionOptions.isEmpty()) {
+            log.debug("QuestionService_deleteQuestion_Deleting answer reports for {} question options", questionOptions.size());
+            for (QuestionOption option : questionOptions) {
+                answerReportRepository.deleteByQuestionOptionId(option.getId());
+            }
+        }
+
+        // Now safe to delete the question (cascade will delete QuestionOptions)
         questionRepository.deleteById(questionId);
         log.debug("QuestionService_deleteQuestion_Question deleted successfully with id: {}", questionId);
     }

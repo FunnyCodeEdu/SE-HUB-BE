@@ -219,6 +219,39 @@ public class ProfileServiceImpl implements ProfileService {
         // Note: syncProfileFromFtes normalizes and saves the profile if FTES data is available
         syncProfileFromFtes(profile, currentUserId);
         
+        // If email or username is still null after sync, try to get from FTES UserInfo API
+        if (profile.getEmail() == null || profile.getUsername() == null) {
+            try {
+                String authToken = getCurrentAuthToken();
+                if (authToken != null) {
+                    FtesUserInfoResponse userInfo = ftesProfileService.getUserInfoFromFtes(authToken);
+                    if (userInfo != null) {
+                        // Sync email if still null
+                        if (profile.getEmail() == null && userInfo.getEmail() != null && !userInfo.getEmail().trim().isEmpty()) {
+                            profile.setEmail(userInfo.getEmail().trim());
+                            log.debug("Synced email from FTES UserInfo API for userId: {}", currentUserId);
+                        }
+                        
+                        // Sync username if still null
+                        if (profile.getUsername() == null && userInfo.getUsername() != null && !userInfo.getUsername().trim().isEmpty()) {
+                            profile.setUsername(userInfo.getUsername().trim());
+                            log.debug("Synced username from FTES UserInfo API for userId: {}", currentUserId);
+                        }
+                        
+                        // Save if we updated email or username
+                        if (profile.getEmail() != null || profile.getUsername() != null) {
+                            normalizeProfileStrings(profile);
+                            profileRepository.save(profile);
+                            log.debug("Saved profile after syncing email/username from FTES UserInfo API");
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Failed to get email/username from FTES UserInfo API for userId: {}. Error: {}", currentUserId, e.getMessage());
+                // Continue without email/username - it's not critical
+            }
+        }
+        
         // Additional normalize to ensure all fields are normalized after sync
         normalizeProfileStrings(profile);
         
@@ -384,9 +417,10 @@ public class ProfileServiceImpl implements ProfileService {
                     }
                 }
                 
-                // Sync email if not set
-                if (profile.getEmail() == null && ftesProfile.getEmail() != null) {
-                    profile.setEmail(ftesProfile.getEmail());
+                // Sync email from FTES Profile API if available
+                if (ftesProfile.getEmail() != null && !ftesProfile.getEmail().trim().isEmpty()) {
+                    profile.setEmail(ftesProfile.getEmail().trim());
+                    log.debug("Synced email from FTES Profile API for userId: {}", userId);
                 }
                 
                 // Sync avatar if not set

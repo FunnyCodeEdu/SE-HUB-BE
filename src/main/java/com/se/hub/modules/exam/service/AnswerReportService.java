@@ -4,6 +4,7 @@ import com.se.hub.common.dto.request.PagingRequest;
 import com.se.hub.common.dto.response.PagingResponse;
 import com.se.hub.modules.exam.dto.request.CreateAnswerReportRequest;
 import com.se.hub.modules.exam.dto.response.AnswerReportResponse;
+import com.se.hub.modules.exam.enums.AnswerReportStatus;
 
 public interface AnswerReportService {
     /**

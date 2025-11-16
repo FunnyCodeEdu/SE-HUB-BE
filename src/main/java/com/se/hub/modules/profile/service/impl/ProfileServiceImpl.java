@@ -11,6 +11,7 @@ import com.se.hub.modules.profile.constant.profile.ProfileConstants;
 import com.se.hub.modules.profile.dto.request.CreateDefaultProfileRequest;
 import com.se.hub.modules.profile.dto.request.CreateUserStatsRequest;
 import com.se.hub.modules.profile.dto.request.UpdateProfileRequest;
+import com.se.hub.modules.profile.dto.response.ContributionGraphResponse;
 import com.se.hub.modules.profile.dto.response.ProfileResponse;
 import com.se.hub.modules.profile.entity.Profile;
 import com.se.hub.modules.profile.entity.UserLevel;
@@ -23,6 +24,7 @@ import com.se.hub.modules.profile.repository.UserLevelRepository;
 import com.se.hub.modules.profile.dto.response.FtesProfileResponse;
 import com.se.hub.modules.profile.dto.response.FtesUserInfoResponse;
 import com.se.hub.modules.profile.service.FtesProfileService;
+import com.se.hub.modules.profile.service.api.ActivityService;
 import com.se.hub.modules.profile.service.api.ProfileService;
 import com.se.hub.modules.profile.service.api.UserStatsService;
 import com.se.hub.modules.user.entity.User;
@@ -53,6 +55,7 @@ public class ProfileServiceImpl implements ProfileService {
     UserStatsService userStatsService;
     ProfileMapper profileMapper;
     FtesProfileService ftesProfileService;
+    ActivityService activityService;
 
     @Override
     @Transactional
@@ -294,7 +297,24 @@ public class ProfileServiceImpl implements ProfileService {
             }
         }
         
-        return profileMapper.toProfileResponse(profile);
+        // Map profile to response
+        ProfileResponse response = profileMapper.toProfileResponse(profile);
+        
+        // Get contribution graph for current year
+        // Virtual Thread Best Practice: Uses synchronous blocking I/O operation.
+        // Virtual threads yield during database query, enabling high concurrency.
+        try {
+            ContributionGraphResponse contributionGraph = 
+                    activityService.getContributionGraph(profile.getId(), null);
+            response.setContributionGraph(contributionGraph);
+            log.debug("Successfully loaded contribution graph for profile: {}", profile.getId());
+        } catch (Exception e) {
+            log.warn("Failed to load contribution graph for profile: {}. Error: {}", profile.getId(), e.getMessage());
+            // Continue without contribution graph - it's not critical
+            response.setContributionGraph(null);
+        }
+        
+        return response;
     }
     
     /**

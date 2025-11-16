@@ -54,4 +54,5 @@ public class ProfileResponse {
     UserLevelResponse level;
     UserStatsResponse userStats;
     Set<AchievementResponse> achievements;
+    ContributionGraphResponse contributionGraph;
 }

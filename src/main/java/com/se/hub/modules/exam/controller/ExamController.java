@@ -23,6 +23,7 @@ import com.se.hub.modules.exam.dto.request.SubmitExamRequest;
 import com.se.hub.modules.exam.dto.request.UpdateExamRequest;
 import com.se.hub.modules.exam.dto.response.ExamResponse;
 import com.se.hub.modules.exam.dto.response.ExamResultResponse;
+import com.se.hub.modules.exam.dto.response.QuestionResponse;
 import com.se.hub.modules.exam.service.ExamAttemptService;
 import com.se.hub.modules.exam.service.ExamService;
 import com.se.hub.modules.profile.repository.ProfileRepository;
@@ -46,6 +47,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Slf4j
 @Tag(name = "Exam Management",
@@ -117,6 +120,26 @@ public class ExamController extends BaseController {
         return success(examService.getByCourseId(courseId, request), MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
     }
 
+    @GetMapping("/{examId}/questions")
+    @Operation(summary = "Get questions by exam ID",
+            description = "Get list of questions for a specific exam")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = "Questions retrieved successfully"),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = ExamMessageConstants.EXAM_NOT_FOUND_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ExamMessageConstants.API_INTERNAL_ERROR)
+    })
+    public ResponseEntity<GenericResponse<List<QuestionResponse>>> getQuestionsByExamId(@PathVariable String examId) {
+        log.info("ExamController_getQuestionsByExamId_Request received for examId: {}", examId);
+        try {
+            List<QuestionResponse> questions = examService.getQuestionsByExamId(examId);
+            log.info("ExamController_getQuestionsByExamId_Questions retrieved: examId={}, count={}", examId, questions.size());
+            return success(questions, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
+        } catch (Exception e) {
+            log.error("ExamController_getQuestionsByExamId_Error fetching questions for examId: {}", examId, e);
+            throw e;
+        }
+    }
+
     @GetMapping("/{examId}")
     @Operation(summary = "Get exam by ID",
             description = "Get exam information by exam ID")
@@ -126,7 +149,15 @@ public class ExamController extends BaseController {
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ExamMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<ExamResponse>> getById(@PathVariable String examId) {
-        return success(examService.getById(examId), MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
+        log.info("ExamController_getById_Request received for examId: {}", examId);
+        try {
+            ExamResponse examResponse = examService.getById(examId);
+            log.info("ExamController_getById_Exam found: id={}, title={}", examResponse.getId(), examResponse.getTitle());
+            return success(examResponse, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
+        } catch (Exception e) {
+            log.error("ExamController_getById_Error fetching exam with id: {}", examId, e);
+            throw e;
+        }
     }
 
     @PutMapping("/{examId}")

@@ -209,6 +209,7 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
+    @Transactional
     @CacheEvict(value = BlogCacheConstants.CACHE_BLOG, key = "#blogId")
     public BlogResponse getById(String blogId) {
         log.debug("BlogService_getById_Fetching blog with id: {}", blogId);

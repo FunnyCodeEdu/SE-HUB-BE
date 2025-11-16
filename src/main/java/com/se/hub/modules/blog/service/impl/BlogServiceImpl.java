@@ -25,6 +25,7 @@ import com.se.hub.modules.profile.entity.Profile;
 import com.se.hub.modules.profile.repository.ProfileRepository;
 import com.se.hub.modules.profile.service.api.ActivityService;
 import com.se.hub.modules.profile.service.api.ProfileProgressService;
+import com.se.hub.modules.blog.service.api.BlogSettingService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -62,6 +63,7 @@ public class BlogServiceImpl implements BlogService {
     BlogMapper blogMapper;
     ProfileProgressService profileProgressService;
     ActivityService activityService;
+    BlogSettingService blogSettingService;
     ReactionService reactionService;
     CommentRepository commentRepository;
 
@@ -182,13 +184,25 @@ public class BlogServiceImpl implements BlogService {
         blog.setCreatedBy(userId);
         blog.setUpdateBy(userId);
 
-        BlogResponse response = blogMapper.toBlogResponse(blogRepository.save(blog));
+        // Check if approval is required
+        boolean requireApproval = blogSettingService.isApprovalRequired();
+        if (!requireApproval) {
+            // Auto-approve if approval is not required
+            blog.setIsApproved(true);
+            log.debug("BlogService_createBlog_Auto-approving blog as approval mode is disabled");
+        }
+
+        Blog savedBlog = blogRepository.save(blog);
+        BlogResponse response = blogMapper.toBlogResponse(savedBlog);
         
-        // Update user stats after blog creation
-        profileProgressService.updatePostsUploaded();
-        
-        // Increment activity count for author
-        activityService.incrementActivity(author.getId());
+        // If blog is auto-approved, update stats and activity immediately
+        if (savedBlog.getIsApproved()) {
+            profileProgressService.updatePostsUploaded();
+            activityService.incrementActivity(author.getId());
+        } else {
+            // Note: User stats and activity will be incremented only when blog is approved by admin
+            // See approveBlog() method for stats and activity tracking
+        }
         
         log.debug("BlogService_createBlog_Blog created successfully with id: {}", response.getId());
         return response;
@@ -573,6 +587,13 @@ public class BlogServiceImpl implements BlogService {
         blog.setUpdateBy(AuthUtils.getCurrentUserId());
 
         Blog savedBlog = blogRepository.save(blog);
+        
+        // Update user stats and achievements when blog is approved
+        profileProgressService.updatePostsUploaded();
+        
+        // Increment activity count for author when blog is approved
+        activityService.incrementActivity(savedBlog.getAuthor().getId());
+        
         log.debug("BlogService_approveBlog_Blog approved successfully with id: {}", blogId);
         
         String currentUserId = AuthUtils.getCurrentUserId();

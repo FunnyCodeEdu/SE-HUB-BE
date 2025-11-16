@@ -14,7 +14,9 @@ import com.se.hub.modules.blog.constant.BlogMessageConstants;
 import com.se.hub.modules.blog.dto.request.CreateBlogRequest;
 import com.se.hub.modules.blog.dto.request.UpdateBlogRequest;
 import com.se.hub.modules.blog.dto.response.BlogResponse;
+import com.se.hub.modules.blog.dto.response.BlogSettingResponse;
 import com.se.hub.modules.blog.service.BlogService;
+import com.se.hub.modules.blog.service.api.BlogSettingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -46,6 +48,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Validated
 public class BlogController extends BaseController {
     BlogService blogService;
+    BlogSettingService blogSettingService;
 
     @PostMapping
     @Operation(summary = "Create new blog",
@@ -365,5 +368,32 @@ public class BlogController extends BaseController {
                 .build();
 
         return success(blogService.getPendingBlogs(request), MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
+    }
+
+    @PostMapping("/settings/toggle-approval")
+    @Operation(summary = "Toggle blog approval mode (Admin only)",
+            description = "Toggle blog approval requirement mode. When disabled, blogs are auto-approved on creation.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = "Blog approval mode toggled successfully"),
+            @ApiResponse(responseCode = ResponseCode.FORBIDDEN_403, description = BlogMessageConstants.BLOG_FORBIDDEN_OPERATION_MESSAGE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
+    })
+    public ResponseEntity<GenericResponse<BlogSettingResponse>> toggleApprovalMode() {
+        log.debug("BlogController_toggleApprovalMode_Toggling blog approval mode");
+        BlogSettingResponse response = blogSettingService.toggleApprovalMode();
+        return success(response, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
+    }
+
+    @GetMapping("/settings/approval-mode")
+    @Operation(summary = "Get blog approval mode",
+            description = "Get current blog approval requirement setting")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = "Blog approval mode retrieved successfully"),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
+    })
+    public ResponseEntity<GenericResponse<BlogSettingResponse>> getApprovalMode() {
+        log.debug("BlogController_getApprovalMode_Getting blog approval mode");
+        BlogSettingResponse response = blogSettingService.getApprovalMode();
+        return success(response, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
     }
 }

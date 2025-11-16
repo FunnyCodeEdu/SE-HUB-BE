@@ -15,6 +15,7 @@ import com.se.hub.modules.blog.mapper.BlogMapper;
 import com.se.hub.modules.interaction.dto.response.ReactionInfo;
 import com.se.hub.modules.interaction.enums.ReactionType;
 import com.se.hub.modules.interaction.enums.TargetType;
+import com.se.hub.modules.interaction.repository.CommentRepository;
 import com.se.hub.modules.interaction.service.api.ReactionService;
 import com.se.hub.modules.blog.constant.BlogCacheConstants;
 import com.se.hub.modules.blog.repository.BlogRepository;
@@ -59,6 +60,7 @@ public class BlogServiceImpl implements BlogService {
     BlogMapper blogMapper;
     ProfileProgressService profileProgressService;
     ReactionService reactionService;
+    CommentRepository commentRepository;
 
     /**
      * Helper method to build PagingResponse from Page<Blog>
@@ -73,13 +75,28 @@ public class BlogServiceImpl implements BlogService {
         Map<String, ReactionInfo> reactionsMap = reactionService
                 .getReactionsForTargets(TargetType.BLOG, blogIds, currentUserId);
         
+        // Batch count comments for all blogs
+        Map<String, Long> commentCountsMap = blogIds.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        blogId -> blogId,
+                        blogId -> commentRepository.countByTargetTypeAndTargetId(TargetType.BLOG, blogId)
+                ));
+        
         return PagingResponse.<BlogResponse>builder()
                 .currentPage(blogs.getNumber())
                 .totalPages(blogs.getTotalPages())
                 .pageSize(blogs.getSize())
                 .totalElement(blogs.getTotalElements())
                 .data(blogList.stream()
-                        .map(blog -> toBlogResponseWithReaction(blog, reactionsMap.get(blog.getId())))
+                        .map(blog -> {
+                            BlogResponse response = toBlogResponseWithReaction(blog, reactionsMap.get(blog.getId()));
+                            // Update cmtCount from Comment table to ensure accuracy
+                            Long commentCount = commentCountsMap.get(blog.getId());
+                            if (commentCount != null) {
+                                response.setCmtCount(commentCount.intValue());
+                            }
+                            return response;
+                        })
                         .toList()
                 )
                 .build();
@@ -172,7 +189,7 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
-    @Cacheable(value = BlogCacheConstants.CACHE_BLOG, key = "#blogId")
+    @CacheEvict(value = BlogCacheConstants.CACHE_BLOG, key = "#blogId")
     public BlogResponse getById(String blogId) {
         log.debug("BlogService_getById_Fetching blog with id: {}", blogId);
         Blog blog = blogRepository.findById(blogId)
@@ -187,8 +204,24 @@ public class BlogServiceImpl implements BlogService {
             throw BlogErrorCode.BLOG_NOT_FOUND.toException();
         }
         
+        // Increment view count for each request
+        incrementViewCount(blogId);
+        
+        // Refresh blog to get updated view count
+        blog = blogRepository.findById(blogId)
+                .orElseThrow(() -> {
+                    log.error("BlogService_getById_Blog not found with id: {}", blogId);
+                    return BlogErrorCode.BLOG_NOT_FOUND.toException();
+                });
+        
         String currentUserId = AuthUtils.getCurrentUserId();
-        return toBlogResponseWithReaction(blog, currentUserId);
+        BlogResponse response = toBlogResponseWithReaction(blog, currentUserId);
+        
+        // Update cmtCount from Comment table to ensure accuracy
+        long commentCount = commentRepository.countByTargetTypeAndTargetId(TargetType.BLOG, blogId);
+        response.setCmtCount((int) commentCount);
+        
+        return response;
     }
 
     @Override

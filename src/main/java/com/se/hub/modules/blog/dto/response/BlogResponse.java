@@ -25,6 +25,7 @@ public class BlogResponse {
     String coverImageUrl;
     int cmtCount;
     int reactionCount;
+    int viewCount;
     Boolean allowComments;
     Boolean isApproved;
     ReactionInfo reactions;

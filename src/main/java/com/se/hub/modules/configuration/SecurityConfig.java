@@ -190,6 +190,7 @@ public class SecurityConfig {
         corsConfiguration.setAllowedOriginPatterns(Arrays.asList(
             "https://sehub.ftes.vn",
             "https://apisehub.ftes.vn",  // For Swagger UI on production
+            "https://admin-sehub.ftes.vn",  // For Admin Panel
             "http://localhost:*",  // For local development (all ports)
             "https://localhost:*", // For local development with HTTPS (all ports)
             "http://127.0.0.1:*",  // For local development (all ports)

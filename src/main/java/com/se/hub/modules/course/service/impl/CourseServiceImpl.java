@@ -16,6 +16,8 @@ import com.se.hub.modules.course.exception.CourseErrorCode;
 import com.se.hub.modules.course.mapper.CourseMapper;
 import com.se.hub.modules.course.repository.CourseRepository;
 import com.se.hub.modules.course.service.CourseService;
+import com.se.hub.modules.document.repository.DocumentRepository;
+import com.se.hub.modules.document.entity.Document;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -37,6 +39,7 @@ public class CourseServiceImpl implements CourseService {
     CourseRepository courseRepository;
     CourseMapper courseMapper;
     ReactionService reactionService;
+    DocumentRepository documentRepository;
 
     private PagingResponse<CourseResponse> buildPagingResponse(Page<Course> courses) {
         List<Course> courseList = courses.getContent();
@@ -165,9 +168,18 @@ public class CourseServiceImpl implements CourseService {
             throw CourseErrorCode.COURSE_ID_REQUIRED.toException();
         }
 
-        if (!courseRepository.existsById(courseId)) {
-            log.error("CourseService_deleteCourseById_Course not found with id: {}", courseId);
-            throw CourseErrorCode.COURSE_NOT_FOUND.toException();
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> {
+                    log.error("CourseService_deleteCourseById_Course not found with id: {}", courseId);
+                    return CourseErrorCode.COURSE_NOT_FOUND.toException();
+                });
+
+        // Xóa tất cả documents liên quan trước
+        List<Document> documents = documentRepository.findAllByCourseId(courseId, Pageable.unpaged()).getContent();
+        if (!documents.isEmpty()) {
+            log.debug("CourseService_deleteCourseById_Deleting {} documents associated with course {}", 
+                    documents.size(), courseId);
+            documentRepository.deleteAll(documents);
         }
 
         courseRepository.deleteById(courseId);

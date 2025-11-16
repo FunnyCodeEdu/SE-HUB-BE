@@ -10,6 +10,7 @@ import com.se.hub.modules.exam.dto.request.CreateQuestionOptionRequest;
 import com.se.hub.modules.exam.dto.request.UpdateQuestionOptionRequest;
 import com.se.hub.modules.exam.dto.request.UpdateQuestionRequest;
 import com.se.hub.modules.exam.dto.response.QuestionResponse;
+import com.se.hub.modules.exam.entity.AnswerReport;
 import com.se.hub.modules.exam.entity.Question;
 import com.se.hub.modules.exam.entity.QuestionOption;
 import com.se.hub.modules.exam.enums.QuestionCategory;
@@ -35,6 +36,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -79,6 +82,15 @@ public class QuestionServiceImpl implements QuestionService {
     @Transactional
     public QuestionResponse createQuestion(CreateQuestionRequest request) {
         log.debug("QuestionService_createQuestion_Creating new question for user: {}", AuthUtils.getCurrentUserId());
+        
+        // Validate options based on question type
+        // CONTENT type questions don't require options, other types do
+        if (request.getQuestionType() != QuestionType.CONTENT) {
+            if (request.getOptions() == null || request.getOptions().isEmpty()) {
+                log.error("QuestionService_createQuestion_Options are required for question type: {}", request.getQuestionType());
+                throw QuestionErrorCode.QUESTION_TYPE_INVALID.toException();
+            }
+        }
         
         // Extract option contents for hash generation
         List<String> optionContents = request.getOptions() != null 
@@ -257,31 +269,65 @@ public class QuestionServiceImpl implements QuestionService {
 
         // Update question options if provided
         if (request.getOptions() != null && !request.getOptions().isEmpty()) {
-            // Fetch existing options to get their IDs for deleting related AnswerReports
+            // Fetch existing options
             List<QuestionOption> existingOptions = questionOptionRepository.findByQuestionId(questionId);
             
-            // Delete all AnswerReports related to existing question options first
-            // This prevents foreign key constraint violation when deleting QuestionOption
-            if (!existingOptions.isEmpty()) {
-                log.debug("QuestionService_updateQuestion_Deleting answer reports for {} existing question options", existingOptions.size());
-                for (QuestionOption option : existingOptions) {
-                    answerReportRepository.deleteByQuestionOptionId(option.getId());
+            // Note: We do NOT delete AnswerReports when updating question options
+            // AnswerReports should be preserved for history tracking
+            // They will only be deleted when the question itself is deleted
+            
+            // Create a map of existing options by ID for quick lookup
+            Map<String, QuestionOption> existingOptionsMap = existingOptions.stream()
+                    .collect(Collectors.toMap(QuestionOption::getId, Function.identity()));
+            
+            List<QuestionOption> updatedOptions = new ArrayList<>();
+            
+            // Process each option from the request
+            for (UpdateQuestionOptionRequest optionRequest : request.getOptions()) {
+                if (optionRequest.getId() != null && existingOptionsMap.containsKey(optionRequest.getId())) {
+                    // UPDATE existing option
+                    QuestionOption existingOption = existingOptionsMap.get(optionRequest.getId());
+                    questionOptionMapper.updateQuestionOptionFromRequest(existingOption, optionRequest);
+                    existingOption.setUpdateBy(userId);
+                    updatedOptions.add(questionOptionRepository.save(existingOption));
+                } else {
+                    // CREATE new option (no ID or ID doesn't exist)
+                    QuestionOption newOption = questionOptionMapper.toQuestionOption(
+                            CreateQuestionOptionRequest.builder()
+                                    .content(optionRequest.getContent())
+                                    .orderIndex(optionRequest.getOrderIndex())
+                                    .isCorrect(optionRequest.getIsCorrect())
+                                    .build()
+                    );
+                    newOption.setQuestion(question);
+                    newOption.setCreatedBy(userId);
+                    newOption.setUpdateBy(userId);
+                    updatedOptions.add(questionOptionRepository.save(newOption));
                 }
             }
             
-            // Delete existing options from database
-            questionOptionRepository.deleteByQuestionId(questionId);
+            // Delete options that are not in the request (only if no AnswerReports reference them)
+            for (QuestionOption existingOption : existingOptions) {
+                boolean isInRequest = request.getOptions().stream()
+                        .anyMatch(req -> req.getId() != null && req.getId().equals(existingOption.getId()));
+                if (!isInRequest) {
+                    // Check if option has AnswerReports
+                    List<AnswerReport> reports = answerReportRepository.findByQuestionOptionId(
+                            existingOption.getId(), Pageable.unpaged()).getContent();
+                    if (reports.isEmpty()) {
+                        // Safe to delete - no reports reference this option
+                        questionOptionRepository.deleteById(existingOption.getId());
+                        log.debug("QuestionService_updateQuestion_Deleted option {} (no AnswerReports)", existingOption.getId());
+                    } else {
+                        // Keep the option but don't add it to question.getOptions()
+                        // Option will remain in database but not in question.getOptions()
+                        log.debug("QuestionService_updateQuestion_Keeping option {} because it has {} reports", 
+                                existingOption.getId(), reports.size());
+                    }
+                }
+            }
             
-            // Clear the collection in memory (create new ArrayList to avoid immutable collection issue)
-            question.setOptions(new ArrayList<>());
-            
-            // Create and save new options
-            List<QuestionOption> options = updateOptions(userId, question, request.getOptions());
-            // Save options to database before setting them on the question
-            List<QuestionOption> savedOptions = options.stream()
-                    .map(questionOptionRepository::save)
-                    .collect(Collectors.toCollection(ArrayList::new));
-            question.setOptions(savedOptions);
+            question.setOptions(updatedOptions);
         }
 
         QuestionResponse response = questionMapper.toQuestionResponse(questionRepository.save(question));
@@ -362,6 +408,15 @@ public class QuestionServiceImpl implements QuestionService {
         int existingCount = 0;
         
         for (CreateQuestionRequest request : requests) {
+            // Validate options based on question type
+            // CONTENT type questions don't require options, other types do
+            if (request.getQuestionType() != QuestionType.CONTENT) {
+                if (request.getOptions() == null || request.getOptions().isEmpty()) {
+                    log.error("QuestionService_createQuestions_Options are required for question type: {}", request.getQuestionType());
+                    throw QuestionErrorCode.QUESTION_TYPE_INVALID.toException();
+                }
+            }
+            
             // Extract option contents for hash generation
             List<String> optionContents = request.getOptions() != null 
                     ? request.getOptions().stream()

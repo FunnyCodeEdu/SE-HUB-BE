@@ -39,11 +39,10 @@ public class AnswerReport extends BaseEntity {
             nullable = false)
     Question question;
 
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = AnswerReportConstants.COL_QUESTION_OPTION_ID,
             referencedColumnName = BaseFieldConstant.ID,
-            nullable = false)
+            nullable = true)
     QuestionOption questionOption;
 
     @NotNull

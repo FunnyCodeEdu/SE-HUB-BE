@@ -17,6 +17,7 @@ import com.se.hub.modules.interaction.dto.response.ReactionToggleResult;
 import com.se.hub.modules.interaction.enums.ReactionType;
 import com.se.hub.modules.interaction.enums.TargetType;
 import com.se.hub.modules.interaction.repository.CommentRepository;
+import com.se.hub.modules.interaction.repository.ReactionRepository;
 import com.se.hub.modules.interaction.service.api.ReactionService;
 import com.se.hub.modules.blog.constant.BlogCacheConstants;
 import com.se.hub.modules.blog.repository.BlogRepository;
@@ -66,6 +67,7 @@ public class BlogServiceImpl implements BlogService {
     BlogSettingService blogSettingService;
     ReactionService reactionService;
     CommentRepository commentRepository;
+    ReactionRepository reactionRepository;
 
     /**
      * Helper method to build PagingResponse from Page<Blog>
@@ -81,11 +83,63 @@ public class BlogServiceImpl implements BlogService {
                 .getReactionsForTargets(TargetType.BLOG, blogIds, currentUserId);
         
         // Batch count comments for all blogs
-        Map<String, Long> commentCountsMap = blogIds.stream()
-                .collect(java.util.stream.Collectors.toMap(
-                        blogId -> blogId,
-                        blogId -> commentRepository.countByTargetTypeAndTargetId(TargetType.BLOG, blogId)
-                ));
+        // Virtual Thread Best Practice: Uses synchronous blocking I/O operation.
+        // Virtual threads yield during database query, enabling high concurrency.
+        Map<String, Long> commentCountsMap = new java.util.HashMap<>();
+        if (!blogIds.isEmpty()) {
+            List<Object[]> commentCounts = commentRepository
+                    .countByTargetTypeAndTargetIdIn(TargetType.BLOG, blogIds);
+            
+            // Initialize all blogs with 0 counts
+            for (String blogId : blogIds) {
+                commentCountsMap.put(blogId, 0L);
+            }
+            
+            // Process query results: [targetId, count]
+            for (Object[] result : commentCounts) {
+                String targetId = (String) result[0];
+                Long count = (Long) result[1];
+                commentCountsMap.put(targetId, count);
+            }
+        }
+        
+        // Batch count reactions (LIKE and DISLIKE) for all blogs
+        // Virtual Thread Best Practice: Uses synchronous blocking I/O operation.
+        // Virtual threads yield during database query, enabling high concurrency.
+        Map<String, Integer> reactionCountsMap = new java.util.HashMap<>();
+        if (!blogIds.isEmpty()) {
+            List<Object[]> reactionCounts = reactionRepository
+                    .countByTargetTypeAndTargetIdInGroupByReactionType(TargetType.BLOG, blogIds);
+            
+            // Initialize all blogs with 0 counts
+            Map<String, Long> likeCountsMap = new java.util.HashMap<>();
+            Map<String, Long> dislikeCountsMap = new java.util.HashMap<>();
+            for (String blogId : blogIds) {
+                likeCountsMap.put(blogId, 0L);
+                dislikeCountsMap.put(blogId, 0L);
+            }
+            
+            // Process query results: [targetId, reactionType, count]
+            for (Object[] result : reactionCounts) {
+                String targetId = (String) result[0];
+                ReactionType reactionType = (ReactionType) result[1];
+                Long count = (Long) result[2];
+                
+                if (reactionType == ReactionType.LIKE) {
+                    likeCountsMap.put(targetId, count);
+                } else if (reactionType == ReactionType.DISLIKE) {
+                    dislikeCountsMap.put(targetId, count);
+                }
+            }
+            
+            // Calculate reactionCount = likeCount - dislikeCount for each blog
+            for (String blogId : blogIds) {
+                long likeCount = likeCountsMap.getOrDefault(blogId, 0L);
+                long dislikeCount = dislikeCountsMap.getOrDefault(blogId, 0L);
+                int reactionCount = (int) (likeCount - dislikeCount);
+                reactionCountsMap.put(blogId, reactionCount);
+            }
+        }
         
         return PagingResponse.<BlogResponse>builder()
                 .currentPage(blogs.getNumber())
@@ -99,6 +153,11 @@ public class BlogServiceImpl implements BlogService {
                             Long commentCount = commentCountsMap.get(blog.getId());
                             if (commentCount != null) {
                                 response.setCmtCount(commentCount.intValue());
+                            }
+                            // Update reactionCount from Reaction table to ensure accuracy
+                            Integer reactionCount = reactionCountsMap.get(blog.getId());
+                            if (reactionCount != null) {
+                                response.setReactionCount(reactionCount);
                             }
                             return response;
                         })

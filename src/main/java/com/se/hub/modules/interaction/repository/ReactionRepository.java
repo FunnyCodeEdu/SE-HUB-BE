@@ -55,5 +55,16 @@ public interface ReactionRepository extends JpaRepository<Reaction, String> {
             @Param("targetType") TargetType targetType,
             @Param("targetIds") List<String> targetIds,
             @Param("user") Profile user);
+
+    /**
+     * Batch count reactions by target type, target IDs and reaction type
+     * Returns map of targetId -> count grouped by reaction type
+     */
+    @Query("SELECT r.targetId, r.reactionType, COUNT(r) FROM Reaction r " +
+           "WHERE r.targetType = :targetType AND r.targetId IN :targetIds " +
+           "GROUP BY r.targetId, r.reactionType")
+    List<Object[]> countByTargetTypeAndTargetIdInGroupByReactionType(
+            @Param("targetType") TargetType targetType,
+            @Param("targetIds") List<String> targetIds);
 }
 

@@ -115,8 +115,9 @@ public class AnswerReportServiceImpl implements AnswerReportService {
                     return AnswerReportErrorCode.ANSWER_REPORT_NOT_FOUND.toException();
                 });
 
-        if (report.getStatus() != AnswerReportStatus.PENDING) {
-            log.error("AnswerReportService_approveAnswerReport_Answer report already processed with id: {}", reportId);
+        // Allow approve if status is PENDING or REJECTED (allow switching from reject to approve)
+        if (report.getStatus() != AnswerReportStatus.PENDING && report.getStatus() != AnswerReportStatus.REJECTED) {
+            log.error("AnswerReportService_approveAnswerReport_Answer report already approved with id: {}", reportId);
             throw AnswerReportErrorCode.ANSWER_REPORT_ALREADY_PROCESSED.toException();
         }
 
@@ -143,8 +144,9 @@ public class AnswerReportServiceImpl implements AnswerReportService {
                     return AnswerReportErrorCode.ANSWER_REPORT_NOT_FOUND.toException();
                 });
 
-        if (report.getStatus() != AnswerReportStatus.PENDING) {
-            log.error("AnswerReportService_rejectAnswerReport_Answer report already processed with id: {}", reportId);
+        // Allow reject if status is PENDING or APPROVED (allow switching from approve to reject)
+        if (report.getStatus() != AnswerReportStatus.PENDING && report.getStatus() != AnswerReportStatus.APPROVED) {
+            log.error("AnswerReportService_rejectAnswerReport_Answer report already rejected with id: {}", reportId);
             throw AnswerReportErrorCode.ANSWER_REPORT_ALREADY_PROCESSED.toException();
         }
 

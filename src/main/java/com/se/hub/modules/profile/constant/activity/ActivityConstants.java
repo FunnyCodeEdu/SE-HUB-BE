@@ -27,6 +27,9 @@ public class ActivityConstants {
     public static final String COLOR_LEVEL_3 = "#30a14e";  // 8-14 contributions
     public static final String COLOR_LEVEL_4 = "#216e39";  // 15+ contributions
 
+    //===== TIMEZONE ======
+    public static final String DEFAULT_TIMEZONE = "Asia/Ho_Chi_Minh";
+
     private ActivityConstants() {}
 }
 

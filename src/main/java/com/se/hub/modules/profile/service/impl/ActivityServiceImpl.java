@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -55,8 +56,8 @@ public class ActivityServiceImpl implements ActivityService {
             throw new AppException(ErrorCode.PROFILE_NOT_FOUND);
         }
 
-        // Get current date
-        LocalDate today = LocalDate.now();
+        // Get current date in Vietnam timezone to avoid timezone issues
+        LocalDate today = LocalDate.now(ZoneId.of(ActivityConstants.DEFAULT_TIMEZONE));
         
         // Get current user ID for audit fields
         String userId = AuthUtils.getCurrentUserId();
@@ -164,6 +165,7 @@ public class ActivityServiceImpl implements ActivityService {
     /**
      * Build months data with weeks for contribution graph.
      * Each month contains weeks, and each week is an array of 7 integers (Sunday to Saturday).
+     * Handles leap years correctly (February with 28/29 days).
      */
     private List<ContributionGraphResponse.MonthData> buildMonthsData(int year, Map<LocalDate, Integer> activityMap) {
         List<ContributionGraphResponse.MonthData> months = new ArrayList<>();
@@ -171,29 +173,42 @@ public class ActivityServiceImpl implements ActivityService {
         // Process each month
         for (int month = 1; month <= 12; month++) {
             LocalDate monthStart = LocalDate.of(year, month, 1);
-            LocalDate monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
+            // Use lengthOfMonth() to correctly handle February (28/29 days)
+            int daysInMonth = monthStart.lengthOfMonth();
+            LocalDate monthEnd = LocalDate.of(year, month, daysInMonth);
             
             // Get month name abbreviation
             String monthName = monthStart.getMonth().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
             
             // Find the Sunday of the week containing the first day of the month
+            // DayOfWeek.getValue(): Monday=1, Tuesday=2, ..., Sunday=7
+            // We need to convert to: Sunday=0, Monday=1, ..., Saturday=6
             DayOfWeek monthFirstDay = monthStart.getDayOfWeek();
-            int daysToMonthStart = monthFirstDay.getValue() % 7;
-            LocalDate monthWeekStart = monthStart.minusDays(daysToMonthStart);
+            int dayOfWeekValue = monthFirstDay.getValue(); // 1=Monday, 7=Sunday
+            // Convert: Sunday (7) -> 0, Monday (1) -> 1, ..., Saturday (6) -> 6
+            int daysToSunday = (dayOfWeekValue == 7) ? 0 : dayOfWeekValue;
+            LocalDate monthWeekStart = monthStart.minusDays(daysToSunday);
             
             // Build weeks for this month
             List<List<Integer>> weeks = new ArrayList<>();
-            LocalDate weekDate = monthWeekStart;
+            LocalDate currentWeekStart = monthWeekStart;
             
             // Continue until we've covered all days in the month
-            while (weekDate.isBefore(monthEnd.plusDays(1)) || 
-                   (weekDate.isBefore(monthEnd.plusDays(7)) && weekDate.getDayOfWeek() != DayOfWeek.SUNDAY)) {
+            // Include all weeks that have at least one day in this month
+            while (currentWeekStart.isBefore(monthEnd.plusDays(1))) {
+                // Check if this week overlaps with the month
+                LocalDate weekEnd = currentWeekStart.plusDays(6); // Saturday of this week
+                if (weekEnd.isBefore(monthStart)) {
+                    // This week is before the month, skip to next week
+                    currentWeekStart = currentWeekStart.plusDays(7);
+                    continue;
+                }
                 
                 List<Integer> week = new ArrayList<>();
                 
-                // Add 7 days for this week
-                for (int day = 0; day < 7; day++) {
-                    LocalDate dayDate = weekDate.plusDays(day);
+                // Add 7 days for this week (Sunday to Saturday)
+                for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
+                    LocalDate dayDate = currentWeekStart.plusDays(dayOffset);
                     
                     // Only include days within the year
                     if (dayDate.getYear() == year) {
@@ -206,11 +221,11 @@ public class ActivityServiceImpl implements ActivityService {
                 
                 weeks.add(week);
                 
-                // Move to next week
-                weekDate = weekDate.plusDays(7);
+                // Move to next week (next Sunday)
+                currentWeekStart = currentWeekStart.plusDays(7);
                 
-                // Stop if we've passed the month end and completed the week
-                if (weekDate.isAfter(monthEnd) && weekDate.getDayOfWeek() == DayOfWeek.SUNDAY) {
+                // Stop if we've passed the month end
+                if (currentWeekStart.isAfter(monthEnd)) {
                     break;
                 }
             }

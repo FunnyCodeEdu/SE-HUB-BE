@@ -49,6 +49,24 @@ public interface BlogRepository extends JpaRepository<Blog, String>, JpaSpecific
     @Query("SELECT DISTINCT b FROM Blog b LEFT JOIN FETCH b.author WHERE b.isApproved = true ORDER BY b.createDate DESC")
     Page<Blog> findLatestBlogs(Pageable pageable);
     
+    @Query(value = """
+            SELECT DISTINCT b FROM Blog b
+            LEFT JOIN FETCH b.author a
+            WHERE b.isApproved = true AND (
+                LOWER(b.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(a.fullName, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            )
+            """,
+            countQuery = """
+            SELECT COUNT(DISTINCT b.id) FROM Blog b
+            LEFT JOIN b.author a
+            WHERE b.isApproved = true AND (
+                LOWER(b.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(COALESCE(a.fullName, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            )
+            """)
+    Page<Blog> searchApprovedBlogs(@Param("keyword") String keyword, Pageable pageable);
+    
     /**
      * Find all pending blogs (not approved)
      */

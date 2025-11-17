@@ -58,4 +58,12 @@ public interface ProfileService {
      * @since 9/16/2025
      */
     ProfileResponse getMyProfile();
+
+    /**
+     * Search profiles by keyword (fullName, username, email)
+     * @param keyword keyword to search
+     * @param pagingRequest paging configuration
+     * @return paging response
+     */
+    PagingResponse<ProfileResponse> searchProfiles(String keyword, PagingRequest pagingRequest);
 }

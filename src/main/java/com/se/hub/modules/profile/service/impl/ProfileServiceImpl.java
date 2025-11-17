@@ -203,6 +203,33 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public PagingResponse<ProfileResponse> searchProfiles(String keyword, PagingRequest pagingRequest) {
+        String sanitizedKeyword = keyword == null ? "" : keyword.trim();
+        if (sanitizedKeyword.isBlank()) {
+            log.error("ProfileService_searchProfiles_Keyword is required");
+            throw new AppException(ErrorCode.DATA_INVALID);
+        }
+
+        Pageable pageable = PageRequest.of(
+                pagingRequest.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
+                pagingRequest.getPageSize(),
+                PagingUtil.createSort(pagingRequest));
+
+        Page<Profile> profilePage = profileRepository.searchProfiles(sanitizedKeyword, pageable);
+
+        return PagingResponse.<ProfileResponse>builder()
+                .currentPage(pagingRequest.getPage())
+                .pageSize(pagingRequest.getPageSize())
+                .totalPages(profilePage.getTotalPages())
+                .totalElement(profilePage.getTotalElements())
+                .data(profilePage.getContent().stream()
+                        .map(profileMapper::toProfileResponse)
+                        .toList())
+                .build();
+    }
+
+    @Override
     @Transactional
     public ProfileResponse getMyProfile() {
         String currentUserId = AuthUtils.getCurrentUserId();

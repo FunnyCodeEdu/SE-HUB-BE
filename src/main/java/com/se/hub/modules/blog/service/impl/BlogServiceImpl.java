@@ -435,6 +435,23 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
+    public PagingResponse<BlogResponse> searchBlogs(String keyword, PagingRequest request) {
+        String sanitizedKeyword = keyword == null ? "" : keyword.trim();
+        if (sanitizedKeyword.isBlank()) {
+            log.error("BlogService_searchBlogs_Keyword is required");
+            throw new AppException(ErrorCode.DATA_INVALID);
+        }
+
+        log.debug("BlogService_searchBlogs_Searching blogs with keyword: {} page: {} size: {}",
+                sanitizedKeyword, request.getPage(), request.getPageSize());
+
+        Pageable pageable = PagingUtil.createPageable(request);
+        Page<Blog> blogs = blogRepository.searchApprovedBlogs(sanitizedKeyword, pageable);
+        log.debug("BlogService_searchBlogs_Found {} blogs", blogs.getTotalElements());
+        return buildPagingResponse(blogs);
+    }
+
+    @Override
     @Transactional
     public void incrementViewCount(String blogId) {
         if (blogId == null || blogId.isBlank()) {

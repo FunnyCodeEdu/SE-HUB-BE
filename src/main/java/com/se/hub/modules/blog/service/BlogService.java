@@ -65,6 +65,14 @@ public interface BlogService {
     PagingResponse<BlogResponse> getLatestBlogs(PagingRequest request);
 
     /**
+     * Search approved blogs by keyword (content or author name)
+     * @param keyword keyword to search
+     * @param request paging request
+     * @return paging response with matched blogs
+     */
+    PagingResponse<BlogResponse> searchBlogs(String keyword, PagingRequest request);
+
+    /**
      * Increment view count for a blog (atomic operation)
      * @param blogId blog ID
      */

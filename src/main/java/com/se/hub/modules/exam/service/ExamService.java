@@ -38,6 +38,14 @@ public interface ExamService {
     PagingResponse<ExamResponse> getByCourseId(String courseId, PagingRequest request);
 
     /**
+     * Search exams by keyword (title or description)
+     * @param keyword keyword to search
+     * @param request paging request
+     * @return paging response with matched exams
+     */
+    PagingResponse<ExamResponse> searchExams(String keyword, PagingRequest request);
+
+    /**
      * update exam by id
      * @author catsocute
      */

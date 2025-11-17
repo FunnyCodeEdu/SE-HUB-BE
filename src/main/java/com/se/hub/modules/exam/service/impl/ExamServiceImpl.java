@@ -183,6 +183,28 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public PagingResponse<ExamResponse> searchExams(String keyword, PagingRequest request) {
+        String sanitizedKeyword = keyword == null ? "" : keyword.trim();
+        if (sanitizedKeyword.isBlank()) {
+            log.error("ExamService_searchExams_Keyword is required");
+            throw new AppException(ErrorCode.DATA_INVALID);
+        }
+
+        log.debug("ExamService_searchExams_Searching exams with keyword: {} page: {} size: {}",
+                sanitizedKeyword, request.getPage(), request.getPageSize());
+
+        Pageable pageable = PageRequest.of(
+                request.getPage() - GlobalVariable.PAGE_SIZE_INDEX,
+                request.getPageSize(),
+                PagingUtil.createSort(request)
+        );
+
+        Page<Exam> examPages = examRepository.searchByKeyword(sanitizedKeyword, pageable);
+        return buildPagingResponse(examPages);
+    }
+
+    @Override
     @Transactional
     public ExamResponse updateById(String examId, UpdateExamRequest request) {
         log.debug("ExamService_updateById_Updating exam with id: {}", examId);

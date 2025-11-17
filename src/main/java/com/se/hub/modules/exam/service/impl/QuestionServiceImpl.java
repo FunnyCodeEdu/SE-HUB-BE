@@ -28,6 +28,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -435,16 +436,11 @@ public class QuestionServiceImpl implements QuestionService {
             // First check if question was already created in this batch
             Question existingQuestion = batchCreatedQuestions.get(contentHash);
             
-            // If not found in batch, check database
+            // If not found in batch, check database globally
+            // Note: contentHash has unique constraint globally, so we must check globally first
             if (existingQuestion == null) {
-                if (courseId != null && !courseId.trim().isEmpty()) {
-                    existingQuestion = questionRepository.findByContentHashAndCourseId(contentHash, courseId)
-                            .orElse(null);
-                } else {
-                    // If no course, check globally
-                    existingQuestion = questionRepository.findByContentHash(contentHash)
-                            .orElse(null);
-                }
+                existingQuestion = questionRepository.findByContentHash(contentHash)
+                        .orElse(null);
             }
             
             if (existingQuestion != null) {
@@ -466,20 +462,38 @@ public class QuestionServiceImpl implements QuestionService {
                 question.setCreatedBy(userId);
                 question.setUpdateBy(userId);
                 
-                // Use saveAndFlush to ensure entity is immediately available for subsequent queries
-                Question savedQuestion = questionRepository.saveAndFlush(question);
-                
-                // Create and save question options if provided
-                if (request.getOptions() != null && !request.getOptions().isEmpty()) {
-                    savedQuestion.setOptions(createOptions(userId, savedQuestion, request.getOptions()));
+                Question savedQuestion;
+                try {
+                    // Use saveAndFlush to ensure entity is immediately available for subsequent queries
+                    savedQuestion = questionRepository.saveAndFlush(question);
+                    
+                    // Create and save question options if provided
+                    if (request.getOptions() != null && !request.getOptions().isEmpty()) {
+                        savedQuestion.setOptions(createOptions(userId, savedQuestion, request.getOptions()));
+                    }
+                    
+                    // Track this question in batch map to avoid duplicates
+                    batchCreatedQuestions.put(contentHash, savedQuestion);
+                    
+                    questionIds.add(savedQuestion.getId());
+                    newCount++;
+                    log.debug("QuestionService_createQuestions_New question created with ID: {}", savedQuestion.getId());
+                } catch (DataIntegrityViolationException e) {
+                    // Handle race condition: question was created by another transaction or concurrent request
+                    // Query again to get the existing question
+                    log.warn("QuestionService_createQuestions_Duplicate key detected for hash: {}, querying existing question", contentHash);
+                    Question existingQuestionFromDb = questionRepository.findByContentHash(contentHash)
+                            .orElseThrow(() -> {
+                                log.error("QuestionService_createQuestions_Failed to find question after duplicate key error for hash: {}", contentHash);
+                                return new RuntimeException("Failed to handle duplicate question", e);
+                            });
+                    
+                    // Use existing question
+                    batchCreatedQuestions.put(contentHash, existingQuestionFromDb);
+                    questionIds.add(existingQuestionFromDb.getId());
+                    existingCount++;
+                    log.debug("QuestionService_createQuestions_Using existing question with ID: {}", existingQuestionFromDb.getId());
                 }
-                
-                // Track this question in batch map to avoid duplicates
-                batchCreatedQuestions.put(contentHash, savedQuestion);
-                
-                questionIds.add(savedQuestion.getId());
-                newCount++;
-                log.debug("QuestionService_createQuestions_New question created with ID: {}", savedQuestion.getId());
             }
         }
         

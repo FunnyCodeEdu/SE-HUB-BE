@@ -1,7 +1,6 @@
 package com.se.hub.modules.blog.dto.response;
 
 import com.se.hub.modules.interaction.dto.response.ReactionInfo;
-import com.se.hub.modules.profile.dto.response.ProfileResponse;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,7 +19,7 @@ import java.time.Instant;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class BlogResponse {
     String id;
-    ProfileResponse author;
+    BlogAuthorResponse author;
     String content;
     String coverImageUrl;
     int cmtCount;

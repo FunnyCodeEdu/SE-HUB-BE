@@ -11,8 +11,6 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
-import java.util.Set;
-
 @Getter
 @Setter
 @Builder
@@ -28,7 +26,7 @@ public class ExamResponse {
     String examCode;
     String courseId;
 
-    Set<QuestionResponse> questions;
+    long questionCount;
     ReactionInfo reactions;
 
     Instant createDate;

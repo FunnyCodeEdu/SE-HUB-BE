@@ -24,3 +24,4 @@ public class SearchRequest {
     Set<SearchTarget> targets;
 }
 
+

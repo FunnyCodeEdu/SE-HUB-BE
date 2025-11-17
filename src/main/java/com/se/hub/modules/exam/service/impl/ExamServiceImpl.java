@@ -28,6 +28,7 @@ import com.se.hub.modules.exam.mapper.QuestionMapper;
 import com.se.hub.modules.exam.repository.ExamAttemptRepository;
 import com.se.hub.modules.exam.repository.ExamRepository;
 import com.se.hub.modules.exam.repository.QuestionRepository;
+import com.se.hub.modules.exam.repository.projection.ExamQuestionCountProjection;
 import com.se.hub.modules.exam.service.ExamService;
 import com.se.hub.modules.exam.service.QuestionService;
 import lombok.AccessLevel;
@@ -40,10 +41,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Exam Service Implementation
@@ -69,6 +72,22 @@ public class ExamServiceImpl implements ExamService {
     QuestionService questionService;
     ExamAttemptRepository examAttemptRepository;
 
+    private Map<String, Long> loadQuestionCountMap(List<String> examIds) {
+        if (examIds == null || examIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return examRepository.findQuestionCountsByExamIds(examIds).stream()
+                .collect(Collectors.toMap(
+                        ExamQuestionCountProjection::getExamId,
+                        ExamQuestionCountProjection::getQuestionCount
+                ));
+    }
+
+    private long loadQuestionCount(String examId) {
+        Map<String, Long> map = loadQuestionCountMap(List.of(examId));
+        return map.getOrDefault(examId, 0L);
+    }
+
     /**
      * Helper method to build PagingResponse from Page<Exam>
      * Reduces code duplication across get methods
@@ -79,6 +98,7 @@ public class ExamServiceImpl implements ExamService {
         
         // Batch check reactions for all exams
         List<String> examIds = examList.stream().map(Exam::getId).toList();
+        Map<String, Long> questionCounts = loadQuestionCountMap(examIds);
         Map<String, ReactionInfo> reactionsMap = reactionService
                 .getReactionsForTargets(TargetType.EXAM, examIds, currentUserId);
         
@@ -90,6 +110,7 @@ public class ExamServiceImpl implements ExamService {
                 .data(examList.stream()
                         .map(exam -> {
                             ExamResponse response = examMapper.toExamResponse(exam);
+                            response.setQuestionCount(questionCounts.getOrDefault(exam.getId(), 0L));
                             ReactionInfo reactionInfo = reactionsMap.getOrDefault(
                                     exam.getId(),
                                     ReactionInfo.builder().userReacted(false).type(null).build()
@@ -129,6 +150,7 @@ public class ExamServiceImpl implements ExamService {
         exam.setQuestions(new HashSet<>());
 
         ExamResponse response = examMapper.toExamResponse(examRepository.save(exam));
+        response.setQuestionCount(0L);
         log.debug("ExamService_create_Exam created successfully with id: {}", response.getId());
         return response;
     }
@@ -143,6 +165,7 @@ public class ExamServiceImpl implements ExamService {
                 });
         
         ExamResponse response = examMapper.toExamResponse(exam);
+        response.setQuestionCount(loadQuestionCount(examId));
         String currentUserId = AuthUtils.getCurrentUserId();
         Map<String, ReactionInfo> reactionsMap = reactionService
                 .getReactionsForTargets(TargetType.EXAM, List.of(examId), currentUserId);
@@ -227,6 +250,7 @@ public class ExamServiceImpl implements ExamService {
         exam.setUpdateBy(AuthUtils.getCurrentUserId());
 
         ExamResponse response = examMapper.toExamResponse(examRepository.save(exam));
+        response.setQuestionCount(loadQuestionCount(examId));
         log.debug("ExamService_updateById_Exam updated successfully with id: {}", examId);
         return response;
     }
@@ -240,7 +264,7 @@ public class ExamServiceImpl implements ExamService {
             throw ExamErrorCode.EXAM_ID_REQUIRED.toException();
         }
 
-        Exam exam = examRepository.findById(examId)
+        examRepository.findById(examId)
                 .orElseThrow(() -> {
                     log.error("ExamService_deleteById_Exam not found with id: {}", examId);
                     return ExamErrorCode.EXAM_NOT_FOUND.toException();
@@ -279,6 +303,7 @@ public class ExamServiceImpl implements ExamService {
         exam.setUpdateBy(AuthUtils.getCurrentUserId());
         
         ExamResponse response = examMapper.toExamResponse(examRepository.save(exam));
+        response.setQuestionCount(current.size());
         log.debug("ExamService_addQuestions_Questions added successfully to exam: {}", examId);
         return response;
     }
@@ -295,18 +320,21 @@ public class ExamServiceImpl implements ExamService {
         
         if (exam.getQuestions() == null || exam.getQuestions().isEmpty()) {
             log.debug("ExamService_removeQuestions_Exam has no questions to remove");
-            return examMapper.toExamResponse(exam);
+            ExamResponse response = examMapper.toExamResponse(exam);
+            response.setQuestionCount(0L);
+            return response;
         }
         
         Set<String> toRemove = new HashSet<>(request.getQuestionIds());
         Set<Question> remaining = exam.getQuestions().stream()
                 .filter(q -> !toRemove.contains(q.getId()))
-                .collect(java.util.stream.Collectors.toSet());
+                .collect(Collectors.toSet());
         
         exam.setQuestions(remaining);
         exam.setUpdateBy(AuthUtils.getCurrentUserId());
         
         ExamResponse response = examMapper.toExamResponse(examRepository.save(exam));
+        response.setQuestionCount(remaining.size());
         log.debug("ExamService_removeQuestions_Questions removed successfully from exam: {}", examId);
         return response;
     }
@@ -336,6 +364,7 @@ public class ExamServiceImpl implements ExamService {
         exam.setUpdateBy(AuthUtils.getCurrentUserId());
         
         ExamResponse response = examMapper.toExamResponse(examRepository.save(exam));
+        response.setQuestionCount(currentQuestions.size());
         log.debug("ExamService_createQuestionsForExam_Questions created and added to exam: {}", examId);
         return response;
     }
@@ -367,6 +396,7 @@ public class ExamServiceImpl implements ExamService {
         exam.setUpdateBy(AuthUtils.getCurrentUserId());
         
         ExamResponse response = examMapper.toExamResponse(examRepository.save(exam));
+        response.setQuestionCount(questions.size());
         log.debug("ExamService_createExamWithQuestions_Exam and questions created successfully");
         return response;
     }

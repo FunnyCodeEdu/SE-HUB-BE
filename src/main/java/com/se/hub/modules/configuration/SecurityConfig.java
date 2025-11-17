@@ -24,6 +24,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Configuration
@@ -106,6 +108,10 @@ public class SecurityConfig {
     private final CustomJwtAuthenticationConverter customJwtAuthenticationConverter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
+    @NonFinal
+    @Value("${security.cors.allowed-origin-patterns}")
+    private String corsAllowedOriginPatterns;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity, CorsConfigurationSource corsConfigurationSource) throws Exception {
         return httpSecurity
@@ -186,16 +192,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        // Allow specific origins - using patterns for flexibility
-        corsConfiguration.setAllowedOriginPatterns(Arrays.asList(
-            "https://sehub.ftes.vn",
-            "https://apisehub.ftes.vn",  // For Swagger UI on production
-            "https://admin-sehub.ftes.vn",  // For Admin Panel
-            "http://localhost:*",  // For local development (all ports)
-            "https://localhost:*", // For local development with HTTPS (all ports)
-            "http://127.0.0.1:*",  // For local development (all ports)
-            "https://127.0.0.1:*"  // For local development with HTTPS (all ports)
-        ));
+        // Allow specific origins - using patterns configured via application properties
+        List<String> allowedOriginPatterns = Arrays.stream(corsAllowedOriginPatterns.split(","))
+                .map(String::trim)
+                .filter(pattern -> !pattern.isEmpty())
+                .collect(Collectors.toList());
+        corsConfiguration.setAllowedOriginPatterns(allowedOriginPatterns);
         corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
         corsConfiguration.setAllowedHeaders(Arrays.asList("*"));
         corsConfiguration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Total-Count"));

@@ -22,4 +22,10 @@ public class AchievementResponse {
     String id;
     AchievementEnums achievementType;
     String description;
+    int minPoints;
+    int minExamsDone;
+    int minCmtCount;
+    int minDocsUploaded;
+    int minBlogsUploaded;
+    int minBlogShared;
 }

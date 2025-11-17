@@ -35,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -407,6 +408,9 @@ public class QuestionServiceImpl implements QuestionService {
         int newCount = 0;
         int existingCount = 0;
         
+        // Track questions created in this batch to avoid duplicates within the same batch
+        Map<String, Question> batchCreatedQuestions = new HashMap<>();
+        
         for (CreateQuestionRequest request : requests) {
             // Validate options based on question type
             // CONTENT type questions don't require options, other types do
@@ -428,15 +432,19 @@ public class QuestionServiceImpl implements QuestionService {
             String contentHash = QuestionHashUtil.generateQuestionHash(request.getContent(), optionContents);
             String normalizedText = QuestionHashUtil.buildHashContent(request.getContent(), optionContents);
             
-            // Check if question already exists in this course
-            Question existingQuestion = null;
-            if (courseId != null && !courseId.trim().isEmpty()) {
-                existingQuestion = questionRepository.findByContentHashAndCourseId(contentHash, courseId)
-                        .orElse(null);
-            } else {
-                // If no course, check globally
-                existingQuestion = questionRepository.findByContentHash(contentHash)
-                        .orElse(null);
+            // First check if question was already created in this batch
+            Question existingQuestion = batchCreatedQuestions.get(contentHash);
+            
+            // If not found in batch, check database
+            if (existingQuestion == null) {
+                if (courseId != null && !courseId.trim().isEmpty()) {
+                    existingQuestion = questionRepository.findByContentHashAndCourseId(contentHash, courseId)
+                            .orElse(null);
+                } else {
+                    // If no course, check globally
+                    existingQuestion = questionRepository.findByContentHash(contentHash)
+                            .orElse(null);
+                }
             }
             
             if (existingQuestion != null) {
@@ -445,6 +453,11 @@ public class QuestionServiceImpl implements QuestionService {
                         contentHash, existingQuestion.getId());
                 questionIds.add(existingQuestion.getId());
                 existingCount++;
+                
+                // Add to batch map if it was just created in this batch
+                if (!batchCreatedQuestions.containsKey(contentHash)) {
+                    batchCreatedQuestions.put(contentHash, existingQuestion);
+                }
             } else {
                 // Create new question
                 Question question = questionMapper.toQuestion(request);
@@ -453,12 +466,16 @@ public class QuestionServiceImpl implements QuestionService {
                 question.setCreatedBy(userId);
                 question.setUpdateBy(userId);
                 
-                Question savedQuestion = questionRepository.save(question);
+                // Use saveAndFlush to ensure entity is immediately available for subsequent queries
+                Question savedQuestion = questionRepository.saveAndFlush(question);
                 
                 // Create and save question options if provided
                 if (request.getOptions() != null && !request.getOptions().isEmpty()) {
                     savedQuestion.setOptions(createOptions(userId, savedQuestion, request.getOptions()));
                 }
+                
+                // Track this question in batch map to avoid duplicates
+                batchCreatedQuestions.put(contentHash, savedQuestion);
                 
                 questionIds.add(savedQuestion.getId());
                 newCount++;

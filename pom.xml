@@ -121,7 +121,7 @@
             <artifactId>spring-ai-starter-model-openai</artifactId>
         </dependency>
 
-        <!-- Socket.IO for real-time chat -->
+        <!-- Socket.IO for real-time chat (notification module uses SSE instead) -->
         <dependency>
             <groupId>com.corundumstudio.socketio</groupId>
             <artifactId>netty-socketio</artifactId>

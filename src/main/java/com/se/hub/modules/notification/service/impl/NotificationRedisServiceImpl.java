@@ -124,11 +124,17 @@ public class NotificationRedisServiceImpl implements NotificationRedisService {
 
     @Override
     public void publishNotification(String userId, NotificationResponse notification) {
-        String channel = NotificationConstants.REDIS_KEY_CHANNEL_PREFIX + userId;
+        // Use single channel "notifications" for SSE compatibility
+        String channel = "notifications";
         try {
-            String message = objectMapper.writeValueAsString(notification);
-            stringRedisTemplate.convertAndSend(channel, message);
-            log.debug("NotificationRedisService_publishNotification_Published notification to channel: {}", channel);
+            // Create message with userId and payload
+            Map<String, Object> message = Map.of(
+                "userId", userId,
+                "payload", notification
+            );
+            String messageJson = objectMapper.writeValueAsString(message);
+            stringRedisTemplate.convertAndSend(channel, messageJson);
+            log.debug("NotificationRedisService_publishNotification_Published notification to channel: {} for user: {}", channel, userId);
         } catch (Exception e) {
             log.error("NotificationRedisService_publishNotification_Error publishing notification", e);
         }

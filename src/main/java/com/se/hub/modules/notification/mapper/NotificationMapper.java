@@ -9,6 +9,7 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface NotificationMapper {
+    @Mapping(source = "id", target = "id")
     @Mapping(source = "notification.notificationType", target = "notificationType")
     @Mapping(source = "notification.title", target = "title")
     @Mapping(source = "notification.content", target = "content")
@@ -17,6 +18,8 @@ public interface NotificationMapper {
     @Mapping(source = "notification.targetId", target = "targetId")
     @Mapping(source = "status", target = "status")
     @Mapping(source = "readAt", target = "readAt")
+    @Mapping(source = "createDate", target = "createDate")
+    @Mapping(source = "updatedDate", target = "updatedDate")
     NotificationResponse toNotificationResponse(UserNotification userNotification);
 
     /**

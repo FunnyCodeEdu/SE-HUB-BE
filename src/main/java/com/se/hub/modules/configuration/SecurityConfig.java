@@ -146,7 +146,7 @@ public class SecurityConfig {
 
                 //config oauth2 resource server with custom bearer token resolver
                 // The resolver will return null for whitelisted endpoints, effectively skipping OAuth2 processing
-                .oauth2ResourceServer(oauth2 -> oauth2
+                        .oauth2ResourceServer(oauth2 -> oauth2
                         .bearerTokenResolver(request -> {
                             String requestPath = request.getRequestURI();
                             
@@ -163,6 +163,17 @@ public class SecurityConfig {
                             // If whitelisted, return null to skip OAuth2 processing
                             if (isWhitelisted) {
                                 return null;
+                            }
+                            
+                            // For SSE subscribe path, allow token passed via query param
+                            if ("/api/notifications/subscribe".equals(requestPath)) {
+                                String tokenParam = request.getParameter("token");
+                                if (tokenParam == null || tokenParam.isBlank()) {
+                                    tokenParam = request.getParameter("access_token");
+                                }
+                                if (tokenParam != null && !tokenParam.isBlank()) {
+                                    return tokenParam;
+                                }
                             }
                             
                             // For non-whitelisted endpoints, extract bearer token from Authorization header

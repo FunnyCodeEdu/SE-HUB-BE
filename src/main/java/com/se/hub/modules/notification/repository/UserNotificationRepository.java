@@ -24,7 +24,8 @@ public interface UserNotificationRepository extends JpaRepository<UserNotificati
     @Query("SELECT un FROM UserNotification un JOIN FETCH un.notification WHERE un.user.user.id = :userId ORDER BY un.createDate DESC")
     Page<UserNotification> findAllByUser_IdOrderByCreateDateDesc(@Param("userId") String userId, Pageable pageable);
     
-    long countByUser_IdAndStatus(String userId, NotificationStatus status);
+    @Query("SELECT COUNT(un) FROM UserNotification un WHERE un.user.user.id = :userId AND un.status = :status")
+    long countByUser_IdAndStatus(@Param("userId") String userId, @Param("status") NotificationStatus status);
     
     @Query("SELECT un FROM UserNotification un JOIN FETCH un.notification WHERE un.id = :id AND un.user.user.id = :userId")
     Optional<UserNotification> findByIdAndUser_Id(@Param("id") String id, @Param("userId") String userId);

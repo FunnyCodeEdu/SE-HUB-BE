@@ -1,5 +1,6 @@
 package com.se.hub.common.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -7,6 +8,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 
 /**
  * Redis Configuration
@@ -20,8 +24,11 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  * - Lettuce supports both blocking and reactive modes
  * - Connection pooling (commons-pool2) improves performance under high load
  */
+@Slf4j
 @Configuration
 public class RedisConfig {
+
+    private RedisMessageListenerContainer messageListenerContainer;
 
     /**
      * StringRedisTemplate Bean
@@ -68,16 +75,48 @@ public class RedisConfig {
     /**
      * RedisMessageListenerContainer Bean
      * Used for Redis Pub/Sub message listening
-     * Required by notification module for real-time notification delivery via WebSocket
+     * Required by notification module for real-time notification delivery via SSE
+     * 
+     * IMPORTANT: This bean is singleton and shared across the application
+     * - Only ONE instance should exist to avoid duplicate subscriptions
+     * - Container is started automatically by Spring
+     * - Connection factory is shared with other Redis beans
+     * 
      * Virtual Thread Best Practice:
      * - Redis Pub/Sub operations are blocking I/O
      * - Virtual threads automatically handle blocking operations efficiently
      */
     @Bean
     public RedisMessageListenerContainer redisMessageListenerContainer(RedisConnectionFactory redisConnectionFactory) {
+        log.info("RedisConfig_redisMessageListenerContainer_Creating RedisMessageListenerContainer");
+        
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(redisConnectionFactory);
+        
+        // Configure container to handle reconnection automatically
+        // Lettuce will automatically reconnect on connection loss
+        container.setRecoveryInterval(2000L); // Retry every 2 seconds on failure
+        
+        // Start the container immediately
+        container.afterPropertiesSet();
+        container.start();
+        
+        log.info("RedisConfig_redisMessageListenerContainer_RedisMessageListenerContainer started successfully");
+        
+        this.messageListenerContainer = container;
         return container;
+    }
+    
+    /**
+     * Cleanup on shutdown
+     */
+    @PreDestroy
+    public void cleanup() {
+        if (messageListenerContainer != null && messageListenerContainer.isRunning()) {
+            log.info("RedisConfig_cleanup_Stopping RedisMessageListenerContainer");
+            messageListenerContainer.stop();
+            log.info("RedisConfig_cleanup_RedisMessageListenerContainer stopped");
+        }
     }
 }
 

@@ -14,6 +14,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
+import static com.se.hub.modules.document.constant.DocumentConstants.IMAGE_MAX_FILE_SIZE_BYTES;
+import static com.se.hub.modules.document.constant.DocumentConstants.IMAGE_MAX_FILE_SIZE_MB;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -60,6 +63,11 @@ public class ImageUploadService {
         if (contentType == null || !contentType.startsWith(IMAGE_CONTENT_TYPE_PREFIX)) {
             log.error("ImageUploadService_validateImage_Invalid image content type: {}", contentType);
             throw DocumentErrorCode.DOCUMENT_IMAGE_INVALID_FORMAT.toException();
+        }
+
+        if (image.getSize() > IMAGE_MAX_FILE_SIZE_BYTES) {
+            log.error("ImageUploadService_validateImage_Image size {} exceeds limit {} MB", image.getSize(), IMAGE_MAX_FILE_SIZE_MB);
+            throw DocumentErrorCode.DOCUMENT_IMAGE_TOO_LARGE.toException(IMAGE_MAX_FILE_SIZE_MB);
         }
     }
 }

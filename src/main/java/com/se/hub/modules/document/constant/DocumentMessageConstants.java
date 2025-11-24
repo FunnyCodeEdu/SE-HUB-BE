@@ -17,6 +17,8 @@ public class DocumentMessageConstants {
     public static final String DOCUMENT_UNAPPROVED_MESSAGE = "Document is not approved";
     public static final String DOCUMENT_FILE_REQUIRED_MESSAGE = "File is required";
     public static final String DOCUMENT_IMAGE_INVALID_FORMAT_MESSAGE = "Only image files are allowed";
+    public static final String DOCUMENT_FILE_TOO_LARGE_MESSAGE = "Document file must not exceed {0} MB";
+    public static final String DOCUMENT_IMAGE_TOO_LARGE_MESSAGE = "Image file must not exceed {0} MB";
     public static final String DOCUMENT_UPLOAD_FAILED_MESSAGE = "Failed to upload file to Google Drive";
     public static final String DOCUMENT_GOOGLE_DRIVE_NOT_CONFIGURED_MESSAGE = "Google Drive is not configured. Please authorize first. Authorization URL: {0}";
 

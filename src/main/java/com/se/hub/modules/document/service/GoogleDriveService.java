@@ -4,6 +4,7 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.Permission;
 import com.se.hub.modules.document.exception.DocumentErrorCode;
+import com.se.hub.modules.document.exception.DocumentException;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -92,18 +93,8 @@ public class GoogleDriveService {
                 log.error("GoogleDriveService_getDrive_Credential is null. Authorization URL: {}", googleAuthUrl);
                 throw DocumentErrorCode.DOCUMENT_GOOGLE_DRIVE_NOT_CONFIGURED.toException(googleAuthUrl);
             }
-            
-            if (credential.getRefreshToken() == null) {
-                log.warn("GoogleDriveService_getDrive_Refresh token is null but access token exists. Attempting to use existing access token.");
-                // Try to refresh access token if it's expired
-                if (credential.getExpiresInSeconds() != null && credential.getExpiresInSeconds() <= 60) {
-                    log.info("GoogleDriveService_getDrive_Access token is expired or expiring soon, but no refresh token available");
-                    String googleAuthUrl = generateGoogleAuthUrl();
-                    throw DocumentErrorCode.DOCUMENT_GOOGLE_DRIVE_NOT_CONFIGURED.toException(googleAuthUrl);
-                }
-                // Continue with access token only (might work if not expired)
-                log.info("GoogleDriveService_getDrive_Using access token without refresh token");
-            }
+
+            ensureCredentialValidity(credential);
             
             Drive drive = new Drive.Builder(HTTP_TRANSPORT, 
                     com.google.api.client.json.gson.GsonFactory.getDefaultInstance(), 
@@ -121,6 +112,36 @@ public class GoogleDriveService {
             log.error("GoogleDriveService_getDrive_Failed to initialize Google Drive client: {}", e.getMessage(), e);
             String googleAuthUrl = generateGoogleAuthUrl();
             throw DocumentErrorCode.DOCUMENT_GOOGLE_DRIVE_NOT_CONFIGURED.toException(googleAuthUrl);
+        }
+    }
+
+    private void ensureCredentialValidity(com.google.api.client.auth.oauth2.Credential credential) {
+        try {
+            boolean hasRefreshToken = credential.getRefreshToken() != null && !credential.getRefreshToken().isBlank();
+            Long expiresInSeconds = credential.getExpiresInSeconds();
+            boolean aboutToExpire = expiresInSeconds != null && expiresInSeconds <= 60;
+            boolean missingAccessToken = credential.getAccessToken() == null || credential.getAccessToken().isBlank();
+
+            if ((aboutToExpire || missingAccessToken) && hasRefreshToken) {
+                log.info("GoogleDriveService_ensureCredentialValidity_Refreshing Google token");
+                boolean refreshed = credential.refreshToken();
+                if (!refreshed) {
+                    log.error("GoogleDriveService_ensureCredentialValidity_Refresh token failed (no exception). Requesting re-auth.");
+                    throw DocumentErrorCode.DOCUMENT_GOOGLE_DRIVE_NOT_CONFIGURED.toException(generateGoogleAuthUrl());
+                }
+                log.info("GoogleDriveService_ensureCredentialValidity_Token refreshed successfully");
+            } else if ((aboutToExpire || missingAccessToken) && !hasRefreshToken) {
+                log.warn("GoogleDriveService_ensureCredentialValidity_No refresh token available and token is invalid/expired");
+                throw DocumentErrorCode.DOCUMENT_GOOGLE_DRIVE_NOT_CONFIGURED.toException(generateGoogleAuthUrl());
+            }
+        } catch (DocumentException e) {
+            throw e;
+        } catch (com.google.api.client.auth.oauth2.TokenResponseException e) {
+            log.error("GoogleDriveService_ensureCredentialValidity_Token refresh failed: {}", e.getDetails(), e);
+            throw DocumentErrorCode.DOCUMENT_GOOGLE_DRIVE_NOT_CONFIGURED.toException(generateGoogleAuthUrl());
+        } catch (IOException e) {
+            log.error("GoogleDriveService_ensureCredentialValidity_IO error while refreshing token: {}", e.getMessage(), e);
+            throw DocumentErrorCode.DOCUMENT_GOOGLE_DRIVE_NOT_CONFIGURED.toException(generateGoogleAuthUrl());
         }
     }
     

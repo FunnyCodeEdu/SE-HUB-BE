@@ -28,6 +28,12 @@ public class DocumentConstants {
     public static final String FILE_PATH_DEFINITION = "VARCHAR(500)";
     public static final String FILE_TYPE_DEFINITION = "VARCHAR(20)";
 
+    public static final long DOCUMENT_MAX_FILE_SIZE_BYTES = 20L * 1024 * 1024;
+    public static final int DOCUMENT_MAX_FILE_SIZE_MB = 20;
+
+    public static final long IMAGE_MAX_FILE_SIZE_BYTES = 5L * 1024 * 1024;
+    public static final int IMAGE_MAX_FILE_SIZE_MB = 5;
+
     private DocumentConstants() {}
 }
 

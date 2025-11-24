@@ -37,6 +37,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import static com.se.hub.modules.document.constant.DocumentConstants.DOCUMENT_MAX_FILE_SIZE_BYTES;
+import static com.se.hub.modules.document.constant.DocumentConstants.DOCUMENT_MAX_FILE_SIZE_MB;
+
 /**
  * Document Service Implementation
  * 
@@ -102,6 +105,7 @@ public class DocumentServiceImpl implements DocumentService {
             log.error("DocumentService_createDocument_File is required");
             throw DocumentErrorCode.DOCUMENT_FILE_REQUIRED.toException();
         }
+        validateDocumentFile(file);
 
         Course course = courseRepository.findById(request.getCourseId())
                 .orElseThrow(() -> {
@@ -372,6 +376,13 @@ public class DocumentServiceImpl implements DocumentService {
         if (!isAdmin()) {
             log.error("DocumentService_checkAdminPermission_User {} is not admin", AuthUtils.getCurrentUserId());
             throw DocumentErrorCode.DOCUMENT_FORBIDDEN_OPERATION.toException();
+        }
+    }
+
+    private void validateDocumentFile(MultipartFile file) {
+        if (file.getSize() > DOCUMENT_MAX_FILE_SIZE_BYTES) {
+            log.error("DocumentService_validateDocumentFile_File size {} exceeds limit {} MB", file.getSize(), DOCUMENT_MAX_FILE_SIZE_MB);
+            throw DocumentErrorCode.DOCUMENT_FILE_TOO_LARGE.toException(DOCUMENT_MAX_FILE_SIZE_MB);
         }
     }
 }

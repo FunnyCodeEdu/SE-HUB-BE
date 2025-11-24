@@ -18,13 +18,16 @@ import java.util.Optional;
 @Repository
 public interface UserNotificationRepository extends JpaRepository<UserNotification, String>, JpaSpecificationExecutor<UserNotification> {
     
-    Page<UserNotification> findAllByUser_IdAndStatusOrderByCreateDateDesc(String userId, NotificationStatus status, Pageable pageable);
+    @Query("SELECT un FROM UserNotification un JOIN FETCH un.notification WHERE un.user.id = :userId AND un.status = :status ORDER BY un.createDate DESC")
+    Page<UserNotification> findAllByUser_IdAndStatusOrderByCreateDateDesc(@Param("userId") String userId, @Param("status") NotificationStatus status, Pageable pageable);
     
-    Page<UserNotification> findAllByUser_IdOrderByCreateDateDesc(String userId, Pageable pageable);
+    @Query("SELECT un FROM UserNotification un JOIN FETCH un.notification WHERE un.user.id = :userId ORDER BY un.createDate DESC")
+    Page<UserNotification> findAllByUser_IdOrderByCreateDateDesc(@Param("userId") String userId, Pageable pageable);
     
     long countByUser_IdAndStatus(String userId, NotificationStatus status);
     
-    Optional<UserNotification> findByIdAndUser_Id(String id, String userId);
+    @Query("SELECT un FROM UserNotification un JOIN FETCH un.notification WHERE un.id = :id AND un.user.id = :userId")
+    Optional<UserNotification> findByIdAndUser_Id(@Param("id") String id, @Param("userId") String userId);
     
     @Modifying
     @Query("UPDATE UserNotification un SET un.status = :status, un.readAt = :readAt WHERE un.user.id = :userId AND un.status = :oldStatus")

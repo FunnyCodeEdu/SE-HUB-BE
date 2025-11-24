@@ -145,6 +145,8 @@ public class NotificationServiceImpl implements NotificationService {
         
         // Update Redis cache
         notificationRedisService.decrementUnreadCount(userId);
+        // Clear recent list cache to force refresh from DB with updated status
+        notificationRedisService.clearRecentList(userId);
         
         log.debug("NotificationService_markAsRead_Notification marked as read successfully");
     }
@@ -165,6 +167,8 @@ public class NotificationServiceImpl implements NotificationService {
         
         // Update Redis cache
         notificationRedisService.setUnreadCount(userId, 0);
+        // Clear recent list cache to force refresh from DB with updated status
+        notificationRedisService.clearRecentList(userId);
         
         log.debug("NotificationService_markAllAsRead_All notifications marked as read successfully");
     }
@@ -207,7 +211,17 @@ public class NotificationServiceImpl implements NotificationService {
                     return NotificationErrorCode.USER_NOTIFICATION_NOT_FOUND.toException();
                 });
         
+        boolean wasUnread = userNotification.getStatus() == NotificationStatus.UNREAD;
+        
         userNotificationRepository.delete(userNotification);
+        
+        // Update Redis cache
+        if (wasUnread) {
+            notificationRedisService.decrementUnreadCount(userId);
+        }
+        // Clear recent list cache to remove deleted notification
+        notificationRedisService.clearRecentList(userId);
+        
         log.debug("NotificationService_deleteNotification_Notification deleted successfully");
     }
 

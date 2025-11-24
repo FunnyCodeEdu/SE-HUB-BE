@@ -49,7 +49,8 @@ public interface UserNotificationRepository extends JpaRepository<UserNotificati
                              @Param("status") NotificationStatus status,
                              @Param("oldStatus") NotificationStatus oldStatus);
     
-    List<UserNotification> findTopNByUser_IdAndStatusOrderByCreateDateDesc(String userId, NotificationStatus status, Pageable pageable);
+    @Query("SELECT un FROM UserNotification un JOIN FETCH un.notification WHERE un.user.id = :userId AND un.status = :status ORDER BY un.createDate DESC")
+    List<UserNotification> findTopNByUser_IdAndStatusOrderByCreateDateDesc(@Param("userId") String userId, @Param("status") NotificationStatus status, Pageable pageable);
     
     @Query("SELECT COUNT(un) FROM UserNotification un WHERE un.user.id = :userId AND un.status = :status")
     long countUnreadByUserIdAndStatus(@Param("userId") String userId, @Param("status") NotificationStatus status);

@@ -79,7 +79,7 @@ public class RedisConfig {
      * 
      * IMPORTANT: This bean is singleton and shared across the application
      * - Only ONE instance should exist to avoid duplicate subscriptions
-     * - Container is started automatically by Spring
+     * - Container is started automatically by Spring via @PostConstruct
      * - Connection factory is shared with other Redis beans
      * 
      * Virtual Thread Best Practice:
@@ -97,14 +97,24 @@ public class RedisConfig {
         // Lettuce will automatically reconnect on connection loss
         container.setRecoveryInterval(2000L); // Retry every 2 seconds on failure
         
-        // Start the container immediately
-        container.afterPropertiesSet();
-        container.start();
-        
-        log.info("RedisConfig_redisMessageListenerContainer_RedisMessageListenerContainer started successfully");
+        // DO NOT call afterPropertiesSet() or start() here
+        // Spring will call afterPropertiesSet() automatically during bean initialization
+        // We'll start the container in @PostConstruct to ensure all dependencies are ready
         
         this.messageListenerContainer = container;
         return container;
+    }
+    
+    /**
+     * Start the RedisMessageListenerContainer after all beans are initialized
+     */
+    @PostConstruct
+    public void startRedisMessageListenerContainer() {
+        if (messageListenerContainer != null && !messageListenerContainer.isRunning()) {
+            log.info("RedisConfig_startRedisMessageListenerContainer_Starting RedisMessageListenerContainer");
+            messageListenerContainer.start();
+            log.info("RedisConfig_startRedisMessageListenerContainer_RedisMessageListenerContainer started successfully");
+        }
     }
     
     /**

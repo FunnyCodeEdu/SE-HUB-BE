@@ -16,6 +16,7 @@ public class DocumentMessageConstants {
     public static final String DOCUMENT_COURSE_NOT_FOUND_MESSAGE = "Course not found";
     public static final String DOCUMENT_UNAPPROVED_MESSAGE = "Document is not approved";
     public static final String DOCUMENT_FILE_REQUIRED_MESSAGE = "File is required";
+    public static final String DOCUMENT_IMAGE_INVALID_FORMAT_MESSAGE = "Only image files are allowed";
     public static final String DOCUMENT_UPLOAD_FAILED_MESSAGE = "Failed to upload file to Google Drive";
     public static final String DOCUMENT_GOOGLE_DRIVE_NOT_CONFIGURED_MESSAGE = "Google Drive is not configured. Please authorize first. Authorization URL: {0}";
 
@@ -30,6 +31,7 @@ public class DocumentMessageConstants {
     public static final String API_DOCUMENT_SUGGESTED_SUCCESS = "Retrieved suggested documents successfully";
     public static final String API_DOCUMENT_PENDING_RETRIEVED_SUCCESS = "Retrieved pending documents successfully";
     public static final String API_DOCUMENT_APPROVED_SUCCESS = "Document approved successfully";
+    public static final String API_DOCUMENT_IMAGE_UPLOAD_SUCCESS = "Image uploaded successfully";
     public static final String API_BAD_REQUEST = "Bad request";
     public static final String API_INTERNAL_ERROR = "Internal server error";
     public static final String DOCUMENT_FORBIDDEN_OPERATION_MESSAGE = "You do not have permission to perform this operation";

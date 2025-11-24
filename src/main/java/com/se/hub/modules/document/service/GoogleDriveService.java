@@ -178,24 +178,36 @@ public class GoogleDriveService {
     }
 
     /**
-     * Upload file to Google Drive and set public view permission
+     * Upload file to default Google Drive folder and set public view permission
      * @param file MultipartFile to upload
      * @return Google Drive file ID
      * @throws IOException if upload fails
      */
     public String uploadFile(MultipartFile file) throws IOException {
+        return uploadFileToFolder(file, null);
+    }
+
+    /**
+     * Upload file to a specific Google Drive folder (falls back to default folder if empty)
+     * @param file MultipartFile to upload
+     * @param targetFolderId target Google Drive folder ID
+     * @return Google Drive file ID
+     * @throws IOException if upload fails
+     */
+    public String uploadFileToFolder(MultipartFile file, String targetFolderId) throws IOException {
+        String effectiveFolderId = resolveFolderId(targetFolderId);
         Drive drive = getDrive();
-        
-        log.debug("GoogleDriveService_uploadFile_Uploading file: {} to folder: {}", 
-                file.getOriginalFilename(), folderId != null && !folderId.isEmpty() ? folderId : "root");
-        
+
+        log.debug("GoogleDriveService_uploadFile_Uploading file: {} to folder: {}",
+                file.getOriginalFilename(), effectiveFolderId != null ? effectiveFolderId : "root");
+
         File fileMetadata = new File();
         fileMetadata.setName(file.getOriginalFilename());
-        
+
         // Set parent folder if configured
-        if (folderId != null && !folderId.isEmpty()) {
-            fileMetadata.setParents(java.util.Collections.singletonList(folderId));
-            log.debug("GoogleDriveService_uploadFile_Setting parent folder: {}", folderId);
+        if (effectiveFolderId != null) {
+            fileMetadata.setParents(java.util.Collections.singletonList(effectiveFolderId));
+            log.debug("GoogleDriveService_uploadFile_Setting parent folder: {}", effectiveFolderId);
         }
 
         java.io.File convFile = convertToFile(file);
@@ -214,9 +226,19 @@ public class GoogleDriveService {
 
         // Clean up temporary file
         convFile.delete();
-        
+
         log.debug("GoogleDriveService_uploadFile_File uploaded successfully with public view permission");
         return fileId;
+    }
+
+    private String resolveFolderId(String customFolderId) {
+        if (customFolderId != null && !customFolderId.isBlank()) {
+            return customFolderId;
+        }
+        if (folderId != null && !folderId.isBlank()) {
+            return folderId;
+        }
+        return null;
     }
 
     /**

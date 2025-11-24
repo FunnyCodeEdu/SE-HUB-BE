@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
-@Profile("dev")
 public class OpenApiConfig {
 
     private static final String AUTHORIZATION = "Authorization";

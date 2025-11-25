@@ -152,6 +152,7 @@ public class SecurityConfig {
                         .oauth2ResourceServer(oauth2 -> oauth2
                         .bearerTokenResolver(request -> {
                             String requestPath = request.getRequestURI();
+                            String method = request.getMethod();
                             
                             // Check if this is a whitelisted endpoint
                             boolean isWhitelisted = Arrays.stream(WHITELIST_ENDPOINTS)
@@ -166,6 +167,27 @@ public class SecurityConfig {
                             // If whitelisted, return null to skip OAuth2 processing
                             if (isWhitelisted) {
                                 return null;
+                            }
+                            
+                            // Check if this is a public GET endpoint
+                            if ("GET".equals(method)) {
+                                boolean isPublicGetEndpoint = Arrays.stream(PUBLIC_GET_ENDPOINTS)
+                                        .anyMatch(pattern -> {
+                                            if (pattern.endsWith("/**")) {
+                                                String basePattern = pattern.substring(0, pattern.length() - 3);
+                                                return requestPath.startsWith(basePattern);
+                                            }
+                                            if (pattern.endsWith("/*")) {
+                                                String basePattern = pattern.substring(0, pattern.length() - 2);
+                                                return requestPath.startsWith(basePattern);
+                                            }
+                                            return requestPath.equals(pattern) || requestPath.startsWith(pattern + "/");
+                                        });
+                                
+                                // If public GET endpoint, return null to skip OAuth2 processing
+                                if (isPublicGetEndpoint) {
+                                    return null;
+                                }
                             }
                             
                             // For SSE subscribe path, allow token passed via query param

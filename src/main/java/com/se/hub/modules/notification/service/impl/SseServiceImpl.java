@@ -85,7 +85,13 @@ public class SseServiceImpl implements SseService {
         
         emitter.onError((e) -> {
             removeEmitter(userId, emitter);
-            log.warn("SseService_subscribe_Emitter error for user: {}", userId, e);
+            // Only log if it's not a client disconnect (Broken pipe is expected when client closes connection)
+            if (!(e instanceof IOException) && 
+                !(e instanceof org.springframework.web.context.request.async.AsyncRequestNotUsableException)) {
+                log.warn("SseService_subscribe_Emitter error for user: {}", userId, e);
+            } else {
+                log.debug("SseService_subscribe_Client disconnected for user: {}", userId);
+            }
         });
         
         log.info("SseService_subscribe_User {} subscribed to SSE, total connections: {}", 
@@ -117,8 +123,13 @@ public class SseServiceImpl implements SseService {
                             .name("notification")
                             .data(notification));
                     successCount++;
-                } catch (IOException e) {
-                    log.warn("SseService_sendNotificationToUser_Error sending to emitter for user: {}", userId, e);
+                } catch (IOException | org.springframework.web.context.request.async.AsyncRequestNotUsableException e) {
+                    // Client disconnected - remove emitter silently
+                    log.debug("SseService_sendNotificationToUser_Client disconnected for user: {}", userId);
+                    removeEmitter(userId, emitter);
+                    failCount++;
+                } catch (Exception e) {
+                    log.warn("SseService_sendNotificationToUser_Unexpected error sending to emitter for user: {}", userId, e);
                     removeEmitter(userId, emitter);
                     failCount++;
                 }
@@ -183,15 +194,26 @@ public class SseServiceImpl implements SseService {
     @Scheduled(fixedRate = KEEP_ALIVE_INTERVAL)
     public void sendKeepAlive() {
         userEmitters.forEach((userId, emitters) -> {
+            // Use iterator to safely remove while iterating
+            List<SseEmitter> toRemove = new CopyOnWriteArrayList<>();
+            
             for (SseEmitter emitter : emitters) {
                 try {
                     emitter.send(SseEmitter.event()
                             .comment("keep-alive"));
-                } catch (IOException e) {
-                    log.debug("SseService_sendKeepAlive_Error sending keep-alive to user: {}", userId);
-                    removeEmitter(userId, emitter);
+                } catch (IOException | org.springframework.web.context.request.async.AsyncRequestNotUsableException e) {
+                    // Client disconnected - remove emitter silently
+                    log.debug("SseService_sendKeepAlive_Client disconnected for user: {}", userId);
+                    toRemove.add(emitter);
+                } catch (Exception e) {
+                    // Other unexpected errors
+                    log.warn("SseService_sendKeepAlive_Unexpected error sending keep-alive to user: {}", userId, e);
+                    toRemove.add(emitter);
                 }
             }
+            
+            // Remove disconnected emitters
+            toRemove.forEach(emitter -> removeEmitter(userId, emitter));
         });
     }
 }

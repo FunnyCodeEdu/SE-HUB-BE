@@ -17,13 +17,22 @@ import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.spec.SecretKeySpec;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -122,6 +131,78 @@ public class SecurityConfig {
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
+
+                // Add filter to remove Authorization header for public endpoints before OAuth2 processing
+                .addFilterBefore((request, response, chain) -> {
+                    HttpServletRequest httpRequest = (HttpServletRequest) request;
+                    String requestPath = httpRequest.getRequestURI();
+                    String method = httpRequest.getMethod();
+                    
+                    // Remove query string for pattern matching
+                    if (requestPath.contains("?")) {
+                        requestPath = requestPath.substring(0, requestPath.indexOf("?"));
+                    }
+                    
+                    // Check if this is a public GET endpoint
+                    boolean isPublicGetEndpoint = false;
+                    if ("GET".equals(method)) {
+                        isPublicGetEndpoint = Arrays.stream(PUBLIC_GET_ENDPOINTS)
+                                .anyMatch(pattern -> {
+                                    if (pattern.endsWith("/**")) {
+                                        String basePattern = pattern.substring(0, pattern.length() - 3);
+                                        return requestPath.startsWith(basePattern);
+                                    } else if (pattern.endsWith("/*")) {
+                                        String basePattern = pattern.substring(0, pattern.length() - 2);
+                                        return requestPath.startsWith(basePattern);
+                                    } else {
+                                        return requestPath.equals(pattern) || requestPath.startsWith(pattern + "/");
+                                    }
+                                });
+                    }
+                    
+                    // Check if whitelisted
+                    boolean isWhitelisted = Arrays.stream(WHITELIST_ENDPOINTS)
+                            .anyMatch(pattern -> {
+                                if (pattern.endsWith("/**")) {
+                                    String basePattern = pattern.substring(0, pattern.length() - 3);
+                                    return requestPath.startsWith(basePattern);
+                                }
+                                return requestPath.equals(pattern) || requestPath.startsWith(pattern + "/");
+                            });
+                    
+                    // If public endpoint, remove Authorization header to prevent OAuth2 processing
+                    if (isPublicGetEndpoint || isWhitelisted) {
+                        log.info("SecurityConfig_PublicEndpointFilter_Removing Authorization header for public endpoint: {} {}", method, requestPath);
+                        HttpServletRequestWrapper wrappedRequest = new HttpServletRequestWrapper(httpRequest) {
+                            @Override
+                            public String getHeader(String name) {
+                                if ("Authorization".equalsIgnoreCase(name)) {
+                                    return null;
+                                }
+                                return super.getHeader(name);
+                            }
+                            
+                            @Override
+                            public Enumeration<String> getHeaders(String name) {
+                                if ("Authorization".equalsIgnoreCase(name)) {
+                                    return Collections.emptyEnumeration();
+                                }
+                                return super.getHeaders(name);
+                            }
+                            
+                            @Override
+                            public Enumeration<String> getHeaderNames() {
+                                List<String> headerNames = Collections.list(super.getHeaderNames());
+                                headerNames.removeIf("Authorization"::equalsIgnoreCase);
+                                return Collections.enumeration(headerNames);
+                            }
+                        };
+                        chain.doFilter(wrappedRequest, response);
+                        return;
+                    }
+                    
+                    chain.doFilter(request, response);
+                }, org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter.class)
 
                 //disable csrf
                 .csrf(AbstractHttpConfigurer::disable)

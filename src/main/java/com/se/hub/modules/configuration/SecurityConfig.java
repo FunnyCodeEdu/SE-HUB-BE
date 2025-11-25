@@ -154,6 +154,13 @@ public class SecurityConfig {
                             String requestPath = request.getRequestURI();
                             String method = request.getMethod();
                             
+                            // Remove query string for pattern matching
+                            if (requestPath.contains("?")) {
+                                requestPath = requestPath.substring(0, requestPath.indexOf("?"));
+                            }
+                            
+                            log.debug("SecurityConfig_bearerTokenResolver_Request: {} {}", method, requestPath);
+                            
                             // Check if this is a whitelisted endpoint
                             boolean isWhitelisted = Arrays.stream(WHITELIST_ENDPOINTS)
                                     .anyMatch(pattern -> {
@@ -166,6 +173,7 @@ public class SecurityConfig {
                             
                             // If whitelisted, return null to skip OAuth2 processing
                             if (isWhitelisted) {
+                                log.debug("SecurityConfig_bearerTokenResolver_Whitelisted endpoint, skipping OAuth2");
                                 return null;
                             }
                             
@@ -173,21 +181,31 @@ public class SecurityConfig {
                             if ("GET".equals(method)) {
                                 boolean isPublicGetEndpoint = Arrays.stream(PUBLIC_GET_ENDPOINTS)
                                         .anyMatch(pattern -> {
+                                            boolean matches = false;
                                             if (pattern.endsWith("/**")) {
                                                 String basePattern = pattern.substring(0, pattern.length() - 3);
-                                                return requestPath.startsWith(basePattern);
-                                            }
-                                            if (pattern.endsWith("/*")) {
+                                                matches = requestPath.startsWith(basePattern);
+                                            } else if (pattern.endsWith("/*")) {
                                                 String basePattern = pattern.substring(0, pattern.length() - 2);
-                                                return requestPath.startsWith(basePattern);
+                                                matches = requestPath.startsWith(basePattern);
+                                            } else {
+                                                matches = requestPath.equals(pattern) || requestPath.startsWith(pattern + "/");
                                             }
-                                            return requestPath.equals(pattern) || requestPath.startsWith(pattern + "/");
+                                            if (matches) {
+                                                log.debug("SecurityConfig_bearerTokenResolver_Matched public GET endpoint pattern: {}", pattern);
+                                            }
+                                            return matches;
                                         });
                                 
                                 // If public GET endpoint, return null to skip OAuth2 processing
                                 if (isPublicGetEndpoint) {
+                                    log.debug("SecurityConfig_bearerTokenResolver_Public GET endpoint, skipping OAuth2");
                                     return null;
+                                } else {
+                                    log.debug("SecurityConfig_bearerTokenResolver_Not a public GET endpoint");
                                 }
+                            } else {
+                                log.debug("SecurityConfig_bearerTokenResolver_Not a GET request, method: {}", method);
                             }
                             
                             // For SSE subscribe path, allow token passed via query param

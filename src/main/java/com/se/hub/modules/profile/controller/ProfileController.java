@@ -14,13 +14,19 @@ import com.se.hub.modules.profile.constant.activity.ActivityControllerConstants;
 import com.se.hub.modules.profile.constant.profile.ProfileControllerConstants;
 import com.se.hub.modules.profile.dto.request.CreateDefaultProfileRequest;
 import com.se.hub.modules.profile.dto.request.UpdateProfileRequest;
+import com.se.hub.modules.notification.dto.request.UpdateNotificationSettingRequest;
+import com.se.hub.modules.notification.dto.response.NotificationSettingResponse;
+import com.se.hub.modules.profile.dto.request.UpdatePrivacySettingRequest;
 import com.se.hub.modules.profile.dto.response.ActivityResponse;
+import com.se.hub.modules.profile.dto.response.CombinedSettingsResponse;
 import com.se.hub.modules.profile.dto.response.ContributionGraphResponse;
 import com.se.hub.modules.profile.dto.response.FollowCountResponse;
+import com.se.hub.modules.profile.dto.response.PrivacySettingResponse;
 import com.se.hub.modules.profile.dto.response.ProfileResponse;
 import com.se.hub.modules.profile.service.api.ActivityService;
 import com.se.hub.modules.profile.service.api.FollowService;
 import com.se.hub.modules.profile.service.api.ProfileService;
+import com.se.hub.modules.profile.service.api.SettingsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -47,6 +53,7 @@ public class ProfileController extends BaseController {
     ProfileService profileService;
     FollowService followService;
     ActivityService activityService;
+    SettingsService settingsService;
 
     @PostMapping("/default")
     @Operation(summary = ProfileControllerConstants.CREATE_DEFAULT_OPERATION_SUMMARY, description = ProfileControllerConstants.CREATE_DEFAULT_OPERATION_DESCRIPTION)
@@ -331,5 +338,48 @@ public class ProfileController extends BaseController {
         
         ContributionGraphResponse data = activityService.getContributionGraph(profileId, year);
         return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
+    }
+
+    @GetMapping("/settings")
+    @Operation(summary = "Get combined settings",
+            description = "Get notification and privacy settings for current user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = "Settings retrieved successfully"),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<CombinedSettingsResponse>> getCombinedSettings() {
+        log.debug("Getting combined settings for current user");
+        CombinedSettingsResponse data = settingsService.getCombinedSettings();
+        return success(data, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
+    }
+
+    @PutMapping("/settings/notification")
+    @Operation(summary = "Update notification settings",
+            description = "Update notification settings for current user (tắt/bật nhận thông báo)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = "Notification settings updated successfully"),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<NotificationSettingResponse>> updateNotificationSettings(
+            @Valid @RequestBody UpdateNotificationSettingRequest request) {
+        log.debug("Updating notification settings for current user");
+        NotificationSettingResponse data = settingsService.updateNotificationSettings(request);
+        return success(data, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
+    }
+
+    @PutMapping("/settings/privacy")
+    @Operation(summary = "Update privacy settings",
+            description = "Update privacy settings for current user (trang cá nhân công khai/riêng tư, bật/ẩn email, mxh, ...)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = "Privacy settings updated successfully"),
+            @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = ProfileControllerConstants.BAD_REQUEST_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<PrivacySettingResponse>> updatePrivacySettings(
+            @Valid @RequestBody UpdatePrivacySettingRequest request) {
+        log.debug("Updating privacy settings for current user");
+        PrivacySettingResponse data = settingsService.updatePrivacySettings(request);
+        return success(data, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
     }
 }

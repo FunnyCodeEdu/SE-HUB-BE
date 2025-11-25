@@ -108,7 +108,11 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
         notificationRedisService.incrementUnreadCount(event.getMentionedUserId());
         NotificationResponse notificationResponse = notificationMapper.toNotificationResponse(savedUserNotification);
         notificationRedisService.addToRecentList(event.getMentionedUserId(), notificationResponse);
-        notificationRedisService.publishNotification(event.getMentionedUserId(), notificationResponse);
+        
+        // Check push notification setting before publishing
+        if (shouldPushNotification(event.getMentionedUserId())) {
+            notificationRedisService.publishNotification(event.getMentionedUserId(), notificationResponse);
+        }
         
         log.debug("NotificationInternalService_createMentionNotification_Mention notification created successfully");
     }
@@ -168,7 +172,11 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
         notificationRedisService.incrementUnreadCount(event.getPostOwnerUserId());
         NotificationResponse notificationResponse = notificationMapper.toNotificationResponse(savedUserNotification);
         notificationRedisService.addToRecentList(event.getPostOwnerUserId(), notificationResponse);
-        notificationRedisService.publishNotification(event.getPostOwnerUserId(), notificationResponse);
+        
+        // Check push notification setting before publishing
+        if (shouldPushNotification(event.getPostOwnerUserId())) {
+            notificationRedisService.publishNotification(event.getPostOwnerUserId(), notificationResponse);
+        }
         
         log.debug("NotificationInternalService_createPostLikedNotification_Post liked notification created successfully");
     }
@@ -228,7 +236,11 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
         notificationRedisService.incrementUnreadCount(event.getPostOwnerUserId());
         NotificationResponse notificationResponse = notificationMapper.toNotificationResponse(savedUserNotification);
         notificationRedisService.addToRecentList(event.getPostOwnerUserId(), notificationResponse);
-        notificationRedisService.publishNotification(event.getPostOwnerUserId(), notificationResponse);
+        
+        // Check push notification setting before publishing
+        if (shouldPushNotification(event.getPostOwnerUserId())) {
+            notificationRedisService.publishNotification(event.getPostOwnerUserId(), notificationResponse);
+        }
         
         log.debug("NotificationInternalService_createPostCommentedNotification_Post commented notification created successfully");
     }
@@ -282,7 +294,11 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
         notificationRedisService.incrementUnreadCount(event.getBlogAuthorUserId());
         NotificationResponse notificationResponse = notificationMapper.toNotificationResponse(savedUserNotification);
         notificationRedisService.addToRecentList(event.getBlogAuthorUserId(), notificationResponse);
-        notificationRedisService.publishNotification(event.getBlogAuthorUserId(), notificationResponse);
+        
+        // Check push notification setting before publishing
+        if (shouldPushNotification(event.getBlogAuthorUserId())) {
+            notificationRedisService.publishNotification(event.getBlogAuthorUserId(), notificationResponse);
+        }
         
         log.debug("NotificationInternalService_createBlogApprovedNotification_Blog approved notification created successfully");
     }
@@ -337,7 +353,11 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
         notificationRedisService.incrementUnreadCount(event.getUserId());
         NotificationResponse notificationResponse = notificationMapper.toNotificationResponse(savedUserNotification);
         notificationRedisService.addToRecentList(event.getUserId(), notificationResponse);
-        notificationRedisService.publishNotification(event.getUserId(), notificationResponse);
+        
+        // Check push notification setting before publishing
+        if (shouldPushNotification(event.getUserId())) {
+            notificationRedisService.publishNotification(event.getUserId(), notificationResponse);
+        }
         
         log.debug("NotificationInternalService_createAchievementUnlockedNotification_Achievement unlocked notification created successfully");
     }
@@ -457,7 +477,11 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
                 UserNotification latest = userNotifications.get(userNotifications.size() - 1);
                 NotificationResponse notificationResponse = notificationMapper.toNotificationResponse(latest);
                 notificationRedisService.addToRecentList(userId, notificationResponse);
-                notificationRedisService.publishNotification(userId, notificationResponse);
+                
+                // Check push notification setting before publishing
+                if (shouldPushNotification(userId)) {
+                    notificationRedisService.publishNotification(userId, notificationResponse);
+                }
             }
         }
     }
@@ -469,7 +493,7 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
      * @return true if notification should be sent, false otherwise
      */
     private boolean shouldSendNotification(String userId, String notificationType) {
-        return notificationSettingRepository.findByUser_Id(userId)
+        return notificationSettingRepository.findByUser_User_Id(userId)
                 .map(setting -> {
                     return switch (notificationType) {
                         case "mention" -> setting.getMentionEnabled();
@@ -482,6 +506,17 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
                         default -> true; // Default to enabled if type not recognized
                     };
                 })
+                .orElse(true); // Default to enabled if settings not found
+    }
+
+    /**
+     * Check if push notification should be sent based on user's pushEnabled setting
+     * @param userId user ID
+     * @return true if push notification should be sent, false otherwise
+     */
+    private boolean shouldPushNotification(String userId) {
+        return notificationSettingRepository.findByUser_User_Id(userId)
+                .map(setting -> Boolean.TRUE.equals(setting.getPushEnabled()))
                 .orElse(true); // Default to enabled if settings not found
     }
 }

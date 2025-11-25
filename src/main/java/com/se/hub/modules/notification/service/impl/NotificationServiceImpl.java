@@ -230,7 +230,7 @@ public class NotificationServiceImpl implements NotificationService {
         log.debug("NotificationService_getSettings_Getting notification settings for user: {}", AuthUtils.getCurrentUserId());
         String userId = AuthUtils.getCurrentUserId();
         
-        NotificationSetting setting = notificationSettingRepository.findByUser_Id(userId)
+        NotificationSetting setting = notificationSettingRepository.findByUser_User_Id(userId)
                 .orElseGet(() -> {
                     // Create default settings if not exists
                     NotificationSetting defaultSetting = NotificationSetting.builder()
@@ -251,7 +251,7 @@ public class NotificationServiceImpl implements NotificationService {
         log.debug("NotificationService_updateSettings_Updating notification settings for user: {}", AuthUtils.getCurrentUserId());
         String userId = AuthUtils.getCurrentUserId();
         
-        NotificationSetting setting = notificationSettingRepository.findByUser_Id(userId)
+        NotificationSetting setting = notificationSettingRepository.findByUser_User_Id(userId)
                 .orElseGet(() -> {
                     NotificationSetting newSetting = NotificationSetting.builder()
                             .user(profileRepository.findByUserId(userId)

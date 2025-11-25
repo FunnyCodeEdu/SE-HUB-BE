@@ -8,7 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface NotificationSettingRepository extends JpaRepository<NotificationSetting, String> {
-    Optional<NotificationSetting> findByUser_Id(String userId);
+    Optional<NotificationSetting> findByUser_User_Id(String userId);
 }
 
 

@@ -25,8 +25,11 @@ import com.se.hub.modules.profile.dto.response.FtesProfileResponse;
 import com.se.hub.modules.profile.dto.response.FtesUserInfoResponse;
 import com.se.hub.modules.profile.service.FtesProfileService;
 import com.se.hub.modules.profile.service.api.ActivityService;
+import com.se.hub.modules.profile.service.api.PrivacyHelperService;
 import com.se.hub.modules.profile.service.api.ProfileService;
 import com.se.hub.modules.profile.service.api.UserStatsService;
+import com.se.hub.modules.profile.entity.PrivacySetting;
+import com.se.hub.modules.profile.repository.PrivacySettingRepository;
 import com.se.hub.modules.user.entity.User;
 import com.se.hub.modules.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -56,6 +59,8 @@ public class ProfileServiceImpl implements ProfileService {
     ProfileMapper profileMapper;
     FtesProfileService ftesProfileService;
     ActivityService activityService;
+    PrivacyHelperService privacyHelperService;
+    PrivacySettingRepository privacySettingRepository;
 
     @Override
     @Transactional
@@ -168,7 +173,18 @@ public class ProfileServiceImpl implements ProfileService {
                     return new AppException(ErrorCode.DATA_NOT_FOUND);
                 });
 
-        return profileMapper.toProfileResponse(profile);
+        ProfileResponse response = profileMapper.toProfileResponse(profile);
+        
+        // Apply privacy settings
+        String currentUserId = AuthUtils.getCurrentUserId();
+        boolean isOwner = userId.equals(currentUserId);
+        PrivacySetting privacySetting = privacySettingRepository.findByUser_User_Id(userId).orElse(null);
+        
+        if (!privacyHelperService.isProfileAccessible(privacySetting, isOwner)) {
+            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+        }
+        
+        return privacyHelperService.applyPrivacySettings(response, privacySetting, isOwner);
     }
 
     @Override
@@ -179,7 +195,18 @@ public class ProfileServiceImpl implements ProfileService {
                     return new AppException(ErrorCode.DATA_NOT_FOUND);
                 });
 
-        return profileMapper.toProfileResponse(profile);
+        ProfileResponse response = profileMapper.toProfileResponse(profile);
+        
+        // Apply privacy settings
+        String currentUserId = AuthUtils.getCurrentUserId();
+        boolean isOwner = profile.getUser().getId().equals(currentUserId);
+        PrivacySetting privacySetting = privacySettingRepository.findByUser_User_Id(profile.getUser().getId()).orElse(null);
+        
+        if (!privacyHelperService.isProfileAccessible(privacySetting, isOwner)) {
+            throw new AppException(ErrorCode.AUTHZ_UNAUTHORIZED);
+        }
+        
+        return privacyHelperService.applyPrivacySettings(response, privacySetting, isOwner);
     }
 
     @Override

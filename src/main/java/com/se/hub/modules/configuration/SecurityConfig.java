@@ -151,12 +151,15 @@ public class SecurityConfig {
                 // The resolver will return null for whitelisted endpoints, effectively skipping OAuth2 processing
                         .oauth2ResourceServer(oauth2 -> oauth2
                         .bearerTokenResolver(request -> {
-                            String requestPath = request.getRequestURI();
-                            String method = request.getMethod();
+                            String originalPath = request.getRequestURI();
+                            final String method = request.getMethod();
                             
                             // Remove query string for pattern matching
-                            if (requestPath.contains("?")) {
-                                requestPath = requestPath.substring(0, requestPath.indexOf("?"));
+                            final String requestPath;
+                            if (originalPath.contains("?")) {
+                                requestPath = originalPath.substring(0, originalPath.indexOf("?"));
+                            } else {
+                                requestPath = originalPath;
                             }
                             
                             log.debug("SecurityConfig_bearerTokenResolver_Request: {} {}", method, requestPath);

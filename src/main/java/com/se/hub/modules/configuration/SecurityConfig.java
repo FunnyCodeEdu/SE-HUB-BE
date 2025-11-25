@@ -73,7 +73,10 @@ public class SecurityConfig {
             "/api/achievements/*",
             // Question endpoints
             "/api/questions",
-            "/api/questions/**"
+            "/api/questions/**",
+            // Search endpoints
+            "/api/search",
+            "/api/search/**"
     };
     
     // Endpoints that require authentication but no permission check

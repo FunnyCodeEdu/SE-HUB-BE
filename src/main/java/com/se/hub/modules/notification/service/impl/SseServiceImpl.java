@@ -125,6 +125,7 @@ public class SseServiceImpl implements SseService {
                     successCount++;
                 } catch (IOException e) {
                     // Client disconnected - remove emitter silently
+                    // IOException includes AsyncRequestNotUsableException (subclass)
                     log.debug("SseService_sendNotificationToUser_Client disconnected for user: {}", userId);
                     removeEmitter(userId, emitter);
                     failCount++;
@@ -203,6 +204,7 @@ public class SseServiceImpl implements SseService {
                             .comment("keep-alive"));
                 } catch (IOException e) {
                     // Client disconnected - remove emitter silently
+                    // IOException includes AsyncRequestNotUsableException (subclass)
                     log.debug("SseService_sendKeepAlive_Client disconnected for user: {}", userId);
                     toRemove.add(emitter);
                 } catch (Exception e) {

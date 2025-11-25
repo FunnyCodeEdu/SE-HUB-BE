@@ -18,42 +18,42 @@ import java.util.Optional;
 @Repository
 public interface UserNotificationRepository extends JpaRepository<UserNotification, String>, JpaSpecificationExecutor<UserNotification> {
     
-    @Query("SELECT un FROM UserNotification un JOIN FETCH un.notification JOIN un.user u JOIN u.user WHERE u.id = :userId AND un.status = :status ORDER BY un.createDate DESC")
+    @Query("SELECT un FROM UserNotification un JOIN FETCH un.notification JOIN un.user u JOIN u.user usr WHERE usr.id = :userId AND un.status = :status ORDER BY un.createDate DESC")
     Page<UserNotification> findAllByUser_IdAndStatusOrderByCreateDateDesc(@Param("userId") String userId, @Param("status") NotificationStatus status, Pageable pageable);
     
-    @Query("SELECT un FROM UserNotification un JOIN FETCH un.notification JOIN un.user u JOIN u.user WHERE u.id = :userId ORDER BY un.createDate DESC")
+    @Query("SELECT un FROM UserNotification un JOIN FETCH un.notification JOIN un.user u JOIN u.user usr WHERE usr.id = :userId ORDER BY un.createDate DESC")
     Page<UserNotification> findAllByUser_IdOrderByCreateDateDesc(@Param("userId") String userId, Pageable pageable);
     
-    @Query("SELECT COUNT(un) FROM UserNotification un JOIN un.user u JOIN u.user WHERE u.id = :userId AND un.status = :status")
+    @Query("SELECT COUNT(un) FROM UserNotification un JOIN un.user u JOIN u.user usr WHERE usr.id = :userId AND un.status = :status")
     long countByUser_IdAndStatus(@Param("userId") String userId, @Param("status") NotificationStatus status);
     
-    @Query("SELECT un FROM UserNotification un JOIN FETCH un.notification JOIN FETCH un.user u JOIN FETCH u.user WHERE un.id = :id AND u.id = :userId")
+    @Query("SELECT un FROM UserNotification un JOIN FETCH un.notification JOIN FETCH un.user u JOIN FETCH u.user usr WHERE un.id = :id AND usr.id = :userId")
     Optional<UserNotification> findByIdAndUser_Id(@Param("id") String id, @Param("userId") String userId);
     
     @Modifying
-    @Query("UPDATE UserNotification un SET un.status = :status, un.readAt = :readAt WHERE EXISTS (SELECT 1 FROM Profile p JOIN p.user u WHERE p.id = un.user.id AND u.id = :userId) AND un.status = :oldStatus")
+    @Query("UPDATE UserNotification un SET un.status = :status, un.readAt = :readAt WHERE un.user.id IN (SELECT p.id FROM Profile p WHERE p.user.id = :userId) AND un.status = :oldStatus")
     int markAllAsReadByUserId(@Param("userId") String userId, 
                                @Param("status") NotificationStatus status,
                                @Param("oldStatus") NotificationStatus oldStatus,
                                @Param("readAt") Instant readAt);
     
     @Modifying
-    @Query("UPDATE UserNotification un SET un.status = :status, un.readAt = :readAt WHERE un.id = :id AND EXISTS (SELECT 1 FROM Profile p JOIN p.user u WHERE p.id = un.user.id AND u.id = :userId)")
+    @Query("UPDATE UserNotification un SET un.status = :status, un.readAt = :readAt WHERE un.id = :id AND un.user.id IN (SELECT p.id FROM Profile p WHERE p.user.id = :userId)")
     int markAsReadByIdAndUserId(@Param("id") String id,
                                  @Param("userId") String userId,
                                  @Param("status") NotificationStatus status,
                                  @Param("readAt") Instant readAt);
     
     @Modifying
-    @Query("UPDATE UserNotification un SET un.status = :status WHERE EXISTS (SELECT 1 FROM Profile p JOIN p.user u WHERE p.id = un.user.id AND u.id = :userId) AND un.status = :oldStatus")
+    @Query("UPDATE UserNotification un SET un.status = :status WHERE un.user.id IN (SELECT p.id FROM Profile p WHERE p.user.id = :userId) AND un.status = :oldStatus")
     int updateStatusByUserId(@Param("userId") String userId,
                              @Param("status") NotificationStatus status,
                              @Param("oldStatus") NotificationStatus oldStatus);
     
-    @Query("SELECT un FROM UserNotification un JOIN FETCH un.notification JOIN un.user u JOIN u.user WHERE u.id = :userId AND un.status = :status ORDER BY un.createDate DESC")
+    @Query("SELECT un FROM UserNotification un JOIN FETCH un.notification JOIN un.user u JOIN u.user usr WHERE usr.id = :userId AND un.status = :status ORDER BY un.createDate DESC")
     List<UserNotification> findTopNByUser_IdAndStatusOrderByCreateDateDesc(@Param("userId") String userId, @Param("status") NotificationStatus status, Pageable pageable);
     
-    @Query("SELECT COUNT(un) FROM UserNotification un JOIN un.user u JOIN u.user WHERE u.id = :userId AND un.status = :status")
+    @Query("SELECT COUNT(un) FROM UserNotification un JOIN un.user u JOIN u.user usr WHERE usr.id = :userId AND un.status = :status")
     long countUnreadByUserIdAndStatus(@Param("userId") String userId, @Param("status") NotificationStatus status);
 }
 

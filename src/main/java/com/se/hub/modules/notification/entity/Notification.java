@@ -19,6 +19,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Getter
 @Setter
@@ -53,6 +55,7 @@ public class Notification extends BaseEntity {
             columnDefinition = NotificationConstants.CONTENT_DEFINITION)
     String content;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = NotificationConstants.COL_METADATA,
             columnDefinition = NotificationConstants.METADATA_DEFINITION)
     String metadata; // JSON string for additional data

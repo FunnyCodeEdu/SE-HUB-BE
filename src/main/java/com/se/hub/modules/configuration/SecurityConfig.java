@@ -162,7 +162,7 @@ public class SecurityConfig {
                                 requestPath = originalPath;
                             }
                             
-                            log.debug("SecurityConfig_bearerTokenResolver_Request: {} {}", method, requestPath);
+                            log.info("SecurityConfig_bearerTokenResolver_Request: {} {} (original: {})", method, requestPath, originalPath);
                             
                             // Check if this is a whitelisted endpoint
                             boolean isWhitelisted = Arrays.stream(WHITELIST_ENDPOINTS)
@@ -176,12 +176,13 @@ public class SecurityConfig {
                             
                             // If whitelisted, return null to skip OAuth2 processing
                             if (isWhitelisted) {
-                                log.debug("SecurityConfig_bearerTokenResolver_Whitelisted endpoint, skipping OAuth2");
+                                log.info("SecurityConfig_bearerTokenResolver_Whitelisted endpoint, skipping OAuth2");
                                 return null;
                             }
                             
                             // Check if this is a public GET endpoint
                             if ("GET".equals(method)) {
+                                log.info("SecurityConfig_bearerTokenResolver_Checking public GET endpoints for: {}", requestPath);
                                 boolean isPublicGetEndpoint = Arrays.stream(PUBLIC_GET_ENDPOINTS)
                                         .anyMatch(pattern -> {
                                             boolean matches = false;
@@ -195,20 +196,20 @@ public class SecurityConfig {
                                                 matches = requestPath.equals(pattern) || requestPath.startsWith(pattern + "/");
                                             }
                                             if (matches) {
-                                                log.debug("SecurityConfig_bearerTokenResolver_Matched public GET endpoint pattern: {}", pattern);
+                                                log.info("SecurityConfig_bearerTokenResolver_Matched public GET endpoint pattern: {} for path: {}", pattern, requestPath);
                                             }
                                             return matches;
                                         });
                                 
                                 // If public GET endpoint, return null to skip OAuth2 processing
                                 if (isPublicGetEndpoint) {
-                                    log.debug("SecurityConfig_bearerTokenResolver_Public GET endpoint, skipping OAuth2");
+                                    log.info("SecurityConfig_bearerTokenResolver_Public GET endpoint, skipping OAuth2 - returning null");
                                     return null;
                                 } else {
-                                    log.debug("SecurityConfig_bearerTokenResolver_Not a public GET endpoint");
+                                    log.info("SecurityConfig_bearerTokenResolver_Not a public GET endpoint - will process token");
                                 }
                             } else {
-                                log.debug("SecurityConfig_bearerTokenResolver_Not a GET request, method: {}", method);
+                                log.info("SecurityConfig_bearerTokenResolver_Not a GET request, method: {}", method);
                             }
                             
                             // For SSE subscribe path, allow token passed via query param
@@ -225,8 +226,11 @@ public class SecurityConfig {
                             // For non-whitelisted endpoints, extract bearer token from Authorization header
                             String authorization = request.getHeader("Authorization");
                             if (authorization != null && authorization.startsWith("Bearer ")) {
-                                return authorization.substring(7);
+                                String token = authorization.substring(7);
+                                log.info("SecurityConfig_bearerTokenResolver_Extracted token from header (length: {})", token.length());
+                                return token;
                             }
+                            log.info("SecurityConfig_bearerTokenResolver_No token found, returning null");
                             return null;
                         })
                         .jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder())

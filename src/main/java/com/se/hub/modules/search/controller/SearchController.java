@@ -70,7 +70,7 @@ public class SearchController extends BaseController {
                     defaultValue = PaginationConstants.DESC) String sortDirection,
             @RequestParam(name = SearchConstants.PARAM_TARGETS, required = false) Set<SearchTarget> targets
     ) {
-        log.debug("SearchController_search keyword: {} page: {} size: {} sort: {} {}", keyword, page, size, sortDirection, sortField);
+        log.info("SearchController_search_Received request - keyword: {} page: {} size: {} sort: {} {}", keyword, page, size, sortDirection, sortField);
         PagingRequest pagingRequest = PagingRequest.builder()
                 .page(page)
                 .pageSize(size)

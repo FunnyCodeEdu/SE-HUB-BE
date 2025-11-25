@@ -135,12 +135,15 @@ public class SecurityConfig {
                 // Add filter to remove Authorization header for public endpoints before OAuth2 processing
                 .addFilterBefore((request, response, chain) -> {
                     HttpServletRequest httpRequest = (HttpServletRequest) request;
-                    String requestPath = httpRequest.getRequestURI();
-                    String method = httpRequest.getMethod();
+                    String originalPath = httpRequest.getRequestURI();
+                    final String method = httpRequest.getMethod();
                     
                     // Remove query string for pattern matching
-                    if (requestPath.contains("?")) {
-                        requestPath = requestPath.substring(0, requestPath.indexOf("?"));
+                    final String requestPath;
+                    if (originalPath.contains("?")) {
+                        requestPath = originalPath.substring(0, originalPath.indexOf("?"));
+                    } else {
+                        requestPath = originalPath;
                     }
                     
                     // Check if this is a public GET endpoint

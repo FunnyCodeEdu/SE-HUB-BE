@@ -76,70 +76,11 @@ public class BlogServiceImpl implements BlogService {
     private PagingResponse<BlogResponse> buildPagingResponse(Page<Blog> blogs) {
         String currentUserId = AuthUtils.getCurrentUserId();
         List<Blog> blogList = blogs.getContent();
-        
-        // Batch check reactions for all blogs
+
+        // Batch check reactions for all blogs (user-specific reaction info)
         List<String> blogIds = blogList.stream().map(Blog::getId).toList();
         Map<String, ReactionInfo> reactionsMap = reactionService
                 .getReactionsForTargets(TargetType.BLOG, blogIds, currentUserId);
-        
-        // Batch count comments for all blogs
-        // Virtual Thread Best Practice: Uses synchronous blocking I/O operation.
-        // Virtual threads yield during database query, enabling high concurrency.
-        Map<String, Long> commentCountsMap = new java.util.HashMap<>();
-        if (!blogIds.isEmpty()) {
-            List<Object[]> commentCounts = commentRepository
-                    .countByTargetTypeAndTargetIdIn(TargetType.BLOG, blogIds);
-            
-            // Initialize all blogs with 0 counts
-            for (String blogId : blogIds) {
-                commentCountsMap.put(blogId, 0L);
-            }
-            
-            // Process query results: [targetId, count]
-            for (Object[] result : commentCounts) {
-                String targetId = (String) result[0];
-                Long count = (Long) result[1];
-                commentCountsMap.put(targetId, count);
-            }
-        }
-        
-        // Batch count reactions (LIKE and DISLIKE) for all blogs
-        // Virtual Thread Best Practice: Uses synchronous blocking I/O operation.
-        // Virtual threads yield during database query, enabling high concurrency.
-        Map<String, Integer> reactionCountsMap = new java.util.HashMap<>();
-        if (!blogIds.isEmpty()) {
-            List<Object[]> reactionCounts = reactionRepository
-                    .countByTargetTypeAndTargetIdInGroupByReactionType(TargetType.BLOG, blogIds);
-            
-            // Initialize all blogs with 0 counts
-            Map<String, Long> likeCountsMap = new java.util.HashMap<>();
-            Map<String, Long> dislikeCountsMap = new java.util.HashMap<>();
-            for (String blogId : blogIds) {
-                likeCountsMap.put(blogId, 0L);
-                dislikeCountsMap.put(blogId, 0L);
-            }
-            
-            // Process query results: [targetId, reactionType, count]
-            for (Object[] result : reactionCounts) {
-                String targetId = (String) result[0];
-                ReactionType reactionType = (ReactionType) result[1];
-                Long count = (Long) result[2];
-                
-                if (reactionType == ReactionType.LIKE) {
-                    likeCountsMap.put(targetId, count);
-                } else if (reactionType == ReactionType.DISLIKE) {
-                    dislikeCountsMap.put(targetId, count);
-                }
-            }
-            
-            // Calculate reactionCount = likeCount - dislikeCount for each blog
-            for (String blogId : blogIds) {
-                long likeCount = likeCountsMap.getOrDefault(blogId, 0L);
-                long dislikeCount = dislikeCountsMap.getOrDefault(blogId, 0L);
-                int reactionCount = (int) (likeCount - dislikeCount);
-                reactionCountsMap.put(blogId, reactionCount);
-            }
-        }
         
         return PagingResponse.<BlogResponse>builder()
                 .currentPage(blogs.getNumber())
@@ -149,16 +90,9 @@ public class BlogServiceImpl implements BlogService {
                 .data(blogList.stream()
                         .map(blog -> {
                             BlogResponse response = toBlogResponseWithReaction(blog, reactionsMap.get(blog.getId()));
-                            // Update cmtCount from Comment table to ensure accuracy
-                            Long commentCount = commentCountsMap.get(blog.getId());
-                            if (commentCount != null) {
-                                response.setCmtCount(commentCount.intValue());
-                            }
-                            // Update reactionCount from Reaction table to ensure accuracy
-                            Integer reactionCount = reactionCountsMap.get(blog.getId());
-                            if (reactionCount != null) {
-                                response.setReactionCount(reactionCount);
-                            }
+                            // Always read counts directly from Blog entity fields
+                            response.setCmtCount(blog.getCmtCount());
+                            response.setReactionCount(blog.getReactionCount());
                             return response;
                         })
                         .toList()
@@ -179,6 +113,9 @@ public class BlogServiceImpl implements BlogService {
                     .type(null)
                     .build());
         }
+        // Always read counts directly from Blog entity fields
+        response.setCmtCount(blog.getCmtCount());
+        response.setReactionCount(blog.getReactionCount());
         return response;
     }
 
@@ -201,6 +138,9 @@ public class BlogServiceImpl implements BlogService {
                     .type(null)
                     .build());
         }
+        // Always read counts directly from Blog entity fields
+        response.setCmtCount(blog.getCmtCount());
+        response.setReactionCount(blog.getReactionCount());
         return response;
     }
 
@@ -296,11 +236,6 @@ public class BlogServiceImpl implements BlogService {
         
         String currentUserId = AuthUtils.getCurrentUserId();
         BlogResponse response = toBlogResponseWithReaction(blog, currentUserId);
-        
-        // Update cmtCount from Comment table to ensure accuracy
-        long commentCount = commentRepository.countByTargetTypeAndTargetId(TargetType.BLOG, blogId);
-        response.setCmtCount((int) commentCount);
-        
         return response;
     }
 

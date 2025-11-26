@@ -3,6 +3,8 @@ package com.se.hub.modules.interaction.service.impl;
 import com.se.hub.common.enums.ErrorCode;
 import com.se.hub.common.exception.AppException;
 import com.se.hub.modules.auth.utils.AuthUtils;
+import com.se.hub.modules.blog.constant.BlogCacheConstants;
+import com.se.hub.modules.blog.repository.BlogRepository;
 import com.se.hub.modules.interaction.dto.response.ReactionInfo;
 import com.se.hub.modules.interaction.dto.response.ReactionResponse;
 import com.se.hub.modules.interaction.dto.response.ReactionToggleResult;
@@ -21,6 +23,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +51,7 @@ public class ReactionServiceImpl implements ReactionService {
 
     ReactionRepository reactionRepository;
     CommentRepository commentRepository;
+    BlogRepository blogRepository;
     ProfileRepository profileRepository;
     UserStatsRepository userStatsRepository;
     ActivityService activityService;
@@ -139,23 +143,48 @@ public class ReactionServiceImpl implements ReactionService {
                               ReactionType oldType, ReactionType newType,
                               String targetId) {
 
-        if (targetType != TargetType.COMMENT) return;
+        // 1) Update blog reactionCount when reacting on BLOG
+        if (targetType == TargetType.BLOG) {
+            int delta = 0;
 
-        // oldType = LIKE, newType = null   → remove like: -1
-        // oldType = null, newType = LIKE   → add like: +1
-        // oldType = LIKE, newType != LIKE  → unlike: -1
-        // oldType != LIKE, newType = LIKE  → relike: +1
+            // Remove effect of old reaction
+            if (oldType == ReactionType.LIKE) {
+                delta -= 1;
+            } else if (oldType == ReactionType.DISLIKE) {
+                delta += 1;
+            }
 
-        int delta = 0;
+            // Apply effect of new reaction
+            if (newType == ReactionType.LIKE) {
+                delta += 1;
+            } else if (newType == ReactionType.DISLIKE) {
+                delta -= 1;
+            }
 
-        if (oldType == ReactionType.LIKE && newType != ReactionType.LIKE) {
-            delta = -1;
-        } else if (oldType != ReactionType.LIKE && newType == ReactionType.LIKE) {
-            delta = 1;
+            if (delta != 0) {
+                blogRepository.incrementReactionCount(targetId, delta);
+                log.debug("ReactionServiceImpl_adjustPoints_Updated blog reactionCount by {} for blogId {}", delta, targetId);
+            }
         }
 
-        if (delta != 0) {
-            updateCommentOwnerPoints(targetId, delta);
+        // 2) Update comment owner points when reacting on COMMENT
+        if (targetType == TargetType.COMMENT) {
+            // oldType = LIKE, newType = null   → remove like: -1
+            // oldType = null, newType = LIKE   → add like: +1
+            // oldType = LIKE, newType != LIKE  → unlike: -1
+            // oldType != LIKE, newType = LIKE  → relike: +1
+
+            int delta = 0;
+
+            if (oldType == ReactionType.LIKE && newType != ReactionType.LIKE) {
+                delta = -1;
+            } else if (oldType != ReactionType.LIKE && newType == ReactionType.LIKE) {
+                delta = 1;
+            }
+
+            if (delta != 0) {
+                updateCommentOwnerPoints(targetId, delta);
+            }
         }
     }
 
@@ -226,6 +255,14 @@ public class ReactionServiceImpl implements ReactionService {
      */
     @Override
     @Transactional
+    @CacheEvict(value = {
+            BlogCacheConstants.CACHE_BLOG,
+            BlogCacheConstants.CACHE_BLOGS,
+            BlogCacheConstants.CACHE_BLOGS_BY_AUTHOR,
+            BlogCacheConstants.CACHE_POPULAR_BLOGS,
+            BlogCacheConstants.CACHE_LIKED_BLOGS,
+            BlogCacheConstants.CACHE_LATEST_BLOGS
+    }, allEntries = true, condition = "#targetTypeString != null && #targetTypeString.toUpperCase() == 'BLOG'")
     public ReactionResponse toggleReaction(String targetTypeString, String targetId, ReactionType reactionType) {
         TargetType targetType = parseTargetType(targetTypeString);
         ReactionToggleResult result = toggleReactionWithCount(targetType, targetId, reactionType);

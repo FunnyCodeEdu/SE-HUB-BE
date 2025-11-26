@@ -6,6 +6,8 @@ import com.se.hub.common.dto.response.PagingResponse;
 import com.se.hub.common.enums.ErrorCode;
 import com.se.hub.common.exception.AppException;
 import com.se.hub.common.utils.PagingUtil;
+import com.se.hub.modules.blog.constant.BlogCacheConstants;
+import com.se.hub.modules.blog.repository.BlogRepository;
 import com.se.hub.modules.auth.utils.AuthUtils;
 import com.se.hub.modules.interaction.dto.request.CreateCommentRequest;
 import com.se.hub.modules.interaction.dto.request.UpdateCommentRequest;
@@ -23,6 +25,7 @@ import com.se.hub.modules.profile.entity.Profile;
 import com.se.hub.modules.profile.repository.ProfileRepository;
 import com.se.hub.modules.profile.service.api.ActivityService;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.cache.annotation.CacheEvict;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -53,6 +56,7 @@ public class CommentServiceImpl implements CommentService {
     
     CommentRepository commentRepository;
     CommentMapper commentMapper;
+    BlogRepository blogRepository;
     ProfileRepository profileRepository;
     ActivityService activityService;
     ReactionService reactionService;
@@ -65,6 +69,14 @@ public class CommentServiceImpl implements CommentService {
      */
     @Override
     @Transactional
+    @CacheEvict(value = {
+            BlogCacheConstants.CACHE_BLOG,
+            BlogCacheConstants.CACHE_BLOGS,
+            BlogCacheConstants.CACHE_BLOGS_BY_AUTHOR,
+            BlogCacheConstants.CACHE_POPULAR_BLOGS,
+            BlogCacheConstants.CACHE_LIKED_BLOGS,
+            BlogCacheConstants.CACHE_LATEST_BLOGS
+    }, allEntries = true)
     public CommentResponse createComment(CreateCommentRequest request) {
         log.debug("CommentServiceImpl_createComment_Creating new comment for user: {}", AuthUtils.getCurrentUserId());
         
@@ -96,6 +108,11 @@ public class CommentServiceImpl implements CommentService {
         // Blocking I/O - virtual thread yields here
         Comment savedComment = commentRepository.save(comment);
         CommentResponse response = commentMapper.toCommentResponse(savedComment);
+
+        // Sync blog comment count when commenting on BLOG target
+        if (savedComment.getTargetType() == TargetType.BLOG) {
+            blogRepository.incrementCommentCount(savedComment.getTargetId(), 1);
+        }
         
         // Increment activity count for author (applies to both BLOG and EXAM comments)
         activityService.incrementActivity(author.getId());
@@ -282,12 +299,21 @@ public class CommentServiceImpl implements CommentService {
         log.debug("CommentServiceImpl_deleteCommentById_Deleting comment with id: {}", commentId);
         
         // Blocking I/O - virtual thread yields here
-        if (!commentRepository.existsById(commentId)) {
-            log.error("CommentServiceImpl_deleteCommentById_Comment id {} not found", commentId);
-            throw InteractionErrorCode.COMMENT_NOT_FOUND.toException();
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> {
+                    log.error("CommentServiceImpl_deleteCommentById_Comment id {} not found", commentId);
+                    return InteractionErrorCode.COMMENT_NOT_FOUND.toException();
+                });
+
+        // Calculate total comments to be deleted (comment + all replies) for BLOG targets
+        if (comment.getTargetType() == TargetType.BLOG) {
+            int totalComments = countCommentWithReplies(comment);
+            if (totalComments > 0) {
+                blogRepository.incrementCommentCount(comment.getTargetId(), -totalComments);
+            }
         }
-        
-        commentRepository.deleteById(commentId);
+
+        commentRepository.delete(comment);
         log.debug("CommentServiceImpl_deleteCommentById_Comment deleted successfully with id: {}", commentId);
     }
 
@@ -385,6 +411,19 @@ public class CommentServiceImpl implements CommentService {
             eventPublisher.publishEvent(mentionEvent);
             log.debug("CommentServiceImpl_createMentionNotifications_Mention event published for user: {}", mentionedUserId);
         }
+    }
+
+    /**
+     * Recursively count a comment and all its replies (any depth).
+     */
+    private int countCommentWithReplies(Comment comment) {
+        int count = 1; // count this comment
+        if (comment.getReplies() != null) {
+            for (Comment reply : comment.getReplies()) {
+                count += countCommentWithReplies(reply);
+            }
+        }
+        return count;
     }
 }
 

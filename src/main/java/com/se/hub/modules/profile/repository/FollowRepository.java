@@ -50,10 +50,14 @@ public interface FollowRepository extends JpaRepository<Follow, String> {
     /**
      * Get mutual friends (users that both current user and target user follow each other)
      * Mutual friend = user A follows user B AND user B follows user A
+     * 
+     * Query explanation:
+     * - f1: current user (userId) follows someone (f1.following = mutual friend)
+     * - f2: that someone (f1.following) follows current user back (f2.following = userId)
      */
     @Query("SELECT DISTINCT f1.following FROM Follow f1 " +
-           "INNER JOIN Follow f2 ON f1.following.id = f2.follower.id " +
-           "WHERE f1.follower.id = :userId AND f2.following.id = :userId")
+           "INNER JOIN Follow f2 ON f1.following.id = f2.follower.id AND f2.following.id = f1.follower.id " +
+           "WHERE f1.follower.id = :userId")
     List<User> findMutualFriends(@Param("userId") String userId);
 }
 

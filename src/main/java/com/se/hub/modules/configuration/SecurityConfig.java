@@ -296,8 +296,9 @@ public class SecurityConfig {
                                 log.info("SecurityConfig_bearerTokenResolver_Not a GET request, method: {}", method);
                             }
                             
-                            // For SSE subscribe path, allow token passed via query param
-                            if ("/api/notifications/subscribe".equals(requestPath)) {
+                            // For SSE subscribe paths, allow token passed via query param
+                            if ("/api/notifications/subscribe".equals(requestPath) || 
+                                "/api/chat/subscribe".equals(requestPath)) {
                                 String tokenParam = request.getParameter("token");
                                 if (tokenParam == null || tokenParam.isBlank()) {
                                     tokenParam = request.getParameter("access_token");

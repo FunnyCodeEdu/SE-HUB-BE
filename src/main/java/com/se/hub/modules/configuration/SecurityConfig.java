@@ -91,7 +91,9 @@ public class SecurityConfig {
     // Endpoints that require authentication but no permission check
     private static final String[] AUTHENTICATED_NO_PERMISSION_ENDPOINTS = {
             "/api/token/my-info",
-            "/api/comments/mutual-friends"  // Mutual friends requires authentication to get current user
+            "/api/comments/mutual-friends",  // Mutual friends requires authentication to get current user
+            "/api/notifications/subscribe",   // SSE notifications require authentication
+            "/api/chat/subscribe"             // SSE chat require authentication
     };
 
     private static final String[] WHITELIST_ENDPOINTS = {

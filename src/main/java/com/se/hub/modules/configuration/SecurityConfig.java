@@ -90,7 +90,8 @@ public class SecurityConfig {
     
     // Endpoints that require authentication but no permission check
     private static final String[] AUTHENTICATED_NO_PERMISSION_ENDPOINTS = {
-            "/api/token/my-info"
+            "/api/token/my-info",
+            "/api/comments/mutual-friends"  // Mutual friends requires authentication to get current user
     };
 
     private static final String[] WHITELIST_ENDPOINTS = {
@@ -146,9 +147,23 @@ public class SecurityConfig {
                         requestPath = originalPath;
                     }
                     
-                    // Check if this is a public GET endpoint
+                    // Check if this endpoint requires authentication (exceptions from public endpoints)
+                    boolean requiresAuth = Arrays.stream(AUTHENTICATED_NO_PERMISSION_ENDPOINTS)
+                            .anyMatch(pattern -> {
+                                if (pattern.endsWith("/**")) {
+                                    String basePattern = pattern.substring(0, pattern.length() - 3);
+                                    return requestPath.startsWith(basePattern);
+                                } else if (pattern.endsWith("/*")) {
+                                    String basePattern = pattern.substring(0, pattern.length() - 2);
+                                    return requestPath.startsWith(basePattern);
+                                } else {
+                                    return requestPath.equals(pattern) || requestPath.startsWith(pattern + "/");
+                                }
+                            });
+                    
+                    // Check if this is a public GET endpoint (only if not requiring auth)
                     boolean isPublicGetEndpoint = false;
-                    if ("GET".equals(method)) {
+                    if ("GET".equals(method) && !requiresAuth) {
                         isPublicGetEndpoint = Arrays.stream(PUBLIC_GET_ENDPOINTS)
                                 .anyMatch(pattern -> {
                                     if (pattern.endsWith("/**")) {
@@ -264,8 +279,22 @@ public class SecurityConfig {
                                 return null;
                             }
                             
-                            // Check if this is a public GET endpoint
-                            if ("GET".equals(method)) {
+                            // Check if this endpoint requires authentication (exceptions from public endpoints)
+                            boolean requiresAuth = Arrays.stream(AUTHENTICATED_NO_PERMISSION_ENDPOINTS)
+                                    .anyMatch(pattern -> {
+                                        if (pattern.endsWith("/**")) {
+                                            String basePattern = pattern.substring(0, pattern.length() - 3);
+                                            return requestPath.startsWith(basePattern);
+                                        } else if (pattern.endsWith("/*")) {
+                                            String basePattern = pattern.substring(0, pattern.length() - 2);
+                                            return requestPath.startsWith(basePattern);
+                                        } else {
+                                            return requestPath.equals(pattern) || requestPath.startsWith(pattern + "/");
+                                        }
+                                    });
+                            
+                            // Check if this is a public GET endpoint (only if not requiring auth)
+                            if ("GET".equals(method) && !requiresAuth) {
                                 log.info("SecurityConfig_bearerTokenResolver_Checking public GET endpoints for: {}", requestPath);
                                 boolean isPublicGetEndpoint = Arrays.stream(PUBLIC_GET_ENDPOINTS)
                                         .anyMatch(pattern -> {

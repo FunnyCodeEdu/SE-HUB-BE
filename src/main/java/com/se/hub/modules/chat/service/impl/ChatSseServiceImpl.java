@@ -84,7 +84,13 @@ public class ChatSseServiceImpl implements ChatSseService {
         
         emitter.onError((e) -> {
             removeEmitter(userId, emitter);
-            log.warn("ChatSseService_subscribe_Emitter error for user: {}", userId, e);
+            // Only log if it's not a client disconnect (Broken pipe is expected when client closes connection)
+            if (!(e instanceof IOException) && 
+                !(e instanceof org.springframework.web.context.request.async.AsyncRequestNotUsableException)) {
+                log.warn("ChatSseService_subscribe_Emitter error for user: {}", userId, e);
+            } else {
+                log.debug("ChatSseService_subscribe_Client disconnected for user: {}", userId);
+            }
         });
         
         log.info("ChatSseService_subscribe_User {} subscribed to chat SSE, total connections: {}", 
@@ -117,7 +123,13 @@ public class ChatSseServiceImpl implements ChatSseService {
                             .data(message));
                     successCount++;
                 } catch (IOException e) {
-                    log.warn("ChatSseService_sendMessageToUser_Error sending to emitter for user: {}", userId, e);
+                    // Client disconnected - remove emitter silently
+                    // IOException includes AsyncRequestNotUsableException (subclass)
+                    log.debug("ChatSseService_sendMessageToUser_Client disconnected for user: {}", userId);
+                    removeEmitter(userId, emitter);
+                    failCount++;
+                } catch (Exception e) {
+                    log.warn("ChatSseService_sendMessageToUser_Unexpected error sending to emitter for user: {}", userId, e);
                     removeEmitter(userId, emitter);
                     failCount++;
                 }
@@ -183,15 +195,27 @@ public class ChatSseServiceImpl implements ChatSseService {
     @Scheduled(fixedRate = KEEP_ALIVE_INTERVAL)
     public void sendKeepAlive() {
         userEmitters.forEach((userId, emitters) -> {
+            // Use iterator to safely remove while iterating
+            List<SseEmitter> toRemove = new CopyOnWriteArrayList<>();
+            
             for (SseEmitter emitter : emitters) {
                 try {
                     emitter.send(SseEmitter.event()
                             .comment("keep-alive"));
                 } catch (IOException e) {
-                    log.debug("ChatSseService_sendKeepAlive_Error sending keep-alive to user: {}", userId);
-                    removeEmitter(userId, emitter);
+                    // Client disconnected - remove emitter silently
+                    // IOException includes AsyncRequestNotUsableException (subclass)
+                    log.debug("ChatSseService_sendKeepAlive_Client disconnected for user: {}", userId);
+                    toRemove.add(emitter);
+                } catch (Exception e) {
+                    // Other unexpected errors
+                    log.warn("ChatSseService_sendKeepAlive_Unexpected error sending keep-alive to user: {}", userId, e);
+                    toRemove.add(emitter);
                 }
             }
+            
+            // Remove disconnected emitters
+            toRemove.forEach(emitter -> removeEmitter(userId, emitter));
         });
     }
 }

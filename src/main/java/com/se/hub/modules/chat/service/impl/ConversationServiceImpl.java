@@ -7,12 +7,16 @@ import com.se.hub.common.utils.PagingUtil;
 import com.se.hub.modules.auth.utils.AuthUtils;
 import com.se.hub.modules.chat.constant.ChatConstants;
 import com.se.hub.modules.chat.dto.request.CreateConversationRequest;
+import com.se.hub.modules.chat.dto.response.ChatMessageResponse;
 import com.se.hub.modules.chat.dto.response.ConversationResponse;
+import com.se.hub.modules.chat.entity.ChatMessage;
 import com.se.hub.modules.chat.entity.Conversation;
 import com.se.hub.modules.chat.entity.ParticipantInfo;
 import com.se.hub.modules.chat.enums.ConversationType;
 import com.se.hub.modules.chat.exception.ChatErrorCode;
+import com.se.hub.modules.chat.mapper.ChatMessageMapper;
 import com.se.hub.modules.chat.mapper.ConversationMapper;
+import com.se.hub.modules.chat.repository.ChatMessageRepository;
 import com.se.hub.modules.chat.repository.ConversationRepository;
 import com.se.hub.modules.chat.service.api.ConversationService;
 import lombok.AccessLevel;
@@ -51,6 +55,8 @@ public class ConversationServiceImpl implements ConversationService {
     
     ConversationRepository conversationRepository;
     ConversationMapper conversationMapper;
+    ChatMessageRepository chatMessageRepository;
+    ChatMessageMapper chatMessageMapper;
     
     /**
      * Create a new conversation.
@@ -182,7 +188,17 @@ public class ConversationServiceImpl implements ConversationService {
             .pageSize(conversations.getSize())
             .totalElement(conversations.getTotalElements())
             .data(conversations.getContent().stream()
-                .map(conv -> conversationMapper.toConversationResponse(conv, currentUserId))
+                .map(conv -> {
+                    ConversationResponse response = conversationMapper.toConversationResponse(conv, currentUserId);
+                    // Fetch and set last message
+                    ChatMessage lastMessage = chatMessageRepository.findTopByConversationIdOrderByCreateDateDesc(conv.getConversationId());
+                    if (lastMessage != null) {
+                        ChatMessageResponse lastMessageResponse = chatMessageMapper.toChatMessageResponse(lastMessage);
+                        lastMessageResponse.setIsMe(currentUserId.equals(lastMessage.getSenderId()));
+                        response.setLastMessage(lastMessageResponse);
+                    }
+                    return response;
+                })
                 .toList())
             .build();
     }

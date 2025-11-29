@@ -31,5 +31,10 @@ public interface ChatMessageRepository extends MongoRepository<ChatMessage, Stri
      * Count messages by conversation ID
      */
     long countByConversationId(String conversationId);
+    
+    /**
+     * Find the last (most recent) message for a conversation
+     */
+    ChatMessage findTopByConversationIdOrderByCreateDateDesc(String conversationId);
 }
 

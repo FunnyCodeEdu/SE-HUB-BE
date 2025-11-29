@@ -388,6 +388,14 @@ public class BlogServiceImpl implements BlogService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {
+            BlogCacheConstants.CACHE_BLOG,
+            BlogCacheConstants.CACHE_BLOGS,
+            BlogCacheConstants.CACHE_BLOGS_BY_AUTHOR,
+            BlogCacheConstants.CACHE_POPULAR_BLOGS,
+            BlogCacheConstants.CACHE_LIKED_BLOGS,
+            BlogCacheConstants.CACHE_LATEST_BLOGS
+    }, allEntries = true)
     public void incrementViewCount(String blogId) {
         if (blogId == null || blogId.isBlank()) {
             log.error("BlogService_incrementViewCount_Blog ID is required");

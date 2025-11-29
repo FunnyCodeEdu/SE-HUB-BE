@@ -17,22 +17,13 @@ import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.spec.SecretKeySpec;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletRequestWrapper;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -135,95 +126,6 @@ public class SecurityConfig {
 
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
 
-                // Add filter to remove Authorization header for public endpoints before OAuth2 processing
-                .addFilterBefore((request, response, chain) -> {
-                    HttpServletRequest httpRequest = (HttpServletRequest) request;
-                    String originalPath = httpRequest.getRequestURI();
-                    final String method = httpRequest.getMethod();
-                    
-                    // Remove query string for pattern matching
-                    final String requestPath;
-                    if (originalPath.contains("?")) {
-                        requestPath = originalPath.substring(0, originalPath.indexOf("?"));
-                    } else {
-                        requestPath = originalPath;
-                    }
-                    
-                    // Check if this endpoint requires authentication (exceptions from public endpoints)
-                    boolean requiresAuth = Arrays.stream(AUTHENTICATED_NO_PERMISSION_ENDPOINTS)
-                            .anyMatch(pattern -> {
-                                if (pattern.endsWith("/**")) {
-                                    String basePattern = pattern.substring(0, pattern.length() - 3);
-                                    return requestPath.startsWith(basePattern);
-                                } else if (pattern.endsWith("/*")) {
-                                    String basePattern = pattern.substring(0, pattern.length() - 2);
-                                    return requestPath.startsWith(basePattern);
-                                } else {
-                                    return requestPath.equals(pattern) || requestPath.startsWith(pattern + "/");
-                                }
-                            });
-                    
-                    // Check if this is a public GET endpoint (only if not requiring auth)
-                    boolean isPublicGetEndpoint = false;
-                    if ("GET".equals(method) && !requiresAuth) {
-                        isPublicGetEndpoint = Arrays.stream(PUBLIC_GET_ENDPOINTS)
-                                .anyMatch(pattern -> {
-                                    if (pattern.endsWith("/**")) {
-                                        String basePattern = pattern.substring(0, pattern.length() - 3);
-                                        return requestPath.startsWith(basePattern);
-                                    } else if (pattern.endsWith("/*")) {
-                                        String basePattern = pattern.substring(0, pattern.length() - 2);
-                                        return requestPath.startsWith(basePattern);
-                                    } else {
-                                        return requestPath.equals(pattern) || requestPath.startsWith(pattern + "/");
-                                    }
-                                });
-                    }
-                    
-                    // Check if whitelisted
-                    boolean isWhitelisted = Arrays.stream(WHITELIST_ENDPOINTS)
-                            .anyMatch(pattern -> {
-                                if (pattern.endsWith("/**")) {
-                                    String basePattern = pattern.substring(0, pattern.length() - 3);
-                                    return requestPath.startsWith(basePattern);
-                                }
-                                return requestPath.equals(pattern) || requestPath.startsWith(pattern + "/");
-                            });
-                    
-                    // If public endpoint, remove Authorization header to prevent OAuth2 processing
-                    if (isPublicGetEndpoint || isWhitelisted) {
-                        log.info("SecurityConfig_PublicEndpointFilter_Removing Authorization header for public endpoint: {} {}", method, requestPath);
-                        HttpServletRequestWrapper wrappedRequest = new HttpServletRequestWrapper(httpRequest) {
-                            @Override
-                            public String getHeader(String name) {
-                                if ("Authorization".equalsIgnoreCase(name)) {
-                                    return null;
-                                }
-                                return super.getHeader(name);
-                            }
-                            
-                            @Override
-                            public Enumeration<String> getHeaders(String name) {
-                                if ("Authorization".equalsIgnoreCase(name)) {
-                                    return Collections.emptyEnumeration();
-                                }
-                                return super.getHeaders(name);
-                            }
-                            
-                            @Override
-                            public Enumeration<String> getHeaderNames() {
-                                List<String> headerNames = Collections.list(super.getHeaderNames());
-                                headerNames.removeIf("Authorization"::equalsIgnoreCase);
-                                return Collections.enumeration(headerNames);
-                            }
-                        };
-                        chain.doFilter(wrappedRequest, response);
-                        return;
-                    }
-                    
-                    chain.doFilter(request, response);
-                }, org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter.class)
-
                 //disable csrf
                 .csrf(AbstractHttpConfigurer::disable)
 
@@ -275,12 +177,6 @@ public class SecurityConfig {
                                         return requestPath.equals(pattern) || requestPath.startsWith(pattern + "/");
                                     });
                             
-                            // If whitelisted, return null to skip OAuth2 processing
-                            if (isWhitelisted) {
-                                log.info("SecurityConfig_bearerTokenResolver_Whitelisted endpoint, skipping OAuth2");
-                                return null;
-                            }
-                            
                             // Check if this endpoint requires authentication (exceptions from public endpoints)
                             boolean requiresAuth = Arrays.stream(AUTHENTICATED_NO_PERMISSION_ENDPOINTS)
                                     .anyMatch(pattern -> {
@@ -296,9 +192,10 @@ public class SecurityConfig {
                                     });
                             
                             // Check if this is a public GET endpoint (only if not requiring auth)
+                            boolean isPublicGetEndpoint = false;
                             if ("GET".equals(method) && !requiresAuth) {
                                 log.info("SecurityConfig_bearerTokenResolver_Checking public GET endpoints for: {}", requestPath);
-                                boolean isPublicGetEndpoint = Arrays.stream(PUBLIC_GET_ENDPOINTS)
+                                isPublicGetEndpoint = Arrays.stream(PUBLIC_GET_ENDPOINTS)
                                         .anyMatch(pattern -> {
                                             boolean matches = false;
                                             if (pattern.endsWith("/**")) {
@@ -315,16 +212,6 @@ public class SecurityConfig {
                                             }
                                             return matches;
                                         });
-                                
-                                // If public GET endpoint, return null to skip OAuth2 processing
-                                if (isPublicGetEndpoint) {
-                                    log.info("SecurityConfig_bearerTokenResolver_Public GET endpoint, skipping OAuth2 - returning null");
-                                    return null;
-                                } else {
-                                    log.info("SecurityConfig_bearerTokenResolver_Not a public GET endpoint - will process token");
-                                }
-                            } else {
-                                log.info("SecurityConfig_bearerTokenResolver_Not a GET request, method: {}", method);
                             }
                             
                             // For SSE subscribe paths, allow token passed via query param
@@ -339,14 +226,22 @@ public class SecurityConfig {
                                 }
                             }
                             
-                            // For non-whitelisted endpoints, extract bearer token from Authorization header
+                            // Extract bearer token from Authorization header if present
+                            // For public/whitelisted endpoints: if token exists, process it to get userId from context
+                            // If no token, return null (endpoint remains public)
                             String authorization = request.getHeader("Authorization");
                             if (authorization != null && authorization.startsWith("Bearer ")) {
                                 String token = authorization.substring(7);
-                                log.info("SecurityConfig_bearerTokenResolver_Extracted token from header (length: {})", token.length());
+                                log.info("SecurityConfig_bearerTokenResolver_Extracted token from header (length: {}) for endpoint: {} {}", token.length(), method, requestPath);
                                 return token;
                             }
-                            log.info("SecurityConfig_bearerTokenResolver_No token found, returning null");
+                            
+                            // No token found - for public/whitelisted endpoints, return null (endpoint remains public)
+                            if (isWhitelisted || isPublicGetEndpoint) {
+                                log.info("SecurityConfig_bearerTokenResolver_Public/Whitelisted endpoint without token, returning null");
+                            } else {
+                                log.info("SecurityConfig_bearerTokenResolver_No token found, returning null");
+                            }
                             return null;
                         })
                         .jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder())

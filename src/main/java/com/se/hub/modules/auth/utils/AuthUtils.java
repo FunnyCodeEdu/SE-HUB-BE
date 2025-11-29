@@ -56,13 +56,14 @@ public class AuthUtils {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         
         if (authentication == null || !authentication.isAuthenticated()) {
-            log.warn("No authenticated user found in SecurityContext");
+            log.info("No authenticated user found in SecurityContext");
             throw new AppException(ErrorCode.JWT_CLAIM_MISSING);
         }
         
         // First try to get from authentication name (username is set to userId in CustomJwtAuthenticationConverter)
         String userId = authentication.getName();
         if (userId != null && !userId.isEmpty()) {
+            log.info("getCurrentUserId()_userId = {}", userId);
             return userId;
         }
         

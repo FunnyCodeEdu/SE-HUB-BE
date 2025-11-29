@@ -77,7 +77,8 @@ public class BlogServiceImpl implements BlogService {
      */
     private PagingResponse<BlogResponse> buildPagingResponse(Page<Blog> blogs) {
         log.info("in BlogServiceImpl.buildPagingResponse");
-        String currentUserId = AuthUtils.getCurrentUserIdOrNull();
+        String currentUserId = AuthUtils.getCurrentUserId();
+        log.info("userId = {}", currentUserId);
         List<Blog> blogList = blogs.getContent();
 
         // Batch check reactions for all blogs (user-specific reaction info)

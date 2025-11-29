@@ -1,10 +1,14 @@
 package com.se.hub.modules.interaction.service.impl;
 
+import com.se.hub.common.dto.request.PagingRequest;
+import com.se.hub.common.dto.response.PagingResponse;
 import com.se.hub.common.enums.ErrorCode;
 import com.se.hub.common.exception.AppException;
+import com.se.hub.common.utils.PagingUtil;
 import com.se.hub.modules.auth.utils.AuthUtils;
 import com.se.hub.modules.blog.constant.BlogCacheConstants;
 import com.se.hub.modules.blog.repository.BlogRepository;
+import com.se.hub.modules.interaction.dto.response.ReactionDetailResponse;
 import com.se.hub.modules.interaction.dto.response.ReactionInfo;
 import com.se.hub.modules.interaction.dto.response.ReactionResponse;
 import com.se.hub.modules.interaction.dto.response.ReactionToggleResult;
@@ -12,6 +16,7 @@ import com.se.hub.modules.interaction.entity.Comment;
 import com.se.hub.modules.interaction.entity.Reaction;
 import com.se.hub.modules.interaction.enums.ReactionType;
 import com.se.hub.modules.interaction.enums.TargetType;
+import com.se.hub.modules.interaction.mapper.ReactionMapper;
 import com.se.hub.modules.interaction.repository.CommentRepository;
 import com.se.hub.modules.interaction.repository.ReactionRepository;
 import com.se.hub.modules.interaction.service.api.ReactionService;
@@ -25,6 +30,8 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +62,7 @@ public class ReactionServiceImpl implements ReactionService {
     ProfileRepository profileRepository;
     UserStatsRepository userStatsRepository;
     ActivityService activityService;
+    ReactionMapper reactionMapper;
 
     /**
      * Toggle reaction (like/unlike) for a target.
@@ -401,6 +409,58 @@ public class ReactionServiceImpl implements ReactionService {
                 log.debug("ReactionServiceImpl_updateCommentOwnerPoints_Decreased {} points for comment owner: {}", Math.abs(pointsChange), commentOwnerUserId);
             }
         }
+    }
+
+    /**
+     * Get all reactions with pagination.
+     * Virtual Thread Best Practice: Uses synchronous blocking I/O operations.
+     * Virtual threads yield during database queries, enabling high concurrency.
+     */
+    @Override
+    public PagingResponse<ReactionDetailResponse> getAllReactions(PagingRequest request) {
+        log.debug("ReactionServiceImpl_getAllReactions_Fetching reactions with page: {}, size: {}", request.getPage(), request.getPageSize());
+
+        Pageable pageable = PagingUtil.createPageable(request);
+
+        // Blocking I/O - virtual thread yields here
+        Page<Reaction> reactions = reactionRepository.findAllWithUser(pageable);
+
+        return PagingResponse.<ReactionDetailResponse>builder()
+                .currentPage(reactions.getNumber())
+                .totalPages(reactions.getTotalPages())
+                .pageSize(reactions.getSize())
+                .totalElement(reactions.getTotalElements())
+                .data(reactions.getContent().stream()
+                        .map(reactionMapper::toReactionDetailResponse)
+                        .toList())
+                .build();
+    }
+
+    /**
+     * Get all reactions by target type with pagination.
+     * Virtual Thread Best Practice: Uses synchronous blocking I/O operations.
+     * Virtual threads yield during database queries, enabling high concurrency.
+     */
+    @Override
+    public PagingResponse<ReactionDetailResponse> getAllReactionsByTargetType(String targetTypeString, PagingRequest request) {
+        log.debug("ReactionServiceImpl_getAllReactionsByTargetType_Fetching reactions for target type: {} with page: {}, size: {}", 
+                targetTypeString, request.getPage(), request.getPageSize());
+
+        TargetType targetType = parseTargetType(targetTypeString);
+        Pageable pageable = PagingUtil.createPageable(request);
+
+        // Blocking I/O - virtual thread yields here
+        Page<Reaction> reactions = reactionRepository.findAllByTargetTypeWithUser(targetType, pageable);
+
+        return PagingResponse.<ReactionDetailResponse>builder()
+                .currentPage(reactions.getNumber())
+                .totalPages(reactions.getTotalPages())
+                .pageSize(reactions.getSize())
+                .totalElement(reactions.getTotalElements())
+                .data(reactions.getContent().stream()
+                        .map(reactionMapper::toReactionDetailResponse)
+                        .toList())
+                .build();
     }
 }
 

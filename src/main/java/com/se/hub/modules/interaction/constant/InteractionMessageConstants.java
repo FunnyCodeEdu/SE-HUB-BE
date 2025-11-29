@@ -36,6 +36,8 @@ public class InteractionMessageConstants {
     public static final String API_REACTION_ADDED_SUCCESS = "Reaction added successfully";
     public static final String API_REACTION_REMOVED_SUCCESS = "Reaction removed successfully";
     public static final String API_REACTION_COUNT_RETRIEVED_SUCCESS = "Reaction count retrieved successfully";
+    public static final String API_REACTION_RETRIEVED_ALL_SUCCESS = "Retrieved all reactions successfully";
+    public static final String API_REACTION_RETRIEVED_BY_TARGET_TYPE_SUCCESS = "Retrieved reactions by target type successfully";
 
     // API Response Messages - Reports
     public static final String API_REPORT_CREATED_SUCCESS = "Report created successfully";

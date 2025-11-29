@@ -1,5 +1,8 @@
 package com.se.hub.modules.interaction.service.api;
 
+import com.se.hub.common.dto.request.PagingRequest;
+import com.se.hub.common.dto.response.PagingResponse;
+import com.se.hub.modules.interaction.dto.response.ReactionDetailResponse;
 import com.se.hub.modules.interaction.dto.response.ReactionInfo;
 import com.se.hub.modules.interaction.dto.response.ReactionResponse;
 import com.se.hub.modules.interaction.dto.response.ReactionToggleResult;
@@ -65,5 +68,20 @@ public interface ReactionService {
      * @return Map of targetId to ReactionInfo
      */
     Map<String, ReactionInfo> getReactionsForTargets(TargetType targetType, List<String> targetIds, String userId);
+
+    /**
+     * Get all reactions with pagination
+     * @param request Paging request with page, pageSize, and sort information
+     * @return PagingResponse containing list of ReactionDetailResponse
+     */
+    PagingResponse<ReactionDetailResponse> getAllReactions(PagingRequest request);
+
+    /**
+     * Get all reactions by target type with pagination
+     * @param targetTypeString String representation of target type
+     * @param request Paging request with page, pageSize, and sort information
+     * @return PagingResponse containing list of ReactionDetailResponse
+     */
+    PagingResponse<ReactionDetailResponse> getAllReactionsByTargetType(String targetTypeString, PagingRequest request);
 }
 

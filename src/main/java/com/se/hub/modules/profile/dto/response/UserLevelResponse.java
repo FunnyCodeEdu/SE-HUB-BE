@@ -21,4 +21,6 @@ import lombok.experimental.FieldDefaults;
 public class UserLevelResponse {
     String id;
     LevelEnums level;
+    int minPoints;
+    int maxPoints;
 }

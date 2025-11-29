@@ -74,7 +74,7 @@ public class BlogServiceImpl implements BlogService {
      * Reduces code duplication across get methods
      */
     private PagingResponse<BlogResponse> buildPagingResponse(Page<Blog> blogs) {
-        String currentUserId = AuthUtils.getCurrentUserId();
+        String currentUserId = AuthUtils.getCurrentUserIdOrNull();
         List<Blog> blogList = blogs.getContent();
 
         // Batch check reactions for all blogs (user-specific reaction info)

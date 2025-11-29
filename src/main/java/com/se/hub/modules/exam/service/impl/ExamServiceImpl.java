@@ -94,7 +94,7 @@ public class ExamServiceImpl implements ExamService {
      */
     private PagingResponse<ExamResponse> buildPagingResponse(Page<Exam> exams) {
         List<Exam> examList = exams.getContent();
-        String currentUserId = AuthUtils.getCurrentUserId();
+        String currentUserId = AuthUtils.getCurrentUserIdOrNull();
         
         // Batch check reactions for all exams
         List<String> examIds = examList.stream().map(Exam::getId).toList();

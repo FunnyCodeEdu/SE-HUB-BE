@@ -12,6 +12,46 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 @Slf4j
 public class AuthUtils {
 
+    /**
+     * Get current user ID or null if not authenticated (for public endpoints)
+     */
+    public static String getCurrentUserIdOrNull() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (authentication == null || !authentication.isAuthenticated() 
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return null;
+        }
+        
+        // First try to get from authentication name
+        String userId = authentication.getName();
+        if (userId != null && !userId.isEmpty() && !"anonymousUser".equals(userId)) {
+            return userId;
+        }
+        
+        // Fallback: try to get from JWT claims
+        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+            Jwt jwt = jwtAuth.getToken();
+            
+            Object claim = jwt.getClaims().get(JwtClaimSetConstant.CLAIM_USER_ID);
+            if (claim == null) {
+                claim = jwt.getClaims().get("userId");
+            }
+            if (claim == null) {
+                claim = jwt.getClaims().get("sub");
+            }
+            if (claim == null) {
+                claim = jwt.getClaims().get("id");
+            }
+            
+            if (claim != null) {
+                return claim.toString();
+            }
+        }
+        
+        return null;
+    }
+
     public static String getCurrentUserId()  {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         

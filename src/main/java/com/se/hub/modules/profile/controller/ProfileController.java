@@ -22,6 +22,7 @@ import com.se.hub.modules.profile.dto.response.FollowCountResponse;
 import com.se.hub.modules.profile.dto.response.ProfileResponse;
 import com.se.hub.modules.profile.service.api.ActivityService;
 import com.se.hub.modules.profile.service.api.FollowService;
+import com.se.hub.modules.profile.service.api.ProfileProgressService;
 import com.se.hub.modules.profile.service.api.ProfileService;
 import com.se.hub.modules.profile.service.api.SettingsService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,6 +52,7 @@ public class ProfileController extends BaseController {
     FollowService followService;
     ActivityService activityService;
     SettingsService settingsService;
+    ProfileProgressService profileProgressService;
 
     @PostMapping("/default")
     @Operation(summary = ProfileControllerConstants.CREATE_DEFAULT_OPERATION_SUMMARY, description = ProfileControllerConstants.CREATE_DEFAULT_OPERATION_DESCRIPTION)
@@ -362,6 +364,23 @@ public class ProfileController extends BaseController {
             @Valid @RequestBody UpdateSettingsRequest request) {
         log.debug("Updating settings for current user");
         CombinedSettingsResponse data = settingsService.updateSettings(request);
+        return success(data, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
+    }
+
+    @PostMapping("/sync-level")
+    @Operation(summary = "Sync user level",
+            description = "Recalculate and sync current user's level based on their current points")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ResponseCode.OK_200, description = "User level synced successfully"),
+            @ApiResponse(responseCode = ResponseCode.NOT_FOUND_404, description = ProfileControllerConstants.NOT_FOUND_RESPONSE),
+            @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = ProfileControllerConstants.INTERNAL_ERROR_RESPONSE)
+    })
+    public ResponseEntity<GenericResponse<ProfileResponse>> syncUserLevel() {
+        log.debug("Syncing user level for current user");
+        String userId = com.se.hub.modules.auth.utils.AuthUtils.getCurrentUserId();
+        profileProgressService.updateLevel(userId);
+        ProfileResponse data = profileService.getMyProfile();
+        log.info("User level synced successfully for userId: {}", userId);
         return success(data, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
     }
 }

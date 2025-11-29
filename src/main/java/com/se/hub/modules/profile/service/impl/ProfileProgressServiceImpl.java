@@ -48,6 +48,7 @@ public class ProfileProgressServiceImpl implements ProfileProgressService {
     public void updateExamsDone() {
         String userId =  getCurrentUserId();
         userStatsRepository.updateUserStats(userId, 10, 1, 0, 0, 0, 0);
+        updateLevel(userId);
         updateAchievements(userId);
     }
 
@@ -56,6 +57,7 @@ public class ProfileProgressServiceImpl implements ProfileProgressService {
     public void updateCmtCount() {
         String userId =  getCurrentUserId();
         userStatsRepository.updateUserStats(userId, 5, 0, 1, 0, 0, 0);
+        updateLevel(userId);
         updateAchievements(userId);
     }
 
@@ -64,6 +66,7 @@ public class ProfileProgressServiceImpl implements ProfileProgressService {
     public void updateDocsUploaded() {
         String userId =  getCurrentUserId();
         userStatsRepository.updateUserStats(userId, 100, 0, 0, 1, 0, 0);
+        updateLevel(userId);
         updateAchievements(userId);
     }
 
@@ -72,6 +75,7 @@ public class ProfileProgressServiceImpl implements ProfileProgressService {
     public void updatePostsUploaded() {
         String userId =  getCurrentUserId();
         userStatsRepository.updateUserStats(userId, 15, 0, 0, 0, 1, 0);
+        updateLevel(userId);
         updateAchievements(userId);
     }
 
@@ -80,13 +84,13 @@ public class ProfileProgressServiceImpl implements ProfileProgressService {
     public void updatePostShared() {
         String userId =  getCurrentUserId();
         userStatsRepository.updateUserStats(userId, 5, 0, 0, 0, 0, 1);
+        updateLevel(userId);
         updateAchievements(userId);
     }
 
     @Override
     @Transactional
     public void updateLevel(String userId) {
-        log.info("update level for user {} ", userId);
         Profile profile = getProfileByUserId(userId);
         int points = userStatsService.getUserStatsByProfileId(profile.getId()).getPoints();
         profile.setLevel(userLevelService.getUserLevelByPoints(points));

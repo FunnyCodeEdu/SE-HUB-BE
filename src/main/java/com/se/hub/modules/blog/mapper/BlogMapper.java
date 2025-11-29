@@ -7,6 +7,7 @@ import com.se.hub.modules.blog.dto.response.BlogResponse;
 import com.se.hub.modules.blog.entity.Blog;
 import com.se.hub.modules.profile.entity.Profile;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
@@ -20,6 +21,13 @@ public interface BlogMapper {
     Blog toBlog(CreateBlogRequest request);
     BlogResponse toBlogResponse(Blog blog);
     Blog updateBlogFromRequest(@MappingTarget Blog blog, UpdateBlogRequest request);
+    
+    /**
+     * Map Profile to BlogAuthorResponse
+     * - id: Profile entity ID (profileId)
+     * - userId: User entity ID (for navigation)
+     */
+    @Mapping(source = "user.id", target = "userId")
     BlogAuthorResponse toBlogAuthorResponse(Profile profile);
     
     /**

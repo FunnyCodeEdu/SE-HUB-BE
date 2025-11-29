@@ -15,7 +15,8 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class BlogAuthorResponse {
-    String id;
+    String id;          // Profile ID
+    String userId;      // User ID (for navigation to profile page)
     String username;
     String fullName;
     String avtUrl;

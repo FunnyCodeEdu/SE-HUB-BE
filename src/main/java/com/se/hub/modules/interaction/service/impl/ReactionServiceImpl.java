@@ -337,9 +337,10 @@ public class ReactionServiceImpl implements ReactionService {
         try {
             // Blocking I/O - virtual thread yields here
             Profile user = profileRepository.findByUserId(userId)
-                    .orElse(null);
+                    .orElseThrow(() -> new AppException(ErrorCode.PROFILE_NOT_FOUND));
 
             if (user == null) {
+                log.info("ReactionServiceImpl_getReactionsForTargets_User profile not found: {}", userId);
                 return targetIds.stream()
                         .collect(Collectors.toMap(
                                 id -> id,
@@ -361,6 +362,7 @@ public class ReactionServiceImpl implements ReactionService {
             for (String targetId : targetIds) {
                 Reaction reaction = reactionMap.get(targetId);
                 if (reaction != null) {
+                    log.info("ReactionServiceImpl_getReactionsForTargets_Reaction found: {}", reaction);
                     result.put(targetId, ReactionInfo.builder()
                             .userReacted(true)
                             .type(reaction.getReactionType())
@@ -374,7 +376,7 @@ public class ReactionServiceImpl implements ReactionService {
             }
             return result;
         } catch (Exception e) {
-            log.debug("ReactionServiceImpl_getReactionsForTargets_Error checking user reactions: {}", e.getMessage());
+            log.info("ReactionServiceImpl_getReactionsForTargets_Error checking user reactions: {}", e.getMessage());
             // Return all false on error
             return targetIds.stream()
                     .collect(Collectors.toMap(

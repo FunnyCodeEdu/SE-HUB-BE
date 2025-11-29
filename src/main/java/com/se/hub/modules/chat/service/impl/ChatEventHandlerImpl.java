@@ -103,7 +103,7 @@ public class ChatEventHandlerImpl implements ChatEventHandler {
                 NotificationResponse notification = NotificationResponse.builder()
                         .id("chat_" + message.getMessageId())
                         .notificationType(NotificationType.MESSAGE_RECEIVED)
-                        .title("New message from " + senderName)
+                        .title(senderName)
                         .content(truncateMessage(message.getMessage()))
                         .targetType("CONVERSATION")
                         .targetId(message.getConversationId())

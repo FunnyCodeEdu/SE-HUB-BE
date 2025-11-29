@@ -43,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Blog Service Implementation
@@ -72,6 +73,7 @@ public class BlogServiceImpl implements BlogService {
     /**
      * Helper method to build PagingResponse from Page<Blog>
      * Reduces code duplication across get methods
+     * View counts are refreshed from database to ensure accuracy even when using cached data
      */
     private PagingResponse<BlogResponse> buildPagingResponse(Page<Blog> blogs) {
         String currentUserId = AuthUtils.getCurrentUserIdOrNull();
@@ -81,6 +83,14 @@ public class BlogServiceImpl implements BlogService {
         List<String> blogIds = blogList.stream().map(Blog::getId).toList();
         Map<String, ReactionInfo> reactionsMap = reactionService
                 .getReactionsForTargets(TargetType.BLOG, blogIds, currentUserId);
+        
+        // Get fresh view counts from database (view count changes frequently, so always get latest)
+        Map<String, Integer> viewCountMap = blogRepository.findViewCountsByIds(blogIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        result -> (String) result[0],
+                        result -> ((Number) result[1]).intValue()
+                ));
         
         return PagingResponse.<BlogResponse>builder()
                 .currentPage(blogs.getNumber())
@@ -93,6 +103,11 @@ public class BlogServiceImpl implements BlogService {
                             // Always read counts directly from Blog entity fields
                             response.setCmtCount(blog.getCmtCount());
                             response.setReactionCount(blog.getReactionCount());
+                            // Use fresh view count from database
+                            Integer freshViewCount = viewCountMap.get(blog.getId());
+                            if (freshViewCount != null) {
+                                response.setViewCount(freshViewCount);
+                            }
                             return response;
                         })
                         .toList()
@@ -388,14 +403,7 @@ public class BlogServiceImpl implements BlogService {
 
     @Override
     @Transactional
-    @CacheEvict(value = {
-            BlogCacheConstants.CACHE_BLOG,
-            BlogCacheConstants.CACHE_BLOGS,
-            BlogCacheConstants.CACHE_BLOGS_BY_AUTHOR,
-            BlogCacheConstants.CACHE_POPULAR_BLOGS,
-            BlogCacheConstants.CACHE_LIKED_BLOGS,
-            BlogCacheConstants.CACHE_LATEST_BLOGS
-    }, allEntries = true)
+    @CacheEvict(value = BlogCacheConstants.CACHE_BLOG, key = "#blogId")
     public void incrementViewCount(String blogId) {
         if (blogId == null || blogId.isBlank()) {
             log.error("BlogService_incrementViewCount_Blog ID is required");

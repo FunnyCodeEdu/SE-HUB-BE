@@ -88,6 +88,13 @@ public interface BlogRepository extends JpaRepository<Blog, String>, JpaSpecific
     void incrementViewCount(@Param("blogId") String blogId);
 
     /**
+     * Get view counts for multiple blog IDs
+     * Used to refresh view counts from database when building cached responses
+     */
+    @Query("SELECT b.id, b.viewCount FROM Blog b WHERE b.id IN :blogIds")
+    List<Object[]> findViewCountsByIds(@Param("blogIds") List<String> blogIds);
+
+    /**
      * Atomic operation to increment reaction count by delta
      * Delta can be positive (like) or negative (unlike)
      * Prevents race conditions when multiple requests update reaction count simultaneously

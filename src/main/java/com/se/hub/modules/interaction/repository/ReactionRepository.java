@@ -4,6 +4,8 @@ import com.se.hub.modules.interaction.entity.Reaction;
 import com.se.hub.modules.interaction.enums.ReactionType;
 import com.se.hub.modules.interaction.enums.TargetType;
 import com.se.hub.modules.profile.entity.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -66,5 +68,21 @@ public interface ReactionRepository extends JpaRepository<Reaction, String> {
     List<Object[]> countByTargetTypeAndTargetIdInGroupByReactionType(
             @Param("targetType") TargetType targetType,
             @Param("targetIds") List<String> targetIds);
+
+    /**
+     * Find all reactions with pagination
+     * Uses LEFT JOIN FETCH to optimize N+1 problem by eagerly loading user
+     */
+    @Query(value = "SELECT DISTINCT r FROM Reaction r LEFT JOIN FETCH r.user",
+           countQuery = "SELECT COUNT(DISTINCT r.id) FROM Reaction r")
+    Page<Reaction> findAllWithUser(Pageable pageable);
+
+    /**
+     * Find all reactions by target type with pagination
+     * Uses LEFT JOIN FETCH to optimize N+1 problem by eagerly loading user
+     */
+    @Query(value = "SELECT DISTINCT r FROM Reaction r LEFT JOIN FETCH r.user WHERE r.targetType = :targetType",
+           countQuery = "SELECT COUNT(DISTINCT r.id) FROM Reaction r WHERE r.targetType = :targetType")
+    Page<Reaction> findAllByTargetTypeWithUser(@Param("targetType") TargetType targetType, Pageable pageable);
 }
 

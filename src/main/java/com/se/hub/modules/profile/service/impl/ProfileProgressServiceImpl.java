@@ -39,6 +39,7 @@ public class ProfileProgressServiceImpl implements ProfileProgressService {
     public void updatePoints(int pointDelta) {
         String userId =  getCurrentUserId();
         userStatsRepository.updateUserStats(userId, pointDelta, 0, 0, 0, 0, 0);
+        log.info("update points for user {} ", userId);
         updateLevel(userId);
     }
 
@@ -85,6 +86,7 @@ public class ProfileProgressServiceImpl implements ProfileProgressService {
     @Override
     @Transactional
     public void updateLevel(String userId) {
+        log.info("update level for user {} ", userId);
         Profile profile = getProfileByUserId(userId);
         int points = userStatsService.getUserStatsByProfileId(profile.getId()).getPoints();
         profile.setLevel(userLevelService.getUserLevelByPoints(points));

@@ -76,6 +76,7 @@ public class BlogServiceImpl implements BlogService {
      * View counts are refreshed from database to ensure accuracy even when using cached data
      */
     private PagingResponse<BlogResponse> buildPagingResponse(Page<Blog> blogs) {
+        log.info("in BlogServiceImpl.buildPagingResponse");
         String currentUserId = AuthUtils.getCurrentUserIdOrNull();
         List<Blog> blogList = blogs.getContent();
 
@@ -276,10 +277,11 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
-    @Cacheable(value = BlogCacheConstants.CACHE_BLOGS, 
-            key = "#request.page + '_' + #request.pageSize + '_' + (#request.sortRequest?.direction ?: 'desc') + '_' + (#request.sortRequest?.field ?: 'createDate')")
+//    @Cacheable(value = BlogCacheConstants.CACHE_BLOGS,
+//            key = "#request.page + '_' + #request.pageSize + '_' + (#request.sortRequest?.direction ?: 'desc') + '_' + (#request.sortRequest?.field ?: 'createDate')")
     public PagingResponse<BlogResponse> getBlogs(PagingRequest request) {
         Pageable pageable = PagingUtil.createPageable(request);
+        log.info("in getBlogs service");
 
         // Only show approved blogs (unless admin)
         Page<Blog> blogs;

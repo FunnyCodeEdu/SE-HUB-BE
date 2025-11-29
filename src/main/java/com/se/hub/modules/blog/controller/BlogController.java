@@ -78,7 +78,7 @@ public class BlogController extends BaseController {
             @RequestParam(required = false, defaultValue = BaseFieldConstant.CREATE_DATE) String field,
             @RequestParam(required = false, defaultValue = PaginationConstants.DESC) String direction
     ) {
-
+        log.info("in getBlogs controller");
         PagingRequest request = PagingRequest.builder()
                 .page(page)
                 .pageSize(size)

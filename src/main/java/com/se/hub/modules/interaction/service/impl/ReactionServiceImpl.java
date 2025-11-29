@@ -318,12 +318,15 @@ public class ReactionServiceImpl implements ReactionService {
      */
     @Override
     public Map<String, ReactionInfo> getReactionsForTargets(TargetType targetType, List<String> targetIds, String userId) {
+        log.info("in getReactionsForTargets");
         if (targetIds == null || targetIds.isEmpty()) {
+            log.info("in getReactionsForTargets_empty");
             return new HashMap<>();
         }
 
         // If user not logged in, return all false
         if (userId == null || userId.isBlank()) {
+            log.info("in getReactionsForTargets_empty not logged");
             return targetIds.stream()
                     .collect(Collectors.toMap(
                             id -> id,

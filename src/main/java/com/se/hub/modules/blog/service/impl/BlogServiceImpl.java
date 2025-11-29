@@ -221,7 +221,14 @@ public class BlogServiceImpl implements BlogService {
 
     @Override
     @Transactional
-    @CacheEvict(value = BlogCacheConstants.CACHE_BLOG, key = "#blogId")
+    @CacheEvict(value = {
+            BlogCacheConstants.CACHE_BLOG,
+            BlogCacheConstants.CACHE_BLOGS,
+            BlogCacheConstants.CACHE_BLOGS_BY_AUTHOR,
+            BlogCacheConstants.CACHE_POPULAR_BLOGS,
+            BlogCacheConstants.CACHE_LIKED_BLOGS,
+            BlogCacheConstants.CACHE_LATEST_BLOGS
+    }, allEntries = true)
     public BlogResponse getById(String blogId) {
         Blog blog = blogRepository.findById(blogId)
                 .orElseThrow(() -> {
@@ -236,6 +243,8 @@ public class BlogServiceImpl implements BlogService {
         }
         
         // Increment view count for each request
+        // Note: incrementViewCount also evicts cache, but we evict here too to ensure
+        // all list caches are cleared immediately when a blog is viewed
         incrementViewCount(blogId);
         
         // Refresh blog to get updated view count

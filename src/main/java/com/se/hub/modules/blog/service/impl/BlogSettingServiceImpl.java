@@ -54,8 +54,6 @@ public class BlogSettingServiceImpl implements BlogSettingService {
     @Override
     @Transactional
     public BlogSettingResponse toggleApprovalMode() {
-        log.debug("BlogSettingServiceImpl_toggleApprovalMode_Toggling approval mode");
-        
         checkAdminPermission();
         
         BlogSetting setting = getOrCreateSetting();
@@ -97,8 +95,6 @@ public class BlogSettingServiceImpl implements BlogSettingService {
      */
     @Override
     public BlogSettingResponse getApprovalMode() {
-        log.debug("BlogSettingServiceImpl_getApprovalMode_Getting approval mode");
-        
         BlogSetting setting = getOrCreateSetting();
         
         return BlogSettingResponse.builder()

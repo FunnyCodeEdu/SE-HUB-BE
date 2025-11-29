@@ -184,7 +184,6 @@ public class BlogServiceImpl implements BlogService {
             BlogCacheConstants.CACHE_LATEST_BLOGS
     }, allEntries = true)
     public BlogResponse createBlog(CreateBlogRequest request) {
-        log.debug("BlogService_createBlog_Creating new blog for user: {}", AuthUtils.getCurrentUserId());
         String userId = AuthUtils.getCurrentUserId();
 
         Profile author = profileRepository.findByUserId(userId)
@@ -203,7 +202,6 @@ public class BlogServiceImpl implements BlogService {
         if (!requireApproval) {
             // Auto-approve if approval is not required
             blog.setIsApproved(true);
-            log.debug("BlogService_createBlog_Auto-approving blog as approval mode is disabled");
         }
 
         Blog savedBlog = blogRepository.save(blog);
@@ -218,7 +216,6 @@ public class BlogServiceImpl implements BlogService {
             // See approveBlog() method for stats and activity tracking
         }
         
-        log.debug("BlogService_createBlog_Blog created successfully with id: {}", response.getId());
         return response;
     }
 
@@ -226,7 +223,6 @@ public class BlogServiceImpl implements BlogService {
     @Transactional
     @CacheEvict(value = BlogCacheConstants.CACHE_BLOG, key = "#blogId")
     public BlogResponse getById(String blogId) {
-        log.debug("BlogService_getById_Fetching blog with id: {}", blogId);
         Blog blog = blogRepository.findById(blogId)
                 .orElseThrow(() -> {
                     log.error("BlogService_getById_Blog not found with id: {}", blogId);
@@ -258,8 +254,6 @@ public class BlogServiceImpl implements BlogService {
     @Cacheable(value = BlogCacheConstants.CACHE_BLOGS_BY_AUTHOR, 
             key = "#authorId + '_' + #request.page + '_' + #request.pageSize + '_' + (#request.sortRequest?.direction ?: 'desc') + '_' + (#request.sortRequest?.field ?: 'createDate')")
     public PagingResponse<BlogResponse> getBlogsByAuthorId(String authorId, PagingRequest request) {
-        log.debug("BlogService_getBlogsByAuthorId_Fetching blogs for author: {} with page: {}, size: {}", 
-                authorId, request.getPage(), request.getPageSize());
         Pageable pageable = PagingUtil.createPageable(request);
 
         // Only show approved blogs (unless admin viewing their own blogs)
@@ -276,8 +270,6 @@ public class BlogServiceImpl implements BlogService {
     @Cacheable(value = BlogCacheConstants.CACHE_BLOGS, 
             key = "#request.page + '_' + #request.pageSize + '_' + (#request.sortRequest?.direction ?: 'desc') + '_' + (#request.sortRequest?.field ?: 'createDate')")
     public PagingResponse<BlogResponse> getBlogs(PagingRequest request) {
-        log.debug("BlogService_getBlogs_Fetching blogs with page: {}, size: {}", 
-                request.getPage(), request.getPageSize());
         Pageable pageable = PagingUtil.createPageable(request);
 
         // Only show approved blogs (unless admin)
@@ -301,7 +293,6 @@ public class BlogServiceImpl implements BlogService {
             BlogCacheConstants.CACHE_LATEST_BLOGS
     }, allEntries = true)
     public BlogResponse updateBlogById(String blogId, UpdateBlogRequest request) {
-        log.debug("BlogService_updateBlogById_Updating blog with id: {}", blogId);
         Blog blog = blogRepository.findById(blogId)
                 .orElseThrow(() -> {
                     log.error("BlogService_updateBlogById_Blog not found with id: {}", blogId);
@@ -312,7 +303,6 @@ public class BlogServiceImpl implements BlogService {
         blog.setUpdateBy(AuthUtils.getCurrentUserId());
 
         BlogResponse response = blogMapper.toBlogResponse(blogRepository.save(blog));
-        log.debug("BlogService_updateBlogById_Blog updated successfully with id: {}", blogId);
         return response;
     }
 
@@ -327,7 +317,6 @@ public class BlogServiceImpl implements BlogService {
             BlogCacheConstants.CACHE_LATEST_BLOGS
     }, allEntries = true)
     public void deleteBlogById(String blogId) {
-        log.debug("BlogService_deleteBlogById_Deleting blog with id: {}", blogId);
         if (blogId == null || blogId.isBlank()) {
             log.error("BlogService_deleteBlogById_Blog ID is required");
             throw BlogErrorCode.BLOG_ID_REQUIRED.toException();
@@ -339,20 +328,15 @@ public class BlogServiceImpl implements BlogService {
         }
 
         blogRepository.deleteById(blogId);
-        log.debug("BlogService_deleteBlogById_Blog deleted successfully with id: {}", blogId);
     }
 
     @Override
     @Cacheable(value = BlogCacheConstants.CACHE_POPULAR_BLOGS, 
             key = "#request.page + '_' + #request.pageSize + '_' + (#request.sortRequest?.direction ?: 'desc') + '_' + (#request.sortRequest?.field ?: 'createDate')")
     public PagingResponse<BlogResponse> getMostPopularBlogs(PagingRequest request) {
-        log.debug("BlogService_getMostPopularBlogs_Fetching most popular blogs with page: {}, size: {}", 
-                request.getPage(), request.getPageSize());
-
         Pageable pageable = PagingUtil.createPageable(request);
 
         Page<Blog> blogs = blogRepository.findMostPopularBlogs(pageable);
-        log.debug("BlogService_getMostPopularBlogs_Found {} popular blogs", blogs.getTotalElements());
         return buildPagingResponse(blogs);
     }
 
@@ -360,13 +344,9 @@ public class BlogServiceImpl implements BlogService {
     @Cacheable(value = BlogCacheConstants.CACHE_LIKED_BLOGS, 
             key = "#request.page + '_' + #request.pageSize + '_' + (#request.sortRequest?.direction ?: 'desc') + '_' + (#request.sortRequest?.field ?: 'createDate')")
     public PagingResponse<BlogResponse> getMostLikedBlogs(PagingRequest request) {
-        log.debug("BlogService_getMostLikedBlogs_Fetching most liked blogs with page: {}, size: {}", 
-                request.getPage(), request.getPageSize());
-
         Pageable pageable = PagingUtil.createPageable(request);
 
         Page<Blog> blogs = blogRepository.findMostLikedBlogs(pageable);
-        log.debug("BlogService_getMostLikedBlogs_Found {} liked blogs", blogs.getTotalElements());
         return buildPagingResponse(blogs);
     }
 
@@ -374,13 +354,9 @@ public class BlogServiceImpl implements BlogService {
     @Cacheable(value = BlogCacheConstants.CACHE_LATEST_BLOGS, 
             key = "#request.page + '_' + #request.pageSize + '_' + (#request.sortRequest?.direction ?: 'desc') + '_' + (#request.sortRequest?.field ?: 'createDate')")
     public PagingResponse<BlogResponse> getLatestBlogs(PagingRequest request) {
-        log.debug("BlogService_getLatestBlogs_Fetching latest blogs with page: {}, size: {}", 
-                request.getPage(), request.getPageSize());
-
         Pageable pageable = PagingUtil.createPageable(request);
 
         Page<Blog> blogs = blogRepository.findLatestBlogs(pageable);
-        log.debug("BlogService_getLatestBlogs_Found {} latest blogs", blogs.getTotalElements());
         return buildPagingResponse(blogs);
     }
 
@@ -392,18 +368,21 @@ public class BlogServiceImpl implements BlogService {
             throw new AppException(ErrorCode.DATA_INVALID);
         }
 
-        log.debug("BlogService_searchBlogs_Searching blogs with keyword: {} page: {} size: {}",
-                sanitizedKeyword, request.getPage(), request.getPageSize());
-
         Pageable pageable = PagingUtil.createPageable(request);
         Page<Blog> blogs = blogRepository.searchApprovedBlogs(sanitizedKeyword, pageable);
-        log.debug("BlogService_searchBlogs_Found {} blogs", blogs.getTotalElements());
         return buildPagingResponse(blogs);
     }
 
     @Override
     @Transactional
-    @CacheEvict(value = BlogCacheConstants.CACHE_BLOG, key = "#blogId")
+    @CacheEvict(value = {
+            BlogCacheConstants.CACHE_BLOG,
+            BlogCacheConstants.CACHE_BLOGS,
+            BlogCacheConstants.CACHE_BLOGS_BY_AUTHOR,
+            BlogCacheConstants.CACHE_POPULAR_BLOGS,
+            BlogCacheConstants.CACHE_LIKED_BLOGS,
+            BlogCacheConstants.CACHE_LATEST_BLOGS
+    }, allEntries = true)
     public void incrementViewCount(String blogId) {
         if (blogId == null || blogId.isBlank()) {
             log.error("BlogService_incrementViewCount_Blog ID is required");
@@ -416,7 +395,6 @@ public class BlogServiceImpl implements BlogService {
         }
 
         blogRepository.incrementViewCount(blogId);
-        log.debug("BlogService_incrementViewCount_View count incremented for blog id {}", blogId);
     }
 
     @Override
@@ -433,11 +411,18 @@ public class BlogServiceImpl implements BlogService {
         }
 
         blogRepository.incrementReactionCount(blogId, delta);
-        log.debug("BlogService_incrementReactionCount_Reaction count incremented by {} for blog id {}", delta, blogId);
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = {
+            BlogCacheConstants.CACHE_BLOG,
+            BlogCacheConstants.CACHE_BLOGS,
+            BlogCacheConstants.CACHE_BLOGS_BY_AUTHOR,
+            BlogCacheConstants.CACHE_POPULAR_BLOGS,
+            BlogCacheConstants.CACHE_LIKED_BLOGS,
+            BlogCacheConstants.CACHE_LATEST_BLOGS
+    }, allEntries = true)
     public void incrementCommentCount(String blogId, int delta) {
         if (blogId == null || blogId.isBlank()) {
             log.error("BlogService_incrementCommentCount_Blog ID is required");
@@ -450,7 +435,6 @@ public class BlogServiceImpl implements BlogService {
         }
 
         blogRepository.incrementCommentCount(blogId, delta);
-        log.debug("BlogService_incrementCommentCount_Comment count incremented by {} for blog id {}", delta, blogId);
     }
 
     @Override
@@ -464,8 +448,6 @@ public class BlogServiceImpl implements BlogService {
             BlogCacheConstants.CACHE_LATEST_BLOGS
     }, allEntries = true)
     public BlogResponse likeBlog(String blogId) {
-        log.debug("BlogService_likeBlog_Liking blog with id: {}", blogId);
-        
         Blog blog = blogRepository.findById(blogId)
                 .orElseThrow(() -> {
                     log.error("BlogService_likeBlog_Blog not found with id: {}", blogId);
@@ -494,8 +476,6 @@ public class BlogServiceImpl implements BlogService {
             activityService.incrementActivity(currentUser.getId());
         }
         
-        log.debug("BlogService_likeBlog_Reaction toggled for blog id {}", blogId);
-        
         return toBlogResponseWithReaction(blogRepository.findById(blogId).orElse(blog), currentUserId);
     }
 
@@ -510,8 +490,6 @@ public class BlogServiceImpl implements BlogService {
             BlogCacheConstants.CACHE_LATEST_BLOGS
     }, allEntries = true)
     public BlogResponse dislikeBlog(String blogId) {
-        log.debug("BlogService_dislikeBlog_Disliking blog with id: {}", blogId);
-        
         Blog blog = blogRepository.findById(blogId)
                 .orElseThrow(() -> {
                     log.error("BlogService_dislikeBlog_Blog not found with id: {}", blogId);
@@ -529,8 +507,6 @@ public class BlogServiceImpl implements BlogService {
         // Update reaction count from Reaction table
         updateBlogReactionCount(blog);
         
-        log.debug("BlogService_dislikeBlog_Reaction toggled for blog id {}", blogId);
-        
         String currentUserId = AuthUtils.getCurrentUserId();
         return toBlogResponseWithReaction(blogRepository.findById(blogId).orElse(blog), currentUserId);
     }
@@ -546,8 +522,6 @@ public class BlogServiceImpl implements BlogService {
             BlogCacheConstants.CACHE_LATEST_BLOGS
     }, allEntries = true)
     public BlogResponse removeReaction(String blogId) {
-        log.debug("BlogService_removeReaction_Removing reaction from blog with id: {}", blogId);
-        
         Blog blog = blogRepository.findById(blogId)
                 .orElseThrow(() -> {
                     log.error("BlogService_removeReaction_Blog not found with id: {}", blogId);
@@ -574,8 +548,6 @@ public class BlogServiceImpl implements BlogService {
         // Update reaction count from Reaction table
         updateBlogReactionCount(blog);
         
-        log.debug("BlogService_removeReaction_Removed reaction from blog id {}", blogId);
-        
         String currentUserId = AuthUtils.getCurrentUserId();
         return toBlogResponseWithReaction(blogRepository.findById(blogId).orElse(blog), currentUserId);
     }
@@ -591,8 +563,6 @@ public class BlogServiceImpl implements BlogService {
             BlogCacheConstants.CACHE_LATEST_BLOGS
     }, allEntries = true)
     public BlogResponse approveBlog(String blogId) {
-        log.debug("BlogService_approveBlog_Approving blog with id: {}", blogId);
-        
         checkAdminPermission();
 
         if (blogId == null || blogId.isBlank()) {
@@ -622,8 +592,6 @@ public class BlogServiceImpl implements BlogService {
         // Increment activity count for author when blog is approved
         activityService.incrementActivity(savedBlog.getAuthor().getId());
         
-        log.debug("BlogService_approveBlog_Blog approved successfully with id: {}", blogId);
-        
         String currentUserId = AuthUtils.getCurrentUserId();
         return toBlogResponseWithReaction(savedBlog, currentUserId);
     }
@@ -639,8 +607,6 @@ public class BlogServiceImpl implements BlogService {
             BlogCacheConstants.CACHE_LATEST_BLOGS
     }, allEntries = true)
     public BlogResponse rejectBlog(String blogId) {
-        log.debug("BlogService_rejectBlog_Rejecting blog with id: {}", blogId);
-        
         checkAdminPermission();
 
         if (blogId == null || blogId.isBlank()) {
@@ -663,7 +629,6 @@ public class BlogServiceImpl implements BlogService {
         blog.setUpdateBy(AuthUtils.getCurrentUserId());
 
         Blog savedBlog = blogRepository.save(blog);
-        log.debug("BlogService_rejectBlog_Blog rejected successfully with id: {}", blogId);
         
         String currentUserId = AuthUtils.getCurrentUserId();
         return toBlogResponseWithReaction(savedBlog, currentUserId);
@@ -671,15 +636,11 @@ public class BlogServiceImpl implements BlogService {
 
     @Override
     public PagingResponse<BlogResponse> getPendingBlogs(PagingRequest request) {
-        log.debug("BlogService_getPendingBlogs_Fetching pending blogs with page: {}, size: {}",
-                request.getPage(), request.getPageSize());
-
         checkAdminPermission();
 
         Pageable pageable = PagingUtil.createPageable(request);
         Page<Blog> blogs = blogRepository.findAllByIsApprovedFalse(pageable);
         
-        log.debug("BlogService_getPendingBlogs_Found {} pending blogs", blogs.getTotalElements());
         return buildPagingResponse(blogs);
     }
 

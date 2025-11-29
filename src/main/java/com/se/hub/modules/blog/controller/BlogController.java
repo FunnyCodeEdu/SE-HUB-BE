@@ -169,7 +169,6 @@ public class BlogController extends BaseController {
             @RequestParam(required = false, defaultValue = BaseFieldConstant.CREATE_DATE) String field,
             @RequestParam(required = false, defaultValue = PaginationConstants.DESC) String direction
     ) {
-        log.debug("BlogController_getPopularBlogs_Fetching popular blogs with page: {}, size: {}", page, size);
         PagingRequest request = PagingRequest.builder()
                 .page(page)
                 .pageSize(size)
@@ -194,7 +193,6 @@ public class BlogController extends BaseController {
             @RequestParam(required = false, defaultValue = BaseFieldConstant.CREATE_DATE) String field,
             @RequestParam(required = false, defaultValue = PaginationConstants.DESC) String direction
     ) {
-        log.debug("BlogController_getLikedBlogs_Fetching liked blogs with page: {}, size: {}", page, size);
         PagingRequest request = PagingRequest.builder()
                 .page(page)
                 .pageSize(size)
@@ -219,7 +217,6 @@ public class BlogController extends BaseController {
             @RequestParam(required = false, defaultValue = BaseFieldConstant.CREATE_DATE) String field,
             @RequestParam(required = false, defaultValue = PaginationConstants.DESC) String direction
     ) {
-        log.debug("BlogController_getLatestBlogs_Fetching latest blogs with page: {}, size: {}", page, size);
         PagingRequest request = PagingRequest.builder()
                 .page(page)
                 .pageSize(size)
@@ -239,7 +236,6 @@ public class BlogController extends BaseController {
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<Void>> incrementViewCount(@PathVariable String blogId) {
-        log.debug("BlogController_incrementViewCount_Incrementing view count for blog id: {}", blogId);
         blogService.incrementViewCount(blogId);
         return success(null, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
     }
@@ -257,7 +253,6 @@ public class BlogController extends BaseController {
     public ResponseEntity<GenericResponse<Void>> incrementReactionCount(
             @PathVariable String blogId,
             @RequestParam(value = "delta", defaultValue = "1") int delta) {
-        log.debug("BlogController_incrementReactionCount_Updating reaction count for blog id: {} with delta: {}", blogId, delta);
         blogService.incrementReactionCount(blogId, delta);
         return success(null, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
     }
@@ -273,7 +268,6 @@ public class BlogController extends BaseController {
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<BlogResponse>> likeBlog(@PathVariable String blogId) {
-        log.debug("BlogController_likeBlog_Liking blog id: {}", blogId);
         BlogResponse response = blogService.likeBlog(blogId);
         return success(response, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
     }
@@ -289,7 +283,6 @@ public class BlogController extends BaseController {
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<BlogResponse>> dislikeBlog(@PathVariable String blogId) {
-        log.debug("BlogController_dislikeBlog_Disliking blog id: {}", blogId);
         BlogResponse response = blogService.dislikeBlog(blogId);
         return success(response, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
     }
@@ -305,7 +298,6 @@ public class BlogController extends BaseController {
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<BlogResponse>> removeReaction(@PathVariable String blogId) {
-        log.debug("BlogController_removeReaction_Removing reaction from blog id: {}", blogId);
         BlogResponse response = blogService.removeReaction(blogId);
         return success(response, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
     }
@@ -322,7 +314,6 @@ public class BlogController extends BaseController {
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<BlogResponse>> approveBlog(@PathVariable String blogId) {
-        log.debug("BlogController_approveBlog_Approving blog id: {}", blogId);
         BlogResponse response = blogService.approveBlog(blogId);
         return success(response, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
     }
@@ -339,7 +330,6 @@ public class BlogController extends BaseController {
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<BlogResponse>> rejectBlog(@PathVariable String blogId) {
-        log.debug("BlogController_rejectBlog_Rejecting blog id: {}", blogId);
         BlogResponse response = blogService.rejectBlog(blogId);
         return success(response, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
     }
@@ -360,7 +350,6 @@ public class BlogController extends BaseController {
             @RequestParam(required = false, defaultValue = BaseFieldConstant.CREATE_DATE) String field,
             @RequestParam(required = false, defaultValue = PaginationConstants.DESC) String direction
     ) {
-        log.debug("BlogController_getPendingBlogs_Fetching pending blogs with page: {}, size: {}", page, size);
         PagingRequest request = PagingRequest.builder()
                 .page(page)
                 .pageSize(size)
@@ -379,7 +368,6 @@ public class BlogController extends BaseController {
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<BlogSettingResponse>> toggleApprovalMode() {
-        log.debug("BlogController_toggleApprovalMode_Toggling blog approval mode");
         BlogSettingResponse response = blogSettingService.toggleApprovalMode();
         return success(response, MessageCodeConstant.M003_UPDATED, MessageConstant.UPDATED);
     }
@@ -392,7 +380,6 @@ public class BlogController extends BaseController {
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = BlogMessageConstants.API_INTERNAL_ERROR)
     })
     public ResponseEntity<GenericResponse<BlogSettingResponse>> getApprovalMode() {
-        log.debug("BlogController_getApprovalMode_Getting blog approval mode");
         BlogSettingResponse response = blogSettingService.getApprovalMode();
         return success(response, MessageCodeConstant.M005_RETRIEVED, MessageConstant.RETRIEVED);
     }

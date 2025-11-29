@@ -77,7 +77,7 @@ public class BlogServiceImpl implements BlogService {
      */
     private PagingResponse<BlogResponse> buildPagingResponse(Page<Blog> blogs) {
         log.info("in BlogServiceImpl.buildPagingResponse");
-        String currentUserId = AuthUtils.getCurrentUserId();
+        String currentUserId = AuthUtils.getCurrentUserIdOrNull();
         log.info("userId = {}", currentUserId);
         List<Blog> blogList = blogs.getContent();
 
@@ -256,7 +256,7 @@ public class BlogServiceImpl implements BlogService {
                     return BlogErrorCode.BLOG_NOT_FOUND.toException();
                 });
         
-        String currentUserId = AuthUtils.getCurrentUserId();
+        String currentUserId = AuthUtils.getCurrentUserIdOrNull();
         BlogResponse response = toBlogResponseWithReaction(blog, currentUserId);
         return response;
     }

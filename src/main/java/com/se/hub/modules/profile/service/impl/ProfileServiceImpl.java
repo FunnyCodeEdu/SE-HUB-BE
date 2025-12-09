@@ -7,18 +7,21 @@ import com.se.hub.common.enums.ErrorCode;
 import com.se.hub.common.exception.AppException;
 import com.se.hub.common.utils.PagingUtil;
 import com.se.hub.modules.auth.utils.AuthUtils;
+import com.se.hub.modules.gamification.service.GamificationProfileService;
 import com.se.hub.modules.profile.constant.profile.ProfileConstants;
 import com.se.hub.modules.profile.dto.request.CreateDefaultProfileRequest;
 import com.se.hub.modules.profile.dto.request.CreateUserStatsRequest;
 import com.se.hub.modules.profile.dto.request.UpdateProfileRequest;
 import com.se.hub.modules.profile.dto.response.ContributionGraphResponse;
 import com.se.hub.modules.profile.dto.response.ProfileResponse;
+import com.se.hub.modules.profile.entity.PrivacySetting;
 import com.se.hub.modules.profile.entity.Profile;
 import com.se.hub.modules.profile.entity.UserLevel;
 import com.se.hub.modules.profile.entity.UserStats;
 import com.se.hub.modules.profile.enums.GenderEnums;
 import com.se.hub.modules.profile.enums.LevelEnums;
 import com.se.hub.modules.profile.mapper.ProfileMapper;
+import com.se.hub.modules.profile.repository.PrivacySettingRepository;
 import com.se.hub.modules.profile.repository.ProfileRepository;
 import com.se.hub.modules.profile.repository.UserLevelRepository;
 import com.se.hub.modules.profile.dto.response.FtesProfileResponse;
@@ -28,8 +31,6 @@ import com.se.hub.modules.profile.service.api.ActivityService;
 import com.se.hub.modules.profile.service.api.PrivacyHelperService;
 import com.se.hub.modules.profile.service.api.ProfileService;
 import com.se.hub.modules.profile.service.api.UserStatsService;
-import com.se.hub.modules.profile.entity.PrivacySetting;
-import com.se.hub.modules.profile.repository.PrivacySettingRepository;
 import com.se.hub.modules.user.entity.User;
 import com.se.hub.modules.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -61,38 +62,32 @@ public class ProfileServiceImpl implements ProfileService {
     ActivityService activityService;
     PrivacyHelperService privacyHelperService;
     PrivacySettingRepository privacySettingRepository;
+    GamificationProfileService gamificationProfileService;
 
     @Override
     @Transactional
     public void createDefaultProfile(CreateDefaultProfileRequest request) {
         log.info("Creating default profile for userId: {}", request.getUserId());
-        
-        // Load user from database
+
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> {
                     log.error("User not found with userId: {}", request.getUserId());
                     return new AppException(ErrorCode.DATA_NOT_FOUND);
                 });
-        
-        // Validation: Check if user is current user
+
         String currentUserId = AuthUtils.getCurrentUserId();
         String userId = user.getId();
         
         if (userId == null || !userId.equals(currentUserId)) {
-            log.warn("User {} attempted to create profile for different user {}", currentUserId, userId);
             throw new AppException(ErrorCode.DATA_NOT_FOUND);
         }
-        
-        // Check if profile already exists
+
         if (profileRepository.existsByUserId(userId)) {
-            log.warn("Profile already exists for userId: {}", userId);
             throw new AppException(ErrorCode.DATA_EXISTED);
         }
-        
-        // Get default user level (COPPER)
+
         UserLevel userLevel = userLevelRepository.findByLevel(LevelEnums.COPPER)
                 .orElseThrow(() -> {
-                    log.error("Cannot find default user level: {}", LevelEnums.COPPER);
                     return new AppException(ErrorCode.DATA_NOT_FOUND);
                 });
         
@@ -123,6 +118,9 @@ public class ProfileServiceImpl implements ProfileService {
         
         // Set user stats to profile
         profile.setUserStats(userStats);
+
+        // Create default gamification profile
+        profile.setGamificationProfile(gamificationProfileService.createDefault(profile));
         
         log.info("Default profile created successfully for userId: {}", userId);
     }
@@ -173,6 +171,7 @@ public class ProfileServiceImpl implements ProfileService {
                     return new AppException(ErrorCode.DATA_NOT_FOUND);
                 });
 
+        ensureGamificationProfileAttached(profile);
         ProfileResponse response = profileMapper.toProfileResponse(profile);
         
         // Apply privacy settings
@@ -195,6 +194,7 @@ public class ProfileServiceImpl implements ProfileService {
                     return new AppException(ErrorCode.DATA_NOT_FOUND);
                 });
 
+        ensureGamificationProfileAttached(profile);
         ProfileResponse response = profileMapper.toProfileResponse(profile);
         
         // Apply privacy settings
@@ -351,6 +351,8 @@ public class ProfileServiceImpl implements ProfileService {
             }
         }
         
+        ensureGamificationProfileAttached(profile);
+
         // Map profile to response
         ProfileResponse response = profileMapper.toProfileResponse(profile);
         
@@ -392,6 +394,9 @@ public class ProfileServiceImpl implements ProfileService {
         // Create user stats
         UserStats userStats = createUserStats(profile);
         profile.setUserStats(userStats);
+
+        // Create gamification profile
+        profile.setGamificationProfile(gamificationProfileService.createDefault(profile));
         
         // Try to sync from FTES (this will normalize and save if FTES data is available)
         // If sync fails, we'll still have a profile with default values
@@ -409,7 +414,7 @@ public class ProfileServiceImpl implements ProfileService {
         // Final check: ensure fullName is valid before final save
         if (profile.getFullName() != null) {
             String finalFullName = profile.getFullName().trim();
-            if (finalFullName.isEmpty() || finalFullName.length() < ProfileConstants.FULL_NAME_MIN) {
+            if (finalFullName.length() < ProfileConstants.FULL_NAME_MIN) {
                 log.warn("FINAL CHECK in createProfileAndSyncFromFtes: FullName has length < {}, setting to null. Value: '{}' (length: {})", 
                         ProfileConstants.FULL_NAME_MIN, profile.getFullName(), finalFullName.length());
                 profile.setFullName(null);
@@ -599,7 +604,7 @@ public class ProfileServiceImpl implements ProfileService {
         // This prevents validation errors since @Size(min=2) requires at least 2 characters
         if (profile.getFullName() != null) {
             String trimmed = profile.getFullName().trim();
-            if (trimmed.isEmpty() || trimmed.length() < ProfileConstants.FULL_NAME_MIN) {
+            if (trimmed.length() < ProfileConstants.FULL_NAME_MIN) {
                 profile.setFullName(null);
             } else {
                 profile.setFullName(trimmed);
@@ -630,6 +635,10 @@ public class ProfileServiceImpl implements ProfileService {
         } else if (profile.getMajor() != null) {
             profile.setMajor(profile.getMajor().trim());
         }
+    }
+
+    private void ensureGamificationProfileAttached(Profile profile) {
+        profile.setGamificationProfile(gamificationProfileService.ensureGamificationProfile(profile));
     }
 
     private UserStats createUserStats(Profile profile) {

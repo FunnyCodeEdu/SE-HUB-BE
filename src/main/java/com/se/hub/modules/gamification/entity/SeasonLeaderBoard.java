@@ -1,4 +1,7 @@
 package com.se.hub.modules.gamification.entity;
 
-public class SeasonLeaderBoard {
+import com.se.hub.common.entity.BaseEntity;
+
+public class SeasonLeaderBoard extends BaseEntity {
+    
 }

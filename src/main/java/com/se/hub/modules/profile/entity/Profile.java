@@ -5,6 +5,7 @@ import com.se.hub.common.entity.BaseEntity;
 import com.se.hub.modules.profile.constant.profile.ProfileConstants;
 import com.se.hub.modules.profile.constant.profile.ProfileErrorCodeConstants;
 import com.se.hub.modules.profile.enums.GenderEnums;
+import com.se.hub.modules.gamification.entity.GamificationProfile;
 import com.se.hub.modules.user.entity.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -117,6 +118,10 @@ public class Profile extends BaseEntity {
     @OneToOne(mappedBy = "profile",
             cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     UserStats userStats;
+
+    @OneToOne(mappedBy = "profile",
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    GamificationProfile gamificationProfile;
 
     @ManyToMany(fetch =  FetchType.LAZY)
     Set<Achievement> achievements;

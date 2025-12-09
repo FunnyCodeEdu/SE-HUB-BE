@@ -1,5 +1,6 @@
 package com.se.hub.modules.profile.dto.response;
 
+import com.se.hub.modules.gamification.dto.response.GamificationProfileResponse;
 import com.se.hub.modules.profile.enums.GenderEnums;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -53,6 +54,7 @@ public class ProfileResponse {
     //nested objects
     UserLevelResponse level;
     UserStatsResponse userStats;
+    GamificationProfileResponse gamificationProfile;
     Set<AchievementResponse> achievements;
     ContributionGraphResponse contributionGraph;
 }

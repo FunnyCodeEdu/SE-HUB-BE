@@ -15,7 +15,7 @@ import com.se.hub.modules.blog.dto.request.CreateBlogRequest;
 import com.se.hub.modules.blog.dto.request.UpdateBlogRequest;
 import com.se.hub.modules.blog.dto.response.BlogResponse;
 import com.se.hub.modules.blog.dto.response.BlogSettingResponse;
-import com.se.hub.modules.blog.service.BlogService;
+import com.se.hub.modules.blog.service.api.BlogService;
 import com.se.hub.modules.blog.service.api.BlogSettingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

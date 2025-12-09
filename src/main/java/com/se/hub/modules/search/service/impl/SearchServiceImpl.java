@@ -6,7 +6,7 @@ import com.se.hub.common.dto.response.PagingResponse;
 import com.se.hub.common.enums.ErrorCode;
 import com.se.hub.common.exception.AppException;
 import com.se.hub.modules.blog.dto.response.BlogResponse;
-import com.se.hub.modules.blog.service.BlogService;
+import com.se.hub.modules.blog.service.api.BlogService;
 import com.se.hub.modules.exam.dto.response.ExamResponse;
 import com.se.hub.modules.exam.service.ExamService;
 import com.se.hub.modules.profile.dto.response.ProfileResponse;

@@ -21,7 +21,7 @@ import com.se.hub.modules.interaction.repository.ReactionRepository;
 import com.se.hub.modules.interaction.service.api.ReactionService;
 import com.se.hub.modules.blog.constant.BlogCacheConstants;
 import com.se.hub.modules.blog.repository.BlogRepository;
-import com.se.hub.modules.blog.service.BlogService;
+import com.se.hub.modules.blog.service.api.BlogService;
 import com.se.hub.modules.profile.entity.Profile;
 import com.se.hub.modules.profile.repository.ProfileRepository;
 import com.se.hub.modules.profile.service.api.ActivityService;

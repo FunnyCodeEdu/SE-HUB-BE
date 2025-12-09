@@ -1,4 +1,4 @@
-package com.se.hub.modules.blog.service;
+package com.se.hub.modules.blog.service.api;
 
 import com.se.hub.common.dto.request.PagingRequest;
 import com.se.hub.common.dto.response.PagingResponse;

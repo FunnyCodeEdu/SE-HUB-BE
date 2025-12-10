@@ -95,7 +95,7 @@ public interface BlogRepository extends JpaRepository<Blog, String>, JpaSpecific
     List<Object[]> findViewCountsByIds(@Param("blogIds") List<String> blogIds);
 
     /**
-     * Atomic operation to increment reaction count by delta
+     * Atomic operation to increment reaction count by delta.
      * Delta can be positive (like) or negative (unlike)
      * Prevents race conditions when multiple requests update reaction count simultaneously
      */

@@ -11,7 +11,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 
 @Slf4j
 public class AuthUtils {
-
+    private  AuthUtils(){}
     /**
      * Get current user ID or null if not authenticated (for public endpoints)
      */
@@ -103,5 +103,4 @@ public class AuthUtils {
             throw new AppException(ErrorCode.JWT_CLAIM_MISSING);
         }
     }
-
 }

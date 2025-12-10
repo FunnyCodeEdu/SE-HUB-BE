@@ -19,10 +19,10 @@ import java.util.Map;
 
 /**
  * Cache Configuration
- * 
+
  * Configures Redis as cache provider for Spring Cache abstraction
  * Uses JSON serialization for cache values
- * 
+
  * Best Practices:
  * - Use Redis for distributed caching in microservices
  * - Configure appropriate TTL (Time To Live) for each cache

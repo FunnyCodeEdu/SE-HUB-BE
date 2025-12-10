@@ -17,7 +17,7 @@ import jakarta.annotation.PreDestroy;
  * Configures RedisTemplate and StringRedisTemplate for direct Redis operations
  * Uses Lettuce as Redis client (default in Spring Boot 2.0+)
  * Connection pooling is configured via application.properties (spring.data.redis.lettuce.pool.*)
- * 
+
  * Virtual Thread Best Practice:
  * - Redis operations are blocking I/O
  * - Virtual threads automatically handle blocking operations efficiently
@@ -76,12 +76,12 @@ public class RedisConfig {
      * RedisMessageListenerContainer Bean
      * Used for Redis Pub/Sub message listening
      * Required by notification module for real-time notification delivery via SSE
-     * 
+
      * IMPORTANT: This bean is singleton and shared across the application
      * - Only ONE instance should exist to avoid duplicate subscriptions
      * - Container is started automatically by Spring via @PostConstruct
      * - Connection factory is shared with other Redis beans
-     * 
+
      * Virtual Thread Best Practice:
      * - Redis Pub/Sub operations are blocking I/O
      * - Virtual threads automatically handle blocking operations efficiently

@@ -91,7 +91,7 @@ public class ConversationServiceImpl implements ConversationService {
         String participantsHash = generateParticipantHash(participantIds);
         
         // Try to find existing conversation with retry mechanism
-        Conversation conversation = findOrCreateConversation(participantsHash, request, participantIds, currentUserId);
+        Conversation conversation = findOrCreateConversation(participantsHash, request, participantIds);
         
         return conversationMapper.toConversationResponse(conversation, currentUserId);
     }
@@ -103,8 +103,7 @@ public class ConversationServiceImpl implements ConversationService {
      */
     private Conversation findOrCreateConversation(String participantsHash, 
                                                   CreateConversationRequest request,
-                                                  List<String> participantIds,
-                                                  String currentUserId) {
+                                                  List<String> participantIds) {
         int maxRetries = 3;
         int retryCount = 0;
         

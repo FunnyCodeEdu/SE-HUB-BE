@@ -19,16 +19,16 @@ import java.util.concurrent.ThreadFactory;
 
 /**
  * Virtual Thread Configuration
- * 
+
  * This configuration enables virtual threads for:
  * - HTTP requests (via WebMvcConfigurer)
  * - @Async methods (via AsyncConfigurer)
  * - @Scheduled tasks (via SchedulingConfigurer)
- * 
+
  * Virtual threads are lightweight threads that are managed by the Java Virtual Machine.
  * They are ideal for I/O-bound operations and can handle millions of concurrent tasks
  * with minimal overhead compared to platform threads.
- * 
+
  * Best Practices:
  * - Use synchronous blocking I/O in service methods (don't use CompletableFuture or reactive APIs)
  * - Virtual threads automatically handle blocking operations efficiently

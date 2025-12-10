@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+import java.time.Instant;
 import java.util.List;
 
 @Getter
@@ -16,13 +17,14 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class GamificationProfileResponse {
+public class StreakRewardResponse {
     String id;
-    Long totalXp;
-    Long seasonXp;
-    int freezeCount;
-    int repairCount;
-    StreakResponse streak;
-    List<MissionProgressResponse> missionProgresses;
+    Instant createDate;
+    Instant updatedDate;
+
+    int streakTarget;
+    String description;
+    boolean isActive;
+    List<RewardResponse> rewards;
 }
 

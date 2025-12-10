@@ -47,7 +47,7 @@ public class SeasonLeaderBoard extends BaseEntity {
     @Min(1)
     @Column(name = SeasonLeaderBoardConstants.FINAL_RANK,
             columnDefinition = SeasonLeaderBoardConstants.FINAL_RANK_DEFINITION)
-    Integer finalRank;
+    int finalRank;
 
     @Enumerated(EnumType.STRING)
     @NotNull

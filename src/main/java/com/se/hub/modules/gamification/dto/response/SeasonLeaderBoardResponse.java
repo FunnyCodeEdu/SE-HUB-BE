@@ -1,5 +1,6 @@
 package com.se.hub.modules.gamification.dto.response;
 
+import com.se.hub.modules.gamification.enums.RewardStatus;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,7 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-import java.util.List;
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -16,13 +17,14 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class GamificationProfileResponse {
+public class SeasonLeaderBoardResponse {
     String id;
-    Long totalXp;
+    Instant createDate;
+    Instant updatedDate;
+
     Long seasonXp;
-    int freezeCount;
-    int repairCount;
-    StreakResponse streak;
-    List<MissionProgressResponse> missionProgresses;
+    int finalRank;
+    RewardStatus rewardStatus;
+    SeasonResponse season;
 }
 

@@ -1,6 +1,5 @@
 package com.se.hub.modules.gamification.entity;
 
-import com.se.hub.common.constant.BaseFieldConstant;
 import com.se.hub.common.entity.BaseEntity;
 import com.se.hub.modules.gamification.constant.gamificationprofile.GamificationProfileConstants;
 import com.se.hub.modules.gamification.constant.streak.StreakConstants;
@@ -8,8 +7,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
@@ -23,7 +20,6 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
-import java.util.List;
 
 @Getter
 @Setter

@@ -1,6 +1,5 @@
 package com.se.hub.modules.gamification.entity;
 
-import com.se.hub.common.constant.BaseFieldConstant;
 import com.se.hub.common.entity.BaseEntity;
 import com.se.hub.modules.gamification.constant.gamificationprofile.GamificationProfileConstants;
 import com.se.hub.modules.profile.entity.Profile;

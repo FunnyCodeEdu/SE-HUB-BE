@@ -4,7 +4,9 @@ import com.se.hub.common.enums.ErrorCode;
 import com.se.hub.common.exception.AppException;
 import com.se.hub.modules.gamification.constant.gamificationprofile.GamificationProfileConstants;
 import com.se.hub.modules.gamification.entity.GamificationProfile;
+import com.se.hub.modules.gamification.entity.Streak;
 import com.se.hub.modules.gamification.repository.GamificationProfileRepository;
+import com.se.hub.modules.gamification.repository.StreakRepository;
 import com.se.hub.modules.gamification.service.GamificationProfileService;
 import com.se.hub.modules.profile.entity.Profile;
 import lombok.AccessLevel;
@@ -21,6 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class GamificationProfileServiceImpl implements GamificationProfileService {
 
     GamificationProfileRepository gamificationProfileRepository;
+    StreakRepository streakRepository;
+
+    private static final int DEFAULT_STREAK_VALUE = 0;
+    private static final boolean DEFAULT_FREEZE_USED_TODAY = false;
 
     @Override
     @Transactional
@@ -39,7 +45,18 @@ public class GamificationProfileServiceImpl implements GamificationProfileServic
                             .freezeCount(GamificationProfileConstants.DEFAULT_FREEZE_COUNT)
                             .repairCount(GamificationProfileConstants.DEFAULT_REPAIR_COUNT)
                             .build();
-                    return gamificationProfileRepository.save(gamificationProfile);
+                    GamificationProfile savedProfile = gamificationProfileRepository.save(gamificationProfile);
+
+                    Streak streak = Streak.builder()
+                            .currentStreak(DEFAULT_STREAK_VALUE)
+                            .maxStreak(DEFAULT_STREAK_VALUE)
+                            .freezeUsedToday(DEFAULT_FREEZE_USED_TODAY)
+                            .gamificationProfile(savedProfile)
+                            .build();
+                    Streak savedStreak = streakRepository.save(streak);
+                    savedProfile.setStreak(savedStreak);
+
+                    return savedProfile;
                 });
     }
 

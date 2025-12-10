@@ -9,6 +9,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -18,6 +19,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -49,9 +52,15 @@ public class GamificationProfile extends BaseEntity {
             columnDefinition = GamificationProfileConstants.REPAIR_COUNT_DEFINITION)
     int repairCount = GamificationProfileConstants.DEFAULT_REPAIR_COUNT;
 
+    @OneToMany(mappedBy = "gamificationProfile", fetch = FetchType.LAZY)
+    List<MissionProgress> missionProgresses;
+
+    @OneToOne(mappedBy = "gamificationProfile")
+    Streak streak;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = GamificationProfileConstants.PROFILE_ID,
-            referencedColumnName = BaseFieldConstant.ID)
+            referencedColumnName = GamificationProfileConstants.PROFILE_ID)
     @MapsId
     Profile profile;
 }

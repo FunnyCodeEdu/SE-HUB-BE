@@ -2,18 +2,15 @@ package com.se.hub.modules.gamification.entity;
 
 import com.se.hub.common.constant.BaseFieldConstant;
 import com.se.hub.common.entity.BaseEntity;
+import com.se.hub.modules.gamification.constant.claimedstreakreward.ClaimedStreakRewardConstants;
 import com.se.hub.modules.gamification.constant.gamificationprofile.GamificationProfileConstants;
-import com.se.hub.modules.gamification.constant.streaklog.StreakLogConstants;
-import com.se.hub.modules.gamification.enums.StreakLogStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,23 +28,26 @@ import java.time.Instant;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = StreakLogConstants.TABLE_STREAK_LOG)
-public class StreakLog extends BaseEntity {
+@Table(name = ClaimedStreakRewardConstants.TABLE_CLAIMED_STREAK_REWARD,
+        uniqueConstraints = @UniqueConstraint(columnNames = {
+                ClaimedStreakRewardConstants.GAMIFICATION_PROFILE_ID,
+                ClaimedStreakRewardConstants.REWARD_STREAK_ID
+        }))
+public class ClaimedStreakReward extends BaseEntity {
 
-    @NotNull
-    @Column(name = StreakLogConstants.DATE,
-            columnDefinition = StreakLogConstants.TIME_DEFINITION)
-    Instant date;
-
-    @Enumerated(EnumType.STRING)
-    @NotNull
-    @Column(name = StreakLogConstants.STATUS,
-            columnDefinition = StreakLogConstants.STATUS_DEFINITION)
-    StreakLogStatus status;
+    @Column(name = ClaimedStreakRewardConstants.CLAIMED_AT,
+            columnDefinition = ClaimedStreakRewardConstants.TIME_DEFINITION)
+    Instant claimedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = StreakLogConstants.GAMIFICATION_PROFILE_ID,
+    @JoinColumn(name = ClaimedStreakRewardConstants.GAMIFICATION_PROFILE_ID,
             referencedColumnName = GamificationProfileConstants.PROFILE_ID,
             nullable = false)
     GamificationProfile gamificationProfile;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = ClaimedStreakRewardConstants.REWARD_STREAK_ID,
+            referencedColumnName = BaseFieldConstant.ID,
+            nullable = false)
+    StreakReward streakReward;
 }

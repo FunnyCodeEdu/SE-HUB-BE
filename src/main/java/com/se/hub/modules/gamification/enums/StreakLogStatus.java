@@ -1,0 +1,8 @@
+package com.se.hub.modules.gamification.enums;
+
+public enum StreakLogStatus {
+    DONE,
+    NONE
+}
+
+

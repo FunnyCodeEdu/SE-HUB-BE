@@ -1,10 +1,10 @@
 package com.se.hub.modules.gamification.service.impl;
 
-import com.se.hub.common.enums.ErrorCode;
-import com.se.hub.common.exception.AppException;
 import com.se.hub.modules.gamification.constant.gamificationprofile.GamificationProfileConstants;
 import com.se.hub.modules.gamification.entity.GamificationProfile;
 import com.se.hub.modules.gamification.entity.Streak;
+import com.se.hub.modules.gamification.exception.GamificationErrorCode;
+import com.se.hub.modules.gamification.exception.GamificationException;
 import com.se.hub.modules.gamification.repository.GamificationProfileRepository;
 import com.se.hub.modules.gamification.repository.StreakRepository;
 import com.se.hub.modules.gamification.service.GamificationProfileService;
@@ -32,7 +32,7 @@ public class GamificationProfileServiceImpl implements GamificationProfileServic
     @Transactional
     public GamificationProfile createDefault(Profile profile) {
         if (profile == null) {
-            throw new AppException(ErrorCode.PROFILE_NOT_NULL);
+            throw new GamificationException(GamificationErrorCode.PROFILE_REQUIRED);
         }
 
         String profileId = profile.getId();

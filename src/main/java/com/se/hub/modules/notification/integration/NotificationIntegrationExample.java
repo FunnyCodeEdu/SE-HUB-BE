@@ -8,10 +8,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * Example integration code for emitting notification events
- * 
+
  * This file shows how to integrate Notification Module with Business Modules.
  * Copy the relevant code snippets to your service implementations.
- * 
+
  * IMPORTANT: This is EXAMPLE CODE - integrate into your actual services!
  */
 @Component
@@ -25,20 +25,20 @@ public class NotificationIntegrationExample {
     
     /**
      * EXAMPLE: Emit BlogApprovedEvent when blog is approved
-     * 
+
      * Add this to BlogService or BlogModerationService:
-     * 
-     * @RequiredArgsConstructor
+
+     * RequiredArgsConstructor
      * public class BlogModerationService {
      *     private final ApplicationEventPublisher eventPublisher;
-     *     
+
      *     public void approveBlog(String blogId) {
      *         Blog blog = blogRepository.findById(blogId)...
-     *         
+
      *         // Business logic: approve blog
      *         blog.setStatus(BlogStatus.APPROVED);
      *         blogRepository.save(blog);
-     *         
+
      *         // Emit event for notification
      *         BlogApprovedEvent event = new BlogApprovedEvent(
      *             this,
@@ -62,18 +62,18 @@ public class NotificationIntegrationExample {
     
     /**
      * EXAMPLE: Emit PostLikedEvent when post/blog is liked
-     * 
+
      * Add this to ReactionService or LikeService:
-     * 
+
      * public void likePost(String targetType, String targetId) {
      *     // Business logic: save like
      *     ...
-     *     
+
      *     // Get post owner and emit event
      *     String postOwnerUserId = getPostOwner(targetType, targetId);
      *     String likerUserId = AuthUtils.getCurrentUserId();
      *     String postTitle = getPostTitle(targetType, targetId);
-     *     
+
      *     PostLikedEvent event = new PostLikedEvent(
      *         this,
      *         postOwnerUserId,
@@ -100,13 +100,13 @@ public class NotificationIntegrationExample {
     
     /**
      * EXAMPLE: Emit MentionEvent when user is mentioned in comment
-     * 
+
      * Add this to CommentServiceImpl.createComment():
-     * 
+
      * public CommentResponse createComment(CreateCommentRequest request) {
      *     // Business logic: save comment
      *     Comment comment = commentRepository.save(...);
-     *     
+
      *     // Detect mentions and emit events
      *     List<String> mentionedUserIds = detectMentions(request.getContent());
      *     for (String mentionedUserId : mentionedUserIds) {
@@ -121,7 +121,7 @@ public class NotificationIntegrationExample {
      *         );
      *         eventPublisher.publishEvent(event);
      *     }
-     *     
+
      *     return commentMapper.toCommentResponse(comment);
      * }
      */

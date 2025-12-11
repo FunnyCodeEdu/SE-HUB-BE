@@ -384,19 +384,20 @@ public class CommentServiceImpl implements CommentService {
         
         for (Map.Entry<String, String> mention : mentions.entrySet()) {
             String mentionedUserId = mention.getKey();
-            
-            // Skip if mentioning yourself
-            if (mentionedUserId.equals(mentionerUserId)) {
-                log.debug("CommentServiceImpl_createMentionNotifications_Skipping self-mention for user: {}", mentionedUserId);
-                continue;
+            boolean isSelfMention = mentionedUserId.equals(mentionerUserId);
+            boolean userNotExists = !profileRepository.existsByUserId(mentionedUserId);
+
+            if (isSelfMention || userNotExists) {
+                if (isSelfMention) {
+                    // Validate mentioned user exists
+                    log.debug("CommentServiceImpl_createMentionNotifications_Skipping self-mention for user: {}", mentionedUserId);
+                } else {
+                    // Skip if mentioning yourself
+                    log.warn("CommentServiceImpl_createMentionNotifications_Mentioned user not found: {}", mentionedUserId);
+                }
+                continue; // chỉ 1 continue duy nhất
             }
-            
-            // Validate mentioned user exists
-            if (!profileRepository.existsByUserId(mentionedUserId)) {
-                log.warn("CommentServiceImpl_createMentionNotifications_Mentioned user not found: {}", mentionedUserId);
-                continue;
-            }
-            
+
             // Publish mention event
             MentionEvent mentionEvent = new MentionEvent(
                     this,

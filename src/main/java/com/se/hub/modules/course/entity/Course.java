@@ -81,8 +81,8 @@ public class Course extends BaseEntity {
     String imgUrl;
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
-    Set<Document> documents;
+    private Set<Document> documents;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    List<User> users;
+    private List<User> users;
 }

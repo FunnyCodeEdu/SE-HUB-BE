@@ -2,6 +2,7 @@ package com.se.hub.modules.configuration;
 
 import com.se.hub.modules.user.entity.User;
 import com.se.hub.modules.user.service.UserSyncService;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.convert.converter.Converter;
@@ -14,7 +15,6 @@ import org.springframework.stereotype.Component;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Custom JWT Authentication Converter that:
@@ -31,7 +31,7 @@ public class CustomJwtAuthenticationConverter implements Converter<Jwt, JwtAuthe
     private static final String ROLE_PREFIX = "ROLE_";
 
     @Override
-    public JwtAuthenticationToken convert(Jwt jwt) {
+    public JwtAuthenticationToken convert(@NonNull Jwt jwt) {
         User user = userSyncService.getOrCreateUser(jwt);
         Collection<GrantedAuthority> authorities = getAuthoritiesFromDatabase(user);
 

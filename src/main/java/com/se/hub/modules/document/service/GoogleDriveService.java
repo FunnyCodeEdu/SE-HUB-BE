@@ -1,10 +1,8 @@
 package com.se.hub.modules.document.service;
-
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.Permission;
 import com.se.hub.modules.document.exception.DocumentErrorCode;
-import com.se.hub.modules.document.exception.DocumentException;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 
 /**
  * Google Drive Service
@@ -45,14 +44,14 @@ public class GoogleDriveService {
     
     @Value("${google.drive.application.name:SE-HUB}")
     String applicationName;
-    
+
     /**
      * Get Drive instance, create new instance each time (no caching)
      * This allows dynamic token refresh without restarting
      */
     private Drive getDrive() {
         try {
-            final com.google.api.client.http.javanet.NetHttpTransport HTTP_TRANSPORT = 
+            final com.google.api.client.http.javanet.NetHttpTransport httpTransport =
                     com.google.api.client.googleapis.javanet.GoogleNetHttpTransport.newTrustedTransport();
             
             // Build credentials JSON string
@@ -77,7 +76,7 @@ public class GoogleDriveService {
             
             com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow flow = 
                     new com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow.Builder(
-                    HTTP_TRANSPORT, 
+                            httpTransport,
                     com.google.api.client.json.gson.GsonFactory.getDefaultInstance(), 
                     clientSecrets, 
                     java.util.List.of(com.google.api.services.drive.DriveScopes.DRIVE))
@@ -96,7 +95,7 @@ public class GoogleDriveService {
 
             ensureCredentialValidity(credential);
             
-            Drive drive = new Drive.Builder(HTTP_TRANSPORT, 
+            Drive drive = new Drive.Builder(httpTransport,
                     com.google.api.client.json.gson.GsonFactory.getDefaultInstance(), 
                     credential)
                     .setApplicationName(applicationName)
@@ -106,8 +105,8 @@ public class GoogleDriveService {
             return drive;
             
         } catch (Exception e) {
-            if (e instanceof com.se.hub.modules.document.exception.DocumentException) {
-                throw (com.se.hub.modules.document.exception.DocumentException) e;
+            if (e instanceof com.se.hub.modules.document.exception.DocumentException de) {
+                throw de;
             }
             log.error("GoogleDriveService_getDrive_Failed to initialize Google Drive client: {}", e.getMessage(), e);
             String googleAuthUrl = generateGoogleAuthUrl();
@@ -130,12 +129,10 @@ public class GoogleDriveService {
                     throw DocumentErrorCode.DOCUMENT_GOOGLE_DRIVE_NOT_CONFIGURED.toException(generateGoogleAuthUrl());
                 }
                 log.info("GoogleDriveService_ensureCredentialValidity_Token refreshed successfully");
-            } else if ((aboutToExpire || missingAccessToken) && !hasRefreshToken) {
+            } else if ((aboutToExpire || missingAccessToken)) {
                 log.warn("GoogleDriveService_ensureCredentialValidity_No refresh token available and token is invalid/expired");
                 throw DocumentErrorCode.DOCUMENT_GOOGLE_DRIVE_NOT_CONFIGURED.toException(generateGoogleAuthUrl());
             }
-        } catch (DocumentException e) {
-            throw e;
         } catch (com.google.api.client.auth.oauth2.TokenResponseException e) {
             log.error("GoogleDriveService_ensureCredentialValidity_Token refresh failed: {}", e.getDetails(), e);
             throw DocumentErrorCode.DOCUMENT_GOOGLE_DRIVE_NOT_CONFIGURED.toException(generateGoogleAuthUrl());
@@ -151,7 +148,7 @@ public class GoogleDriveService {
      */
     public String generateGoogleAuthUrl() {
         try {
-            final com.google.api.client.http.javanet.NetHttpTransport HTTP_TRANSPORT = 
+            final com.google.api.client.http.javanet.NetHttpTransport httpTransport =
                     com.google.api.client.googleapis.javanet.GoogleNetHttpTransport.newTrustedTransport();
             
             // Build credentials JSON string
@@ -177,7 +174,7 @@ public class GoogleDriveService {
             
             com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow flow = 
                     new com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow.Builder(
-                    HTTP_TRANSPORT, 
+                            httpTransport,
                     com.google.api.client.json.gson.GsonFactory.getDefaultInstance(), 
                     clientSecrets, 
                     java.util.List.of(com.google.api.services.drive.DriveScopes.DRIVE))
@@ -246,7 +243,12 @@ public class GoogleDriveService {
         setPublicViewPermission(fileId);
 
         // Clean up temporary file
-        convFile.delete();
+        try {
+            Files.delete(convFile.toPath());
+            log.debug("GoogleDriveService_uploadFile_Temporary file deleted: {}", convFile.getAbsolutePath());
+        } catch (IOException ex) {
+            log.warn("GoogleDriveService_uploadFile_Failed to delete temp file: {}", convFile.getAbsolutePath(), ex);
+        }
 
         log.debug("GoogleDriveService_uploadFile_File uploaded successfully with public view permission");
         return fileId;

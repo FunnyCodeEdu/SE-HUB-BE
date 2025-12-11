@@ -45,8 +45,6 @@ public class ImageUploadService {
                     .viewUrl(googleDriveService.getFileViewUrl(fileId))
                     .downloadUrl(googleDriveService.getFileUrl(fileId))
                     .build();
-        } catch (DocumentException e) {
-            throw e;
         } catch (IOException e) {
             log.error("ImageUploadService_uploadImage_Failed to upload image: {}", e.getMessage(), e);
             throw DocumentErrorCode.DOCUMENT_UPLOAD_FAILED.toException();

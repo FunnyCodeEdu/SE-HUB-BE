@@ -42,7 +42,7 @@ import static com.se.hub.modules.document.constant.DocumentConstants.DOCUMENT_MA
 
 /**
  * Document Service Implementation
- * 
+
  * Virtual Thread Best Practice:
  * - This service uses synchronous blocking I/O operations (JPA repository calls)
  * - Virtual threads automatically handle blocking operations efficiently
@@ -101,7 +101,7 @@ public class DocumentServiceImpl implements DocumentService {
         String userId = AuthUtils.getCurrentUserId();
 
         // Validate file
-        if (file == null || file.isEmpty()) {
+        if (file.isEmpty()) {
             log.error("DocumentService_createDocument_File is required");
             throw DocumentErrorCode.DOCUMENT_FILE_REQUIRED.toException();
         }
@@ -118,9 +118,6 @@ public class DocumentServiceImpl implements DocumentService {
         try {
             fileId = googleDriveService.uploadFile(file);
             log.debug("DocumentService_createDocument_File uploaded to Google Drive with ID: {}", fileId);
-        } catch (com.se.hub.modules.document.exception.DocumentException e) {
-            // Re-throw DocumentException to preserve error message with link
-            throw e;
         } catch (IOException e) {
             log.error("DocumentService_createDocument_Failed to upload file to Google Drive: {}", e.getMessage(), e);
             throw DocumentErrorCode.DOCUMENT_UPLOAD_FAILED.toException();
@@ -215,22 +212,7 @@ public class DocumentServiceImpl implements DocumentService {
     public List<DocumentResponse> getLatestDocuments() {
         log.debug("DocumentService_getLatestDocuments_Fetching latest documents");
         List<Document> documents = documentRepository.findTop4ByIsApprovedTrueOrderByCreateDateDesc();
-        String currentUserId = AuthUtils.getCurrentUserId();
-        List<String> documentIds = documents.stream().map(Document::getId).toList();
-        Map<String, ReactionInfo> reactionsMap = reactionService
-                .getReactionsForTargets(TargetType.DOCUMENT, documentIds, currentUserId);
-        
-        return documents.stream()
-                .map(document -> {
-                    DocumentResponse response = documentMapper.toDocumentResponse(document);
-                    ReactionInfo reactionInfo = reactionsMap.getOrDefault(
-                            document.getId(),
-                            ReactionInfo.builder().userReacted(false).type(null).build()
-                    );
-                    response.setReactions(reactionInfo);
-                    return response;
-                })
-                .toList();
+        return mapDocumentsWithReactions(documents);
     }
 
     @Override
@@ -248,23 +230,34 @@ public class DocumentServiceImpl implements DocumentService {
                 .filter(doc -> !doc.getId().equals(documentId))
                 .toList();
         
+        return mapDocumentsWithReactions(filteredDocs);
+    }
+
+    private List<DocumentResponse> mapDocumentsWithReactions(List<Document> documents) {
         String currentUserId = AuthUtils.getCurrentUserId();
-        List<String> documentIds = filteredDocs.stream().map(Document::getId).toList();
+        List<String> documentIds = documents.stream().map(Document::getId).toList();
+
         Map<String, ReactionInfo> reactionsMap = reactionService
                 .getReactionsForTargets(TargetType.DOCUMENT, documentIds, currentUserId);
-        
-        return filteredDocs.stream()
-                .map(document -> {
-                    DocumentResponse response = documentMapper.toDocumentResponse(document);
+
+        return documents.stream()
+                .map(doc -> {
+                    DocumentResponse response = documentMapper.toDocumentResponse(doc);
+
                     ReactionInfo reactionInfo = reactionsMap.getOrDefault(
-                            document.getId(),
-                            ReactionInfo.builder().userReacted(false).type(null).build()
+                            doc.getId(),
+                            ReactionInfo.builder()
+                                    .userReacted(false)
+                                    .type(null)
+                                    .build()
                     );
+
                     response.setReactions(reactionInfo);
                     return response;
                 })
                 .toList();
     }
+
 
     @Override
     @Transactional

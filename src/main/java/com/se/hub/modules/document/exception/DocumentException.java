@@ -10,7 +10,7 @@ import lombok.Getter;
 @Getter
 public class DocumentException extends AppException {
     private final DocumentErrorCode documentErrorCode;
-    private final Object[] args;
+    private final transient Object[] args;
 
     public DocumentException(DocumentErrorCode documentErrorCode, Object... args) {
         super(documentErrorCode.toErrorCode());

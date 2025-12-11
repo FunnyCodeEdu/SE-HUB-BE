@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 
 /**
  * Exam Service Implementation
- * 
+
  * Virtual Thread Best Practice:
  * - This service uses synchronous blocking I/O operations (JPA repository calls)
  * - Virtual threads automatically handle blocking operations efficiently

@@ -12,7 +12,7 @@ import java.util.List;
  */
 @Slf4j
 public class QuestionHashUtil {
-    
+    private QuestionHashUtil(){}
     private static final int WORDS_TO_TAKE_FROM_QUESTION = 10; // Lấy 10 từ đầu của câu hỏi
     private static final int WORDS_TO_TAKE_FROM_OPTION = 5; // Lấy 5 từ đầu của mỗi câu trả lời
     
@@ -23,10 +23,16 @@ public class QuestionHashUtil {
         if (text == null || text.trim().isEmpty()) {
             return "";
         }
+//        return text
+//                .toLowerCase()
+//                .replaceAll("\\s+", " ")          // gộp nhiều space thành 1
+//                .replaceAll("[^0-9a-zA-Zà-ỹÀ-Ỹ ]", "") // bỏ ký tự đặc biệt, giữ chữ + số + tiếng Việt
+//                .trim();
+
         return text
                 .toLowerCase()
-                .replaceAll("\\s+", " ")          // gộp nhiều space thành 1
-                .replaceAll("[^0-9a-zA-Zà-ỹÀ-Ỹ ]", "") // bỏ ký tự đặc biệt, giữ chữ + số + tiếng Việt
+                .replaceAll("\\s+", " ")              // gộp multiple spaces
+                .replaceAll("[^\\p{L}\\p{N} ]", "")   // giữ: chữ (mọi ngôn ngữ) + số + space
                 .trim();
     }
     

@@ -82,7 +82,7 @@ public class Exam extends BaseEntity {
     Course course;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    Set<Question> questions;
+    transient Set<Question> questions;
 }
 
 

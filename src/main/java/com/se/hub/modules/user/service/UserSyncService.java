@@ -153,11 +153,12 @@ public class UserSyncService {
     private String determineRoleNameFromScope(Jwt jwt) {
         // Try to get scope as string first (most common format)
         String scopeString = jwt.getClaimAsString("scope");
+        String admin = "ADMIN";
         if (scopeString != null && !scopeString.trim().isEmpty()) {
             // Check if scope is ROLE_ADMIN
-            if (scopeString.equalsIgnoreCase("ROLE_ADMIN") || scopeString.equalsIgnoreCase("ADMIN")) {
+            if (scopeString.equalsIgnoreCase("ROLE_ADMIN") || scopeString.equalsIgnoreCase(admin)) {
                 log.debug("Scope is ADMIN: {}", scopeString);
-                return "ADMIN";
+                return admin;
             }
             // All other scopes (ROLE_STUDENT, ROLE_INSTRUCTOR, etc.) → USER
             log.debug("Scope is not ADMIN, defaulting to USER: {}", scopeString);
@@ -171,13 +172,13 @@ public class UserSyncService {
             boolean isAdmin = scopes.stream()
                     .anyMatch(scope -> scope != null && (
                             scope.equalsIgnoreCase("ROLE_ADMIN") ||
-                            scope.equalsIgnoreCase("ADMIN") ||
-                            scope.contains("ADMIN")
+                            scope.equalsIgnoreCase(admin) ||
+                            scope.contains(admin)
                     ));
             
             if (isAdmin) {
                 log.debug("Found ADMIN in scope list: {}", scopes);
-                return "ADMIN";
+                return admin;
             }
             log.debug("No ADMIN found in scope list, defaulting to USER: {}", scopes);
             return "USER";

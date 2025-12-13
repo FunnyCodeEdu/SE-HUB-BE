@@ -43,22 +43,22 @@ public class User implements Serializable {
 
     // ID from JWT token (no @GeneratedValue - set manually)
     @Id
-    @Column(name = "id", updatable = false)
+    @Column(name = UserConstants.COL_ID, updatable = false)
     String id;
 
     @CreatedBy
-    @Column(name = "created_by", updatable = false)
+    @Column(name = UserConstants.COL_CREATED_BY, updatable = false)
     String createdBy;
 
     @LastModifiedBy
-    @Column(name = "update_by")
+    @Column(name = UserConstants.COL_UPDATE_BY)
     String updateBy;
 
-    @Column(name = "create_date", updatable = false)
+    @Column(name = UserConstants.COL_CREATE_DATE, updatable = false)
     Instant createDate;
 
     @LastModifiedDate
-    @Column(name = "updated_date")
+    @Column(name = UserConstants.COL_UPDATED_DATE)
     Instant updatedDate;
 
     @Enumerated(EnumType.STRING)
@@ -67,10 +67,10 @@ public class User implements Serializable {
     UserStatus status;
 
     @ManyToOne
-    @JoinColumn(name = "role_name")
+    @JoinColumn(name = UserConstants.COL_ROLE_NAME)
     Role role;
 
-    @OneToOne(mappedBy = "user")
+    @OneToOne(mappedBy = UserConstants.COL_USER)
     Profile profile;
 
     @PrePersist

@@ -17,4 +17,6 @@ public class RoleConstants {
     public static final int MAX_CHARS_ROLE_NAME = 25;
     public static final int MIN_CHARS_DESCRIPTION = 1;
     public static final int MAX_CHARS_DESCRIPTION = 255;
+
+    private RoleConstants() {}
 }

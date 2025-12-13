@@ -18,8 +18,8 @@ import java.util.List;
 public class NewChatMessageEvent extends ApplicationEvent {
     String conversationId;
     String senderId;
-    transient List<String> recipientUserIds; // All participants except sender
-    transient ChatMessageResponse message;
+    List<String> recipientUserIds; // All participants except sender
+    ChatMessageResponse message;
     Instant occurredAt;
 
     public NewChatMessageEvent(Object source, String conversationId, String senderId, 

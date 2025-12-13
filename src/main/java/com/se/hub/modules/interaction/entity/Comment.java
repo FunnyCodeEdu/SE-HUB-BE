@@ -83,13 +83,13 @@ public class Comment extends BaseEntity {
     @OneToMany(mappedBy = "parentComment",
             cascade = CascadeType.ALL,
             fetch = FetchType.LAZY)
-    transient List<Comment> replies;
+    List<Comment> replies;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @JoinTable(name = "comment_mentions",
             joinColumns = @JoinColumn(name = "comment_id"))
     @Column(name = "username")
     @jakarta.persistence.MapKeyColumn(name = "user_id")
-    transient Map<String, String> mentions; // Map<userId, username>
+    Map<String, String> mentions; // Map<userId, username>
 }
 

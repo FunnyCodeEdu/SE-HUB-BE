@@ -114,7 +114,7 @@ public class Profile extends BaseEntity {
     @NotNull(message = ProfileErrorCodeConstants.LEVEL_NOT_NULL)
     UserLevel level;
 
-    @OneToOne(mappedBy = "profile",
+    @OneToOne(mappedBy = ProfileConstants.TABLE_PROFILE,
             cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     UserStats userStats;
 
@@ -122,7 +122,7 @@ public class Profile extends BaseEntity {
     Set<Achievement> achievements;
 
     @OneToOne(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", referencedColumnName = BaseFieldConstant.ID)
+    @JoinColumn(name = ProfileConstants.USER_ID, referencedColumnName = BaseFieldConstant.ID)
     @NotNull(message = ProfileErrorCodeConstants.USER_NOT_NULL)
     User user;
 }

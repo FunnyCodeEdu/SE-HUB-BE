@@ -81,7 +81,7 @@ public class Question extends BaseEntity {
     @OneToMany(mappedBy = "question",
             fetch = FetchType.LAZY,
             cascade = CascadeType.REMOVE)
-    transient List<QuestionOption> options;
+    List<QuestionOption> options;
 
     @Column(name = QuestionConstants.COL_NORMALIZED_TEXT,
             columnDefinition = "TEXT")

@@ -68,7 +68,7 @@ public class Report extends BaseEntity {
             cascade = CascadeType.ALL,
             fetch = FetchType.LAZY,
             orphanRemoval = true)
-    transient Set<ReportReason> reasons;
+    Set<ReportReason> reasons;
 
     @Override
     public boolean equals(Object o) {

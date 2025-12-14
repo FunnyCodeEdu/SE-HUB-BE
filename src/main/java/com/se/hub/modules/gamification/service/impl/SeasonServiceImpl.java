@@ -25,7 +25,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -98,14 +97,8 @@ public class SeasonServiceImpl implements SeasonService {
         season.setUpdateBy(userId);
 
         // handle rewards update
-        if (request.getRewards() != null) {
-            if (request.getRewards().isEmpty()) {
-                season.setRewards(new ArrayList<>()); //clear if empty list provided
-            } else {
-                List<Reward> newRewards = rewardService.createRewards(request.getRewards(), userId);
-                season.setRewards(newRewards);
-            }
-        }
+        List<Reward> newRewards = rewardService.createRewards(request.getRewards(), userId);
+        season.setRewards(newRewards);
 
         Season updatedSeason = seasonRepository.save(season);
         return seasonMapper.toSeasonResponse(updatedSeason);

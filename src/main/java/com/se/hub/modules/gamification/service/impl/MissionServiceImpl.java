@@ -25,7 +25,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -98,14 +97,8 @@ public class MissionServiceImpl implements MissionService {
         mission.setUpdateBy(userId);
 
         // handle rewards update
-        if (request.getRewards() != null) {
-            if (request.getRewards().isEmpty()) {
-                mission.setRewards(new ArrayList<>()); //clear if empty list provided
-            } else {
-                List<Reward> newRewards = rewardService.createRewards(request.getRewards(), userId);
-                mission.setRewards(newRewards);
-            }
-        }
+        List<Reward> newRewards = rewardService.createRewards(request.getRewards(), userId);
+        mission.setRewards(newRewards);
 
         Mission updatedMission = missionRepository.save(mission);
         return missionMapper.toMissionResponse(updatedMission);

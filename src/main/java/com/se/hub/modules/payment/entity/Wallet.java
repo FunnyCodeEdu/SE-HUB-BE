@@ -1,7 +1,6 @@
 package com.se.hub.modules.payment.entity;
 
 import com.se.hub.common.constant.BaseFieldConstant;
-import com.se.hub.common.entity.BaseEntity;
 import com.se.hub.modules.payment.constant.wallet.WalletConstants;
 import com.se.hub.modules.payment.enums.WalletStatus;
 import com.se.hub.modules.profile.entity.Profile;
@@ -10,6 +9,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToMany;
@@ -33,7 +33,11 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @Table(name = WalletConstants.TABLE_WALLET)
-public class Wallet extends BaseEntity {
+public class Wallet {
+
+    @Id
+    @Column(name = BaseFieldConstant.ID)
+    String id;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = WalletConstants.PROFILE_ID,

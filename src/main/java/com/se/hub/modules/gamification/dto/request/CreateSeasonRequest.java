@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -31,10 +31,10 @@ public class CreateSeasonRequest {
     String name;
 
     @NotNull(message = SeasonMessageConstants.START_AT_REQUIRED)
-    Instant startAt;
+    LocalDate startAt;
 
     @NotNull(message = SeasonMessageConstants.END_AT_REQUIRED)
-    Instant endAt;
+    LocalDate endAt;
 
     @Enumerated(EnumType.STRING)
     @NotNull(message = SeasonMessageConstants.STATUS_REQUIRED)

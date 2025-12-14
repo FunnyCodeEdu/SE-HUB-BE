@@ -18,7 +18,7 @@ public final class SeasonConstants {
     // ===== COLUMN DEFINITIONS =====
     public static final String NAME_DEFINITION = "VARCHAR(255)";
     public static final String STATUS_DEFINITION = "VARCHAR(50)";
-    public static final String TIME_DEFINITION = "TIMESTAMP";
+    public static final String TIME_DEFINITION = "DATE";
 
     // ===== VALIDATION LIMITS =====
     public static final int NAME_MAX = 255;

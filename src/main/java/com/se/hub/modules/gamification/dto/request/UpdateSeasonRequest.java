@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -28,9 +28,9 @@ public class UpdateSeasonRequest {
     @Size(max = SeasonConstants.NAME_MAX, message = SeasonMessageConstants.NAME_MAX)
     String name;
 
-    Instant startAt;
+    LocalDate startAt;
 
-    Instant endAt;
+    LocalDate endAt;
 
     @Enumerated(EnumType.STRING)
     SeasonStatus status;

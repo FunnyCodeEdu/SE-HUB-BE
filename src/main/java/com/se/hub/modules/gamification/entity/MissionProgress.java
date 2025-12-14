@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -45,12 +45,12 @@ public class MissionProgress extends BaseEntity {
     @Column(name = MissionProgressConstants.START_AT,
             columnDefinition = MissionProgressConstants.TIME_DEFINITION)
     @NotNull(message = MissionProgressMessageConstants.START_AT_REQUIRED)
-    Instant startAt;
+    LocalDate startAt;
 
     @Column(name = MissionProgressConstants.END_AT,
             columnDefinition = MissionProgressConstants.TIME_DEFINITION)
     @NotNull(message = MissionProgressMessageConstants.END_AT_REQUIRED)
-    Instant endAt;
+    LocalDate endAt;
 
     @NotNull(message = MissionProgressMessageConstants.CURRENT_VALUE_REQUIRED)
     @Min(value = 0, message = MissionProgressMessageConstants.CURRENT_VALUE_MIN)

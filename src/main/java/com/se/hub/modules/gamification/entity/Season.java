@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -46,12 +46,12 @@ public class Season extends BaseEntity {
     @Column(name = SeasonConstants.START_AT,
             columnDefinition = SeasonConstants.TIME_DEFINITION)
     @NotNull(message = SeasonMessageConstants.START_AT_REQUIRED)
-    Instant startAt;
+    LocalDate startAt;
 
     @Column(name = SeasonConstants.END_AT,
             columnDefinition = SeasonConstants.TIME_DEFINITION)
     @NotNull(message = SeasonMessageConstants.END_AT_REQUIRED)
-    Instant endAt;
+    LocalDate endAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name = SeasonConstants.STATUS,

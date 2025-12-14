@@ -3,6 +3,7 @@ package com.se.hub.modules.gamification.entity;
 import com.se.hub.common.entity.BaseEntity;
 import com.se.hub.modules.gamification.constant.gamificationprofile.GamificationProfileConstants;
 import com.se.hub.modules.gamification.constant.streak.StreakConstants;
+import com.se.hub.modules.gamification.constant.streak.StreakMessageConstants;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -32,13 +33,13 @@ import java.time.Instant;
 public class Streak extends BaseEntity {
 
     @NotNull
-    @Min(0)
+    @Min(value = 0, message = StreakMessageConstants.CURRENT_STREAK_MIN)
     @Column(name = StreakConstants.CURRENT_STREAK,
             columnDefinition = StreakConstants.STREAK_INT_DEFINITION)
     Integer currentStreak;
 
     @NotNull
-    @Min(0)
+    @Min(value = 0, message = StreakMessageConstants.MAX_STREAK_MIN)
     @Column(name = StreakConstants.MAX_STREAK,
             columnDefinition = StreakConstants.STREAK_INT_DEFINITION)
     Integer maxStreak;
@@ -55,5 +56,6 @@ public class Streak extends BaseEntity {
     @JoinColumn(name = StreakConstants.GAMIFICATION_PROFILE_ID,
             referencedColumnName = GamificationProfileConstants.PROFILE_ID,
             nullable = false)
+    @NotNull(message = StreakMessageConstants.GAMIFICATION_PROFILE_REQUIRED)
     GamificationProfile gamificationProfile;
 }

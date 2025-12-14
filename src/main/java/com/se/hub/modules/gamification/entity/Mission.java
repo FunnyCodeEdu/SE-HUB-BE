@@ -2,6 +2,7 @@ package com.se.hub.modules.gamification.entity;
 
 import com.se.hub.common.entity.BaseEntity;
 import com.se.hub.modules.gamification.constant.mission.MissionConstants;
+import com.se.hub.modules.gamification.constant.mission.MissionMessageConstants;
 import com.se.hub.modules.gamification.enums.MissionTargetType;
 import com.se.hub.modules.gamification.enums.MissionType;
 import jakarta.persistence.Column;
@@ -38,7 +39,7 @@ import java.util.List;
 public class Mission extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
-    @NotNull
+    @NotNull(message = MissionMessageConstants.TYPE_REQUIRED)
     @Column(name = MissionConstants.TYPE,
             columnDefinition = MissionConstants.TYPE_DEFINITION)
     MissionType type;
@@ -47,18 +48,18 @@ public class Mission extends BaseEntity {
     boolean isActive;
 
     @Enumerated(EnumType.STRING)
-    @NotNull
+    @NotNull(message = MissionMessageConstants.TARGET_TYPE_REQUIRED)
     @Column(name = MissionConstants.TARGET_TYPE,
             columnDefinition = MissionConstants.TARGET_TYPE_DEFINITION)
     MissionTargetType targetType;
 
-    @NotNull
-    @Min(1)
+    @NotNull(message = MissionMessageConstants.TOTAL_COUNT_REQUIRED)
+    @Min(value = 1, message = MissionMessageConstants.TOTAL_COUNT_MIN)
     @Column(name = MissionConstants.TOTAL_COUNT,
             columnDefinition = MissionConstants.TOTAL_COUNT_DEFINITION)
     int totalCount;
 
-    @Size(max = 500)
+    @Size(max = 500, message = MissionMessageConstants.DESCRIPTION_MAX)
     @Column(name = MissionConstants.DESCRIPTION,
             columnDefinition = MissionConstants.DESCRIPTION_DEFINITION)
     String description;

@@ -2,6 +2,7 @@ package com.se.hub.modules.gamification.entity;
 
 import com.se.hub.common.entity.BaseEntity;
 import com.se.hub.modules.gamification.constant.rewardstreak.RewardStreakConstants;
+import com.se.hub.modules.gamification.constant.rewardstreak.RewardStreakMessageConstants;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -32,12 +33,12 @@ import java.util.List;
 @Table(name = RewardStreakConstants.TABLE_REWARD_STREAK)
 public class StreakReward extends BaseEntity {
 
-    @Min(0)
+    @Min(value = 0, message = RewardStreakMessageConstants.STREAK_TARGET_MIN)
     @Column(name = RewardStreakConstants.STREAK_TARGET,
             columnDefinition = RewardStreakConstants.STREAK_TARGET_DEFINITION)
     int streakTarget;
 
-    @Size(max = RewardStreakConstants.DESCRIPTION_MAX)
+    @Size(max = RewardStreakConstants.DESCRIPTION_MAX, message = RewardStreakMessageConstants.DESCRIPTION_MAX)
     @Column(name = RewardStreakConstants.DESCRIPTION,
             columnDefinition = RewardStreakConstants.DESCRIPTION_DEFINITION)
     String description;

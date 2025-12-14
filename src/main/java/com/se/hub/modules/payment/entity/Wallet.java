@@ -36,6 +36,7 @@ import java.util.List;
 public class Wallet {
 
     @Id
+    @Column(name = "id")
     String id;
 
     @OneToOne(fetch = FetchType.LAZY)

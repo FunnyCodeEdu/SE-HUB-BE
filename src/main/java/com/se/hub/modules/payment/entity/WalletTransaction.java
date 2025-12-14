@@ -1,6 +1,5 @@
 package com.se.hub.modules.payment.entity;
 
-import com.se.hub.common.constant.BaseFieldConstant;
 import com.se.hub.common.entity.BaseEntity;
 import com.se.hub.modules.payment.constant.wallettransaction.WalletTransactionConstants;
 import com.se.hub.modules.payment.enums.TransactionDirection;
@@ -59,7 +58,6 @@ public class WalletTransaction extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = WalletTransactionConstants.WALLET_ID,
-            referencedColumnName = BaseFieldConstant.ID,
             nullable = false)
     Wallet wallet;
 }

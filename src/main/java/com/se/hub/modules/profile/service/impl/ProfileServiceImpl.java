@@ -8,6 +8,7 @@ import com.se.hub.common.exception.AppException;
 import com.se.hub.common.utils.PagingUtil;
 import com.se.hub.modules.auth.utils.AuthUtils;
 import com.se.hub.modules.gamification.service.GamificationProfileService;
+import com.se.hub.modules.payment.service.WalletService;
 import com.se.hub.modules.profile.constant.profile.ProfileConstants;
 import com.se.hub.modules.profile.dto.request.CreateDefaultProfileRequest;
 import com.se.hub.modules.profile.dto.request.CreateUserStatsRequest;
@@ -63,6 +64,7 @@ public class ProfileServiceImpl implements ProfileService {
     PrivacyHelperService privacyHelperService;
     PrivacySettingRepository privacySettingRepository;
     GamificationProfileService gamificationProfileService;
+    WalletService walletService;
 
     @Override
     @Transactional
@@ -121,6 +123,9 @@ public class ProfileServiceImpl implements ProfileService {
 
         // Create default gamification profile
         profile.setGamificationProfile(gamificationProfileService.createDefault(profile));
+        
+        // Create default wallet
+        walletService.createDefault(profile);
         
         log.info("Default profile created successfully for userId: {}", userId);
     }
@@ -398,6 +403,9 @@ public class ProfileServiceImpl implements ProfileService {
         // Create gamification profile
         profile.setGamificationProfile(gamificationProfileService.createDefault(profile));
         
+        // Create default wallet
+        walletService.createDefault(profile);
+        
         // Try to sync from FTES (this will normalize and save if FTES data is available)
         // If sync fails, we'll still have a profile with default values
         try {
@@ -574,6 +582,9 @@ public class ProfileServiceImpl implements ProfileService {
         
         // Set user stats to profile
         profile.setUserStats(userStats);
+        
+        // Create default wallet
+        walletService.createDefault(profile);
         
         return profile;
     }

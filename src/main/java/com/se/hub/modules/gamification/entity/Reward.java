@@ -2,6 +2,7 @@ package com.se.hub.modules.gamification.entity;
 
 import com.se.hub.common.entity.BaseEntity;
 import com.se.hub.modules.gamification.constant.reward.RewardConstants;
+import com.se.hub.modules.gamification.constant.reward.RewardMessageConstants;
 import com.se.hub.modules.gamification.enums.RewardType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,6 +10,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,11 +32,12 @@ public class Reward extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = RewardConstants.REWARD_TYPE,
             columnDefinition = RewardConstants.REWARD_TYPE_DEFINITION)
-    @NotNull
+    @NotNull(message = RewardMessageConstants.REWARD_TYPE_REQUIRED)
     RewardType rewardType;
 
     @Column(name = RewardConstants.REWARD_VALUE,
             columnDefinition = RewardConstants.REWARD_VALUE_DEFINITION)
-    @NotNull
+    @NotNull(message = RewardMessageConstants.REWARD_VALUE_REQUIRED)
+    @Min(value = 0, message = RewardMessageConstants.REWARD_VALUE_MIN)
     Long rewardValue;
 }

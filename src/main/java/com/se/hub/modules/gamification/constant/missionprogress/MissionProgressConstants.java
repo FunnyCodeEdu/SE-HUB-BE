@@ -16,7 +16,7 @@ public final class MissionProgressConstants {
     public static final String GAMIFICATION_PROFILE_ID = "gamification_profile_id";
 
     // ===== COLUMN DEFINITIONS =====
-    public static final String TIME_DEFINITION = "TIMESTAMP";
+    public static final String TIME_DEFINITION = "DATE";
     public static final String CURRENT_VALUE_DEFINITION = "BIGINT";
     public static final String STATUS_DEFINITION = "VARCHAR(50)";
     public static final String REWARD_STATUS_DEFINITION = "VARCHAR(50)";

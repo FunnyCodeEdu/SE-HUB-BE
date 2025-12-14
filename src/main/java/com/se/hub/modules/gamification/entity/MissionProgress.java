@@ -4,6 +4,7 @@ import com.se.hub.common.constant.BaseFieldConstant;
 import com.se.hub.common.entity.BaseEntity;
 import com.se.hub.modules.gamification.constant.gamificationprofile.GamificationProfileConstants;
 import com.se.hub.modules.gamification.constant.missionprogress.MissionProgressConstants;
+import com.se.hub.modules.gamification.constant.missionprogress.MissionProgressMessageConstants;
 import com.se.hub.modules.gamification.enums.MissionProgressStatus;
 import com.se.hub.modules.gamification.enums.RewardStatus;
 import jakarta.persistence.Column;
@@ -25,7 +26,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -43,26 +44,28 @@ public class MissionProgress extends BaseEntity {
 
     @Column(name = MissionProgressConstants.START_AT,
             columnDefinition = MissionProgressConstants.TIME_DEFINITION)
-    Instant startAt;
+    @NotNull(message = MissionProgressMessageConstants.START_AT_REQUIRED)
+    LocalDate startAt;
 
     @Column(name = MissionProgressConstants.END_AT,
             columnDefinition = MissionProgressConstants.TIME_DEFINITION)
-    Instant endAt;
+    @NotNull(message = MissionProgressMessageConstants.END_AT_REQUIRED)
+    LocalDate endAt;
 
-    @NotNull
-    @Min(0)
+    @NotNull(message = MissionProgressMessageConstants.CURRENT_VALUE_REQUIRED)
+    @Min(value = 0, message = MissionProgressMessageConstants.CURRENT_VALUE_MIN)
     @Column(name = MissionProgressConstants.CURRENT_VALUE,
             columnDefinition = MissionProgressConstants.CURRENT_VALUE_DEFINITION)
     int currentValue;
 
     @Enumerated(EnumType.STRING)
-    @NotNull
+    @NotNull(message = MissionProgressMessageConstants.STATUS_REQUIRED)
     @Column(name = MissionProgressConstants.STATUS,
             columnDefinition = MissionProgressConstants.STATUS_DEFINITION)
     MissionProgressStatus status;
 
     @Enumerated(EnumType.STRING)
-    @NotNull
+    @NotNull(message = MissionProgressMessageConstants.REWARD_STATUS_REQUIRED)
     @Column(name = MissionProgressConstants.REWARD_STATUS,
             columnDefinition = MissionProgressConstants.REWARD_STATUS_DEFINITION)
     RewardStatus rewardStatus;
@@ -71,11 +74,13 @@ public class MissionProgress extends BaseEntity {
     @JoinColumn(name = MissionProgressConstants.MISSION_ID,
             referencedColumnName = BaseFieldConstant.ID,
             nullable = false)
+    @NotNull(message = MissionProgressMessageConstants.MISSION_REQUIRED)
     Mission mission;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = MissionProgressConstants.GAMIFICATION_PROFILE_ID,
             referencedColumnName = GamificationProfileConstants.PROFILE_ID,
             nullable = false)
+    @NotNull(message = MissionProgressMessageConstants.PROFILE_REQUIRED)
     GamificationProfile gamificationProfile;
 }

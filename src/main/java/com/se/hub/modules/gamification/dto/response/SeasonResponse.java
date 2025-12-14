@@ -10,6 +10,7 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -24,8 +25,8 @@ public class SeasonResponse {
     Instant updatedDate;
 
     String name;
-    Instant startAt;
-    Instant endAt;
+    LocalDate startAt;
+    LocalDate endAt;
     SeasonStatus status;
     List<RewardResponse> rewards;
 }

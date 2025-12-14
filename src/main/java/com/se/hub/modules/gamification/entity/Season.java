@@ -2,6 +2,7 @@ package com.se.hub.modules.gamification.entity;
 
 import com.se.hub.common.entity.BaseEntity;
 import com.se.hub.modules.gamification.constant.season.SeasonConstants;
+import com.se.hub.modules.gamification.constant.season.SeasonMessageConstants;
 import com.se.hub.modules.gamification.enums.SeasonStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,7 +24,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -36,24 +37,26 @@ import java.util.List;
 @Table(name = SeasonConstants.TABLE_SEASON)
 public class Season extends BaseEntity {
 
-    @Size(max = SeasonConstants.NAME_MAX)
-    @NotNull
+    @Size(max = SeasonConstants.NAME_MAX, message = SeasonMessageConstants.NAME_MAX)
+    @NotNull(message = SeasonMessageConstants.NAME_REQUIRED)
     @Column(name = SeasonConstants.NAME,
             columnDefinition = SeasonConstants.NAME_DEFINITION)
     String name;
 
     @Column(name = SeasonConstants.START_AT,
             columnDefinition = SeasonConstants.TIME_DEFINITION)
-    Instant startAt;
+    @NotNull(message = SeasonMessageConstants.START_AT_REQUIRED)
+    LocalDate startAt;
 
     @Column(name = SeasonConstants.END_AT,
             columnDefinition = SeasonConstants.TIME_DEFINITION)
-    Instant endAt;
+    @NotNull(message = SeasonMessageConstants.END_AT_REQUIRED)
+    LocalDate endAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name = SeasonConstants.STATUS,
             columnDefinition = SeasonConstants.STATUS_DEFINITION)
-    @NotNull
+    @NotNull(message = SeasonMessageConstants.STATUS_REQUIRED)
     SeasonStatus status;
 
     @ManyToMany(fetch = FetchType.LAZY)

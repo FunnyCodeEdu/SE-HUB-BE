@@ -11,6 +11,7 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -23,8 +24,8 @@ public class MissionProgressResponse {
     Instant createDate;
     Instant updatedDate;
 
-    Instant startAt;
-    Instant endAt;
+    LocalDate startAt;
+    LocalDate endAt;
     int currentValue;
     MissionProgressStatus status;
     RewardStatus rewardStatus;

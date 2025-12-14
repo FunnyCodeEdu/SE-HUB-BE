@@ -36,7 +36,6 @@ import java.util.List;
 public class Wallet {
 
     @Id
-    @Column(name = BaseFieldConstant.ID)
     String id;
 
     @OneToOne(fetch = FetchType.LAZY)

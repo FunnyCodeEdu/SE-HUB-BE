@@ -4,6 +4,7 @@ import com.se.hub.common.constant.BaseFieldConstant;
 import com.se.hub.common.entity.BaseEntity;
 import com.se.hub.modules.exam.constant.ExamMessageConstants;
 import com.se.hub.modules.exam.constant.exam_attempt.ExamAttemptConstants;
+import com.se.hub.modules.exam.constant.exam_attempt.ExamAttemptErrorCodeConstants;
 import com.se.hub.modules.profile.entity.Profile;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -31,25 +32,25 @@ import lombok.experimental.FieldDefaults;
 @Entity
 public class ExamAttempt extends BaseEntity {
     
-    @NotNull(message = "Exam ID cannot be null")
+    @NotNull(message = ExamMessageConstants.EXAM_ID_CAN_NOT_BE_NULL)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = ExamAttemptConstants.COL_EXAM_ID,
             referencedColumnName = BaseFieldConstant.ID,
             nullable = false)
     Exam exam;
     
-    @NotNull(message = "Profile ID cannot be null")
+    @NotNull(message = ExamAttemptErrorCodeConstants.EXAM_ATTEMPT_PROFILE_ID_CAN_NOT_BE_NULL)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = ExamAttemptConstants.COL_PROFILE_ID,
             referencedColumnName = BaseFieldConstant.ID,
             nullable = false)
     Profile profile;
     
-    @Min(value = 0, message = "Score cannot be negative")
+    @Min(value = 0, message = ExamAttemptErrorCodeConstants.EXAM_ATTEMPT_SCORE_CAN_NOT_BE_NEGATIVE)
     @Column(name = ExamAttemptConstants.COL_SCORE, nullable = false)
     int score;
     
-    @Min(value = 0, message = "Total score cannot be negative")
+    @Min(value = 0, message = ExamAttemptErrorCodeConstants.EXAM_ATTEMPT_TOTAL_SCORE_CAN_NOT_BE_NEGATIVE)
     @Column(name = ExamAttemptConstants.COL_TOTAL_SCORE, nullable = false)
     int totalScore;
     

@@ -76,7 +76,7 @@ public class Profile extends BaseEntity {
     @Column(name = ProfileConstants.GENDER)
     GenderEnums gender;
 
-    @Column(name = ProfileConstants.BIO, length = 500)
+    @Column(name = ProfileConstants.BIO, length = ProfileConstants.BIO_LENGTH)
     @Size(max = ProfileConstants.BIO_MAX,
             message = ProfileErrorCodeConstants.BIO_SIZE_INVALID)
     String bio;

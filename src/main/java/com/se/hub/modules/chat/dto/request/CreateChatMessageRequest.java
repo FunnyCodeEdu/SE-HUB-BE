@@ -2,6 +2,7 @@ package com.se.hub.modules.chat.dto.request;
 
 import com.se.hub.modules.chat.constant.ChatConstants;
 import com.se.hub.modules.chat.constant.ChatErrorCodeConstants;
+import com.se.hub.modules.chat.constant.ChatMessageConstants;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
@@ -22,10 +23,10 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CreateChatMessageRequest {
-    @NotBlank(message = "Conversation ID is required")
+    @NotBlank(message = ChatErrorCodeConstants.CONVERSATION_ID_IS_REQUIRED)
     String conversationId;
     
-    @NotBlank(message = "Message cannot be blank")
+    @NotBlank(message = ChatErrorCodeConstants.MESSAGE_NOT_BLANK)
     @Size(max = ChatConstants.MESSAGE_MAX_LENGTH,
           message = ChatErrorCodeConstants.MESSAGE_TOO_LONG)
     String message;

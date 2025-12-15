@@ -78,13 +78,13 @@ public class Question extends BaseEntity {
             columnDefinition = QuestionConstants.CATEGORY_DEFINITION)
     QuestionCategory category;
 
-    @OneToMany(mappedBy = "question",
+    @OneToMany(mappedBy = QuestionConstants.TABLE_QUESTION,
             fetch = FetchType.LAZY,
             cascade = CascadeType.REMOVE)
     List<QuestionOption> options;
 
     @Column(name = QuestionConstants.COL_NORMALIZED_TEXT,
-            columnDefinition = "TEXT")
+            columnDefinition = QuestionConstants.CONTENT_DEFINITION)
     String normalizedText; // Normalized text for duplicate checking (not returned to user)
 
     @Column(name = QuestionConstants.COL_CONTENT_HASH,

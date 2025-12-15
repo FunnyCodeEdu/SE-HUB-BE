@@ -1,5 +1,6 @@
 package com.se.hub.modules.interaction.dto.request;
 
+import com.se.hub.modules.interaction.constant.ReportErrorCodeConstants;
 import com.se.hub.modules.interaction.enums.ReportStatus;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -18,7 +19,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UpdateReportRequest {
 
-    @NotNull(message = "Report status is required")
+    @NotNull(message = ReportErrorCodeConstants.REPORT_STATUS_IS_REQUIRED)
     ReportStatus status;
 }
 

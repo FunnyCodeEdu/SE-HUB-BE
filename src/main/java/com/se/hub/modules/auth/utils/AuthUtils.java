@@ -19,13 +19,13 @@ public class AuthUtils {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         
         if (authentication == null || !authentication.isAuthenticated() 
-                || "anonymousUser".equals(authentication.getPrincipal())) {
+                || JwtClaimSetConstant.ANONIMOUS_USER.equals(authentication.getPrincipal())) {
             return null;
         }
         
         // First try to get from authentication name
         String userId = authentication.getName();
-        if (userId != null && !userId.isEmpty() && !"anonymousUser".equals(userId)) {
+        if (userId != null && !userId.isEmpty() && !JwtClaimSetConstant.ANONIMOUS_USER.equals(userId)) {
             return userId;
         }
         
@@ -33,16 +33,7 @@ public class AuthUtils {
         if (authentication instanceof JwtAuthenticationToken jwtAuth) {
             Jwt jwt = jwtAuth.getToken();
             
-            Object claim = jwt.getClaims().get(JwtClaimSetConstant.CLAIM_USER_ID);
-            if (claim == null) {
-                claim = jwt.getClaims().get("userId");
-            }
-            if (claim == null) {
-                claim = jwt.getClaims().get("sub");
-            }
-            if (claim == null) {
-                claim = jwt.getClaims().get("id");
-            }
+            Object claim = getClaim(jwt);
             
             if (claim != null) {
                 return claim.toString();
@@ -72,16 +63,7 @@ public class AuthUtils {
             Jwt jwt = jwtAuth.getToken();
             
             // Try different claim names
-            Object claim = jwt.getClaims().get(JwtClaimSetConstant.CLAIM_USER_ID);
-            if (claim == null) {
-                claim = jwt.getClaims().get("userId");
-            }
-            if (claim == null) {
-                claim = jwt.getClaims().get("sub"); // Subject claim
-            }
-            if (claim == null) {
-                claim = jwt.getClaims().get("id");
-            }
+            Object claim = getClaim(jwt);
             
             if (claim != null) {
                 String userIdFromClaim = claim.toString();
@@ -92,6 +74,20 @@ public class AuthUtils {
         
         log.warn("Cannot get current user id from authentication or JWT claims");
         throw new AppException(ErrorCode.JWT_CLAIM_MISSING);
+    }
+
+    private static Object getClaim(Jwt jwt) {
+        Object claim = jwt.getClaims().get(JwtClaimSetConstant.CLAIM_USER_ID);
+        if (claim == null) {
+            claim = jwt.getClaims().get(JwtClaimSetConstant.CLAIM_USER_ID);
+        }
+        if (claim == null) {
+            claim = jwt.getClaims().get(JwtClaimSetConstant.CLAIM_SUB); // Subject claim
+        }
+        if (claim == null) {
+            claim = jwt.getClaims().get(JwtClaimSetConstant.CLAIM_ID);
+        }
+        return claim;
     }
 
     public static String getCurrentUserName()  {

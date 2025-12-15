@@ -17,5 +17,9 @@ public class ExamAttemptConstants {
 
     //===== COLUMN DEFINITIONS ======
     public static final String DESCRIPTION_DEFINITION = "TEXT";
+
+    //===== VALIDATION VALUE LIMITS ======
+    public static final int SCORE_MIN_VALUE = 0;
+    public static final int TOTAL_SCORE_MIN_VALUE = 0;
     private ExamAttemptConstants(){}
 }

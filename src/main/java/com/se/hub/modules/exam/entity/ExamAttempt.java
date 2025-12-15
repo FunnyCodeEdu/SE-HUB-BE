@@ -46,11 +46,11 @@ public class ExamAttempt extends BaseEntity {
             nullable = false)
     Profile profile;
     
-    @Min(value = 0, message = ExamAttemptErrorCodeConstants.EXAM_ATTEMPT_SCORE_CAN_NOT_BE_NEGATIVE)
+    @Min(value = ExamAttemptConstants.SCORE_MIN_VALUE, message = ExamAttemptErrorCodeConstants.EXAM_ATTEMPT_SCORE_CAN_NOT_BE_NEGATIVE)
     @Column(name = ExamAttemptConstants.COL_SCORE, nullable = false)
     int score;
     
-    @Min(value = 0, message = ExamAttemptErrorCodeConstants.EXAM_ATTEMPT_TOTAL_SCORE_CAN_NOT_BE_NEGATIVE)
+    @Min(value = ExamAttemptConstants.TOTAL_SCORE_MIN_VALUE, message = ExamAttemptErrorCodeConstants.EXAM_ATTEMPT_TOTAL_SCORE_CAN_NOT_BE_NEGATIVE)
     @Column(name = ExamAttemptConstants.COL_TOTAL_SCORE, nullable = false)
     int totalScore;
     

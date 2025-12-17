@@ -40,6 +40,7 @@ public class MissionServiceImpl implements MissionService {
     @Override
     @Transactional
     public MissionResponse createMission(CreateMissionRequest request) {
+        log.info("Creating mission with active {}", request.isActive());
         String userId = AuthUtils.getCurrentUserId();
 
         Mission mission = missionMapper.toMission(request);

@@ -19,6 +19,9 @@ public final class GamificationMessageConstants {
     // Season
     public static final String SEASON_NOT_FOUND_MESSAGE = "Season not found";
 
+    // Streak Reward
+    public static final String STREAK_REWARD_NOT_FOUND_MESSAGE = "Streak reward not found";
+
     // Common
     public static final String INVALID_REQUEST_MESSAGE = "Invalid gamification request";
     public static final String FORBIDDEN_OPERATION_MESSAGE = "Forbidden operation in gamification module";

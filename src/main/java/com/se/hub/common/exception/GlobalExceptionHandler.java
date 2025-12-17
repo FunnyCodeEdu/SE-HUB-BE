@@ -4,6 +4,8 @@ import com.se.hub.common.constant.ApiConstant;
 import com.se.hub.common.dto.MessageDTO;
 import com.se.hub.common.dto.response.GenericResponse;
 import com.se.hub.common.enums.ErrorCode;
+import com.se.hub.modules.document.exception.DocumentErrorCode;
+import com.se.hub.modules.document.exception.DocumentException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,15 +22,10 @@ import java.util.Objects;
 public class GlobalExceptionHandler extends RuntimeException{
     
     // Handle DocumentException first (more specific)
-    @ExceptionHandler(value = com.se.hub.modules.document.exception.DocumentException.class)
-    public ResponseEntity<GenericResponse<Object>> handlingDocumentException(
-            com.se.hub.modules.document.exception.DocumentException exception) {
-        log.info("GlobalExceptionHandler_handlingDocumentException_Handling DocumentException: {}", exception.getMessage());
-        com.se.hub.modules.document.exception.DocumentErrorCode documentErrorCode = exception.getDocumentErrorCode();
+    @ExceptionHandler(value = DocumentException.class)
+    public ResponseEntity<GenericResponse<Object>> handlingDocumentException(DocumentException exception) {
+        DocumentErrorCode documentErrorCode = exception.getDocumentErrorCode();
         String formattedMessage = exception.getFormattedMessage();
-        
-        log.info("GlobalExceptionHandler_handlingDocumentException_Error code: {}, Message: {}", 
-                documentErrorCode.getCode(), formattedMessage);
         
         GenericResponse<Object> genericResponse = GenericResponse.builder()
                 .isSuccess(ApiConstant.FAILURE)
@@ -74,7 +71,6 @@ public class GlobalExceptionHandler extends RuntimeException{
     //handling File Upload Size Exceeded
     @ExceptionHandler(value = MaxUploadSizeExceededException.class)
     public ResponseEntity<GenericResponse<Object>> handlingMaxUploadSizeExceededException(MaxUploadSizeExceededException exception) {
-        log.error("GlobalExceptionHandler_handlingMaxUploadSizeExceededException_Maximum upload size exceeded: {}", exception.getMessage());
         GenericResponse<Object> genericResponse = GenericResponse.builder()
                 .isSuccess(ApiConstant.FAILURE)
                 .message(MessageDTO.builder()
@@ -100,19 +96,9 @@ public class GlobalExceptionHandler extends RuntimeException{
 
     //handling MethodArgumentNotValidException
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    public ResponseEntity<GenericResponse<Object>> handlingMethodArgumentNotValidException(MethodArgumentNotValidException exception) {
+    ResponseEntity<GenericResponse<Object>> handlingMethodArgumentNotValidException(MethodArgumentNotValidException exception) {
         String enumKey = Objects.requireNonNull(exception.getFieldError()).getDefaultMessage();
-        ErrorCode errorCode;
-        
-        try {
-            // Try to convert validation message to ErrorCode enum
-            errorCode = ErrorCode.valueOf(enumKey);
-        } catch (IllegalArgumentException e) {
-            // If enum constant doesn't exist, fallback to DATA_INVALID
-            log.warn("GlobalExceptionHandler_handlingMethodArgumentNotValidException_ErrorCode enum not found for validation message: {}. Using DATA_INVALID as fallback.", enumKey);
-            errorCode = ErrorCode.DATA_INVALID;
-        }
-        
+        ErrorCode errorCode = ErrorCode.valueOf(enumKey);
         GenericResponse<Object> genericResponse = GenericResponse.builder()
                 .isSuccess(ApiConstant.FAILURE)
                 .message(MessageDTO.builder()

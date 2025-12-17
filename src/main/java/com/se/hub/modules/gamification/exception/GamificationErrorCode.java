@@ -6,6 +6,7 @@ import com.se.hub.modules.gamification.constant.common.GamificationCommonErrorCo
 import com.se.hub.modules.gamification.constant.gamificationprofile.GamificationProfileErrorCodeConstants;
 import com.se.hub.modules.gamification.constant.mission.MissionErrorCodeConstants;
 import com.se.hub.modules.gamification.constant.reward.RewardErrorCodeConstants;
+import com.se.hub.modules.gamification.constant.rewardstreak.RewardStreakErrorCodeConstants;
 import com.se.hub.modules.gamification.constant.season.SeasonErrorCodeConstants;
 import com.se.hub.modules.gamification.constant.streak.StreakErrorCodeConstants;
 import lombok.AllArgsConstructor;
@@ -24,6 +25,7 @@ public enum GamificationErrorCode {
     MISSION_NOT_FOUND(MissionErrorCodeConstants.MISSION_NOT_FOUND, GamificationMessageConstants.MISSION_NOT_FOUND_MESSAGE, HttpStatus.NOT_FOUND),
     REWARD_NOT_FOUND(RewardErrorCodeConstants.REWARD_NOT_FOUND, GamificationMessageConstants.REWARD_NOT_FOUND_MESSAGE, HttpStatus.NOT_FOUND),
     SEASON_NOT_FOUND(SeasonErrorCodeConstants.SEASON_NOT_FOUND, GamificationMessageConstants.SEASON_NOT_FOUND_MESSAGE, HttpStatus.NOT_FOUND),
+    STREAK_REWARD_NOT_FOUND(RewardStreakErrorCodeConstants.STREAK_REWARD_NOT_FOUND, GamificationMessageConstants.STREAK_REWARD_NOT_FOUND_MESSAGE, HttpStatus.NOT_FOUND),
 
     INVALID_REQUEST(GamificationCommonErrorCodeConstants.INVALID_REQUEST, GamificationMessageConstants.INVALID_REQUEST_MESSAGE, HttpStatus.BAD_REQUEST),
     FORBIDDEN_OPERATION(GamificationCommonErrorCodeConstants.FORBIDDEN_OPERATION, GamificationMessageConstants.FORBIDDEN_OPERATION_MESSAGE, HttpStatus.FORBIDDEN);
@@ -45,7 +47,7 @@ public enum GamificationErrorCode {
 
     public ErrorCode toErrorCode() {
         return switch (this) {
-            case GAMIFICATION_PROFILE_NOT_FOUND, STREAK_NOT_FOUND, MISSION_NOT_FOUND, REWARD_NOT_FOUND, SEASON_NOT_FOUND ->
+            case GAMIFICATION_PROFILE_NOT_FOUND, STREAK_NOT_FOUND, MISSION_NOT_FOUND, REWARD_NOT_FOUND, SEASON_NOT_FOUND, STREAK_REWARD_NOT_FOUND ->
                     ErrorCode.DATA_NOT_FOUND;
             case PROFILE_REQUIRED, INVALID_REQUEST -> ErrorCode.DATA_INVALID;
             case FORBIDDEN_OPERATION -> ErrorCode.AUTHZ_UNAUTHORIZED;

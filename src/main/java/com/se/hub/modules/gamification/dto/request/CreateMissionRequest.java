@@ -30,7 +30,7 @@ public class CreateMissionRequest {
     @NotNull(message = MissionMessageConstants.TYPE_REQUIRED)
     MissionType type;
 
-    boolean isActive;
+    boolean active;
 
     @Enumerated(EnumType.STRING)
     @NotNull(message = MissionMessageConstants.TARGET_TYPE_REQUIRED)

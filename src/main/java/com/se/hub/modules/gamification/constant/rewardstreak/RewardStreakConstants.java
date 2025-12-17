@@ -4,7 +4,7 @@ public final class RewardStreakConstants {
     private RewardStreakConstants() {}
 
     // ===== TABLE NAME =====
-    public static final String TABLE_REWARD_STREAK = "reward_streak";
+    public static final String TABLE_REWARD_STREAK = "streak_reward";
     public static final String TABLE_REWARD_STREAK_REWARD = "reward_streak_reward";
 
     // ===== COLUMN NAMES =====

@@ -28,7 +28,7 @@ public class CreateStreakRewardRequest {
     @Size(max = RewardStreakConstants.DESCRIPTION_MAX, message = RewardStreakMessageConstants.DESCRIPTION_MAX)
     String description;
 
-    boolean isActive;
+    boolean active;
 
     @Valid
     List<CreateRewardRequest> rewards;

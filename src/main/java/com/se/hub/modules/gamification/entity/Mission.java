@@ -45,7 +45,7 @@ public class Mission extends BaseEntity {
     MissionType type;
 
     @Column(name = MissionConstants.IS_ACTIVE)
-    boolean isActive;
+    boolean active;
 
     @Enumerated(EnumType.STRING)
     @NotNull(message = MissionMessageConstants.TARGET_TYPE_REQUIRED)

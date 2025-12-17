@@ -28,7 +28,7 @@ public class UpdateMissionRequest {
     @Enumerated(EnumType.STRING)
     MissionType type;
 
-    Boolean isActive;
+    Boolean active;
 
     @Enumerated(EnumType.STRING)
     MissionTargetType targetType;

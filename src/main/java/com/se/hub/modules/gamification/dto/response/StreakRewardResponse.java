@@ -24,7 +24,7 @@ public class StreakRewardResponse {
 
     int streakTarget;
     String description;
-    boolean isActive;
+    boolean active;
     List<RewardResponse> rewards;
 }
 

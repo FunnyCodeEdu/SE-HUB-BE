@@ -45,7 +45,7 @@ public class StreakReward extends BaseEntity {
 
     @Column(name = RewardStreakConstants.IS_ACTIVE,
             columnDefinition = RewardStreakConstants.BOOLEAN_DEFINITION)
-    boolean isActive;
+    boolean active;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = RewardStreakConstants.TABLE_REWARD_STREAK_REWARD,

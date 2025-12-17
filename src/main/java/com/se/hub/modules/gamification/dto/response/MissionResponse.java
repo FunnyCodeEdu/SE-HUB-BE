@@ -25,7 +25,7 @@ public class MissionResponse {
     Instant updatedDate;
 
     MissionType type;
-    boolean isActive;
+    boolean active;
     MissionTargetType targetType;
     int totalCount;
     String description;

@@ -11,5 +11,10 @@ public final class MissionProgressMessageConstants {
     public static final String REWARD_STATUS_REQUIRED = "Reward status is required";
     public static final String MISSION_REQUIRED = "Mission reference is required";
     public static final String PROFILE_REQUIRED = "Gamification profile reference is required";
+
+    // ===== API MESSAGES =====
+    public static final String API_DAILY_PROGRESS_RETRIEVED_SUCCESS = "Daily mission progress retrieved successfully";
+    public static final String API_BAD_REQUEST = "Invalid request data";
+    public static final String API_INTERNAL_ERROR = "Internal server error";
 }
 

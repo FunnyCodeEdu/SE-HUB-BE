@@ -20,6 +20,9 @@ public final class MissionProgressConstants {
     public static final String CURRENT_VALUE_DEFINITION = "BIGINT";
     public static final String STATUS_DEFINITION = "VARCHAR(50)";
     public static final String REWARD_STATUS_DEFINITION = "VARCHAR(50)";
+
+    // ===== BUSINESS CONSTANTS =====
+    public static final int DAILY_MISSION_COUNT = 5;
 }
 
 

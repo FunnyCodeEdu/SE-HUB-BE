@@ -8,7 +8,7 @@ public final class MissionConstants {
 
     // ===== COLUMN NAMES =====
     public static final String TYPE = "type";
-    public static final String IS_ACTIVE = "isActive";
+    public static final String IS_ACTIVE = "active";
     public static final String TARGET_TYPE = "targetType";
     public static final String TOTAL_COUNT = "totalCount";
     public static final String DESCRIPTION = "description";

@@ -10,7 +10,7 @@ public final class RewardStreakConstants {
     // ===== COLUMN NAMES =====
     public static final String STREAK_TARGET = "streakTarget";
     public static final String DESCRIPTION = "description";
-    public static final String IS_ACTIVE = "isActive";
+    public static final String IS_ACTIVE = "active";
     public static final String REWARD_STREAK_ID = "reward_streak_id";
     public static final String REWARD_ID = "reward_id";
 

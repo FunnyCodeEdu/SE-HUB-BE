@@ -43,6 +43,7 @@ public class MissionServiceImpl implements MissionService {
         String userId = AuthUtils.getCurrentUserId();
 
         Mission mission = missionMapper.toMission(request);
+        log.info("Creating mission with active {}", mission.isActive());
         mission.setCreatedBy(userId);
         mission.setUpdateBy(userId);
 
@@ -53,6 +54,7 @@ public class MissionServiceImpl implements MissionService {
         }
 
         Mission savedMission = missionRepository.save(mission);
+        log.info("Creating mission with active {}", savedMission.isActive());
         return missionMapper.toMissionResponse(savedMission);
     }
 

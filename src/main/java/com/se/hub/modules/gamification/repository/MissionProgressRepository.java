@@ -1,6 +1,7 @@
 package com.se.hub.modules.gamification.repository;
 
 import com.se.hub.modules.gamification.entity.MissionProgress;
+import com.se.hub.modules.gamification.enums.MissionTargetType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,6 +12,8 @@ public interface MissionProgressRepository extends JpaRepository<MissionProgress
     List<MissionProgress> findByGamificationProfileId(String profileId);
     
     void deleteByGamificationProfileId(String profileId);
+    
+    List<MissionProgress> findByGamificationProfileIdAndMissionTargetType(String profileId, MissionTargetType targetType);
 }
 
 

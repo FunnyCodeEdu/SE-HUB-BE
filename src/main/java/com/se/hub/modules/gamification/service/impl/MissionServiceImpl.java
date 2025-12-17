@@ -40,11 +40,9 @@ public class MissionServiceImpl implements MissionService {
     @Override
     @Transactional
     public MissionResponse createMission(CreateMissionRequest request) {
-        log.info("Creating mission with active {}", request.isActive());
         String userId = AuthUtils.getCurrentUserId();
 
         Mission mission = missionMapper.toMission(request);
-        log.info("Creating mission with active {}", mission.isActive());
         mission.setCreatedBy(userId);
         mission.setUpdateBy(userId);
 
@@ -55,7 +53,6 @@ public class MissionServiceImpl implements MissionService {
         }
 
         Mission savedMission = missionRepository.save(mission);
-        log.info("Creating mission with active {}", savedMission.isActive());
         return missionMapper.toMissionResponse(savedMission);
     }
 

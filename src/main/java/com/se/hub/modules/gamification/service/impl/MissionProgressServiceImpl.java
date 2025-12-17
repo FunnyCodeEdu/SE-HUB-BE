@@ -7,6 +7,7 @@ import com.se.hub.modules.gamification.entity.GamificationProfile;
 import com.se.hub.modules.gamification.entity.Mission;
 import com.se.hub.modules.gamification.entity.MissionProgress;
 import com.se.hub.modules.gamification.enums.MissionProgressStatus;
+import com.se.hub.modules.gamification.enums.MissionTargetType;
 import com.se.hub.modules.gamification.enums.MissionType;
 import com.se.hub.modules.gamification.enums.RewardStatus;
 import com.se.hub.modules.gamification.exception.GamificationErrorCode;
@@ -66,7 +67,7 @@ public class MissionProgressServiceImpl implements MissionProgressService {
         }
         
         // get 5 daily mission
-        List<Mission> randomMissions = missionRepository.findRandomByTypeAndIsActiveTrue(
+        List<Mission> randomMissions = missionRepository.findRandomByTypeAndActiveTrue(
                 MissionType.DAILY.name(), 
                 MissionProgressConstants.DAILY_MISSION_COUNT
         );
@@ -93,6 +94,20 @@ public class MissionProgressServiceImpl implements MissionProgressService {
         return savedProgress.stream()
                 .map(missionProgressMapper::toMissionProgressResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public void updateCurrentValue(String profileId, MissionTargetType targetType) {
+        List<MissionProgress> progressList = missionProgressRepository
+                .findByGamificationProfileIdAndMissionTargetType(profileId, targetType);
+        
+        if (progressList.isEmpty()) {
+            return;
+        }
+        
+        progressList.forEach(progress -> progress.setCurrentValue(progress.getCurrentValue() + 1));
+        missionProgressRepository.saveAll(progressList);
     }
 }
 

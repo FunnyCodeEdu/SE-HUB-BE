@@ -10,8 +10,8 @@ import java.util.List;
 
 @Repository
 public interface MissionRepository extends JpaRepository<Mission, String> {
-    @Query(value = "SELECT * FROM mission WHERE type = :type AND is_active = true ORDER BY RAND() LIMIT :limit", nativeQuery = true)
-    List<Mission> findRandomByTypeAndIsActiveTrue(@Param("type") String type, @Param("limit") int limit);
+    @Query(value = "SELECT * FROM mission WHERE type = :type AND active = true ORDER BY RAND() LIMIT :limit", nativeQuery = true)
+    List<Mission> findRandomByTypeAndActiveTrue(@Param("type") String type, @Param("limit") int limit);
 }
 
 

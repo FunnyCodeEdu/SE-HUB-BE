@@ -55,7 +55,7 @@ public interface QuestionRepository extends JpaRepository<Question, String> {
     
     /**
      * Find random questions by criteria
-     * Note: This query uses PostgreSQL RANDOM() function and named parameters
+     * Note: This query uses postgresSQL RANDOM() function and named parameters
      */
     @Query(value = """
         SELECT q.* FROM question q

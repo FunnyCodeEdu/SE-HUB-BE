@@ -16,6 +16,7 @@ public class ProfileErrorCodeConstants {
     public static final String ADDRESS_SIZE_INVALID = "PROFILE_ADDRESS_SIZE_INVALID";
     public static final String MAJOR_SIZE_INVALID = "PROFILE_MAJOR_SIZE_INVALID";
     public static final String USERNAME_SIZE_INVALID = "PROFILE_USERNAME_SIZE_INVALID";
+    public static final String USER_ID_NOT_BLANK = "PROFILE_USER_ID_NOT_BLANK";
     
     // ===== BUSINESS LOGIC ERROR CODES =====
     public static final String PROFILE_NOT_NULL = "PROFILE_NOT_NULL";

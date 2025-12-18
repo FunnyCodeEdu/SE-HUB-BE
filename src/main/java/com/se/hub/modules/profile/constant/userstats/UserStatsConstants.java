@@ -16,4 +16,6 @@ public class UserStatsConstants {
     public static final int DEFAULT_DOCS_UPLOADED = 0;
     public static final int DEFAULT_POSTS_UPLOADED = 0;
     public static final int DEFAULT_POSTS_SHARED = 0;
+
+    private UserStatsConstants() {}
 }

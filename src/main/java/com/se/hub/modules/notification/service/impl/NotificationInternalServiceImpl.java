@@ -52,7 +52,7 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
     NotificationMapper notificationMapper;
     NotificationTemplateService notificationTemplateService;
     NotificationSettingRepository notificationSettingRepository;
-
+    private static final String SYSTEM = "SYSTEM";
     @Override
     @Transactional
     public void createMentionNotification(MentionEvent event) {
@@ -267,7 +267,6 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
                 com.se.hub.modules.notification.enums.NotificationTemplateType.BLOG_APPROVED,
                 event.getBlogTitle()
         );
-        
         Notification notification = Notification.builder()
                 .notificationType(NotificationType.BLOG_APPROVED)
                 .title(title)
@@ -275,8 +274,8 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
                 .targetType("BLOG")
                 .targetId(event.getBlogId())
                 .build();
-        notification.setCreatedBy("SYSTEM");
-        notification.setUpdateBy("SYSTEM");
+        notification.setCreatedBy(SYSTEM);
+        notification.setUpdateBy(SYSTEM);
         
         notification = notificationRepository.save(notification);
         
@@ -285,8 +284,8 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
                 .notification(notification)
                 .status(NotificationStatus.UNREAD)
                 .build();
-        userNotification.setCreatedBy("SYSTEM");
-        userNotification.setUpdateBy("SYSTEM");
+        userNotification.setCreatedBy(SYSTEM);
+        userNotification.setUpdateBy(SYSTEM);
         
         UserNotification savedUserNotification = userNotificationRepository.save(userNotification);
         
@@ -313,7 +312,6 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
             log.debug("NotificationInternalService_createAchievementUnlockedNotification_User {} has disabled achievement notifications", event.getUserId());
             return;
         }
-        
         Profile user = profileRepository.findByUserId(event.getUserId())
                 .orElseThrow(() -> new AppException(ErrorCode.PROFILE_NOT_FOUND));
         
@@ -334,8 +332,8 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
                 .targetType("ACHIEVEMENT")
                 .targetId(event.getAchievementId())
                 .build();
-        notification.setCreatedBy("SYSTEM");
-        notification.setUpdateBy("SYSTEM");
+        notification.setCreatedBy(SYSTEM);
+        notification.setUpdateBy(SYSTEM);
         
         notification = notificationRepository.save(notification);
         
@@ -344,8 +342,8 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
                 .notification(notification)
                 .status(NotificationStatus.UNREAD)
                 .build();
-        userNotification.setCreatedBy("SYSTEM");
-        userNotification.setUpdateBy("SYSTEM");
+        userNotification.setCreatedBy(SYSTEM);
+        userNotification.setUpdateBy(SYSTEM);
         
         UserNotification savedUserNotification = userNotificationRepository.save(userNotification);
         
@@ -366,16 +364,15 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
     @Transactional
     public void createSystemAnnouncementNotification(SystemAnnouncementEvent event) {
         log.debug("NotificationInternalService_createSystemAnnouncementNotification_Creating system announcement notification");
-        
         Notification notification = Notification.builder()
                 .notificationType(NotificationType.SYSTEM_ANNOUNCEMENT)
                 .title(event.getTitle())
                 .content(event.getContent())
                 .metadata(event.getMetadata())
-                .targetType("SYSTEM")
+                .targetType(SYSTEM)
                 .build();
-        notification.setCreatedBy("SYSTEM");
-        notification.setUpdateBy("SYSTEM");
+        notification.setCreatedBy(SYSTEM);
+        notification.setUpdateBy(SYSTEM);
         
         Notification savedNotification = notificationRepository.save(notification);
         
@@ -428,7 +425,6 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
      */
     private void processBatchUserNotifications(Notification notification, List<Profile> targetUsers) {
         int batchSize = com.se.hub.modules.notification.constant.NotificationConstants.BATCH_SIZE;
-        
         // Process in chunks to avoid memory issues
         for (int i = 0; i < targetUsers.size(); i += batchSize) {
             int end = Math.min(i + batchSize, targetUsers.size());
@@ -441,8 +437,8 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
                                 .notification(notification)
                                 .status(NotificationStatus.UNREAD)
                                 .build();
-                        userNotification.setCreatedBy("SYSTEM");
-                        userNotification.setUpdateBy("SYSTEM");
+                        userNotification.setCreatedBy(SYSTEM);
+                        userNotification.setUpdateBy(SYSTEM);
                         return userNotification;
                     })
                     .toList();
@@ -474,7 +470,7 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
             
             // Add to recent list and publish (only the latest one)
             if (!userNotifications.isEmpty()) {
-                UserNotification latest = userNotifications.get(userNotifications.size() - 1);
+                UserNotification latest = userNotifications.getLast();
                 NotificationResponse notificationResponse = notificationMapper.toNotificationResponse(latest);
                 notificationRedisService.addToRecentList(userId, notificationResponse);
                 
@@ -494,17 +490,15 @@ public class NotificationInternalServiceImpl implements NotificationInternalServ
      */
     private boolean shouldSendNotification(String userId, String notificationType) {
         return notificationSettingRepository.findByUser_User_Id(userId)
-                .map(setting -> {
-                    return switch (notificationType) {
-                        case "mention" -> setting.getMentionEnabled();
-                        case "like" -> setting.getLikeEnabled();
-                        case "comment" -> setting.getCommentEnabled();
-                        case "blog" -> setting.getBlogEnabled();
-                        case "achievement" -> setting.getAchievementEnabled();
-                        case "follow" -> setting.getFollowEnabled();
-                        case "system" -> setting.getSystemEnabled();
-                        default -> true; // Default to enabled if type not recognized
-                    };
+                .map(setting -> switch (notificationType) {
+                    case "mention" -> setting.getMentionEnabled();
+                    case "like" -> setting.getLikeEnabled();
+                    case "comment" -> setting.getCommentEnabled();
+                    case "blog" -> setting.getBlogEnabled();
+                    case "achievement" -> setting.getAchievementEnabled();
+                    case "follow" -> setting.getFollowEnabled();
+                    case "system" -> setting.getSystemEnabled();
+                    default -> true;
                 })
                 .orElse(true); // Default to enabled if settings not found
     }

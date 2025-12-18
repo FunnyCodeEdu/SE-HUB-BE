@@ -84,7 +84,7 @@ public class Question extends BaseEntity {
     List<QuestionOption> options;
 
     @Column(name = QuestionConstants.COL_NORMALIZED_TEXT,
-            columnDefinition = "TEXT")
+            columnDefinition = QuestionConstants.CONTENT_DEFINITION)
     String normalizedText; // Normalized text for duplicate checking (not returned to user)
 
     @Column(name = QuestionConstants.COL_CONTENT_HASH,

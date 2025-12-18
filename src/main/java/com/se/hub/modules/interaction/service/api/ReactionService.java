@@ -19,7 +19,7 @@ public interface ReactionService {
      * Returns true if reaction was added, false if removed.
      * @deprecated Use {@link #toggleReactionWithCount(TargetType, String, ReactionType)} instead
      */
-    @Deprecated
+    @Deprecated(since = "1.5.0", forRemoval = false)
     boolean toggleReaction(TargetType targetType, String targetId, ReactionType reactionType);
 
     /**

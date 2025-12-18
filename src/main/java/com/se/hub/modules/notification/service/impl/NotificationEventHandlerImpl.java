@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * Notification Event Handler Implementation
- * 
+  
  * Handles all notification-related domain events from other modules
  * Uses @Async to process events asynchronously with virtual threads
  */

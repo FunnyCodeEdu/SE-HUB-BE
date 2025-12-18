@@ -69,13 +69,13 @@ public class NotificationCleanupScheduler {
     @Transactional
     public void deleteOldNotifications() {
         log.info("NotificationCleanupScheduler_deleteOldNotifications_Starting old notification cleanup");
-        
-        // Delete notifications older than 6 months
-        // Note: This is a soft delete - we mark as DELETED instead of actually deleting
-        // In production, you might want to:
-        // 1. Find all notifications older than 6 months: Instant sixMonthsAgo = Instant.now().minus(180, ChronoUnit.DAYS);
-        // 2. Mark them as DELETED
-        // 3. Optionally archive to cold storage
+
+    // Delete notifications older than 6 months
+    // Note: This is a soft delete - we mark as DELETED instead of actually deleting
+    // In production, you might want to:
+    // 1. Find all notifications older than 6 months: Instant sixMonthsAgo = Instant.now().minus(180, ChronoUnit.DAYS);
+    // 2. Mark them as DELETED
+    // 3. Optionally archive to cold storage
         
         log.info("NotificationCleanupScheduler_deleteOldNotifications_Old notification cleanup completed");
     }
@@ -89,10 +89,10 @@ public class NotificationCleanupScheduler {
     public void cleanupArchivedRecords() {
         log.info("NotificationCleanupScheduler_cleanupArchivedRecords_Starting archived records cleanup");
         
-        // Delete archived notifications older than 1 month
-        // In production:
-        // 1. Find all archived notifications older than 1 month: Instant oneMonthAgo = Instant.now().minus(30, ChronoUnit.DAYS);
-        // 2. Permanently delete them from database
+    // Delete archived notifications older than 1 month
+    // In production:
+    // 1. Find all archived notifications older than 1 month: Instant oneMonthAgo = Instant.now().minus(30, ChronoUnit.DAYS);
+    // 2. Permanently delete them from database
         
         log.info("NotificationCleanupScheduler_cleanupArchivedRecords_Archived records cleanup completed");
     }

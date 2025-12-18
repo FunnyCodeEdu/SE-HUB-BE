@@ -43,7 +43,10 @@ public class NotificationAggregationServiceImpl implements NotificationAggregati
     UserNotificationRepository userNotificationRepository;
     ProfileRepository profileRepository;
     NotificationMapper notificationMapper;
-
+    private static final String SYSTEM = "SYSTEM";
+    private static final String MENTION = "MENTION";
+    private static final String POST_COMMENTED = "POST_COMMENTED";
+    private static final String POST_LIKED = "POST_LIKED";
     private static final int MIN_EVENTS_FOR_AGGREGATION = 2;
     private static final String AGGREGATION_KEY_SEPARATOR = ":";
 
@@ -61,7 +64,7 @@ public class NotificationAggregationServiceImpl implements NotificationAggregati
         
         // Get all aggregation keys from Redis
         Set<String> keys = stringRedisTemplate.keys(NotificationConstants.REDIS_KEY_AGG_PREFIX + "*");
-        if (keys == null || keys.isEmpty()) {
+        if (keys.isEmpty()) {
             return;
         }
 
@@ -104,7 +107,7 @@ public class NotificationAggregationServiceImpl implements NotificationAggregati
      * Create aggregated notification from multiple events
      */
     @Transactional
-    private void createAggregatedNotification(String eventType, String targetId, String userId, List<String> events) {
+    protected void createAggregatedNotification(String eventType, String targetId, String userId, List<String> events) {
         log.info("NotificationAggregationService_createAggregatedNotification_Creating aggregated notification for {} events of type {} for user {}", 
                 events.size(), eventType, userId);
         
@@ -122,7 +125,7 @@ public class NotificationAggregationServiceImpl implements NotificationAggregati
             
             // Create aggregated title and content
             String title = createAggregatedTitle(eventType, events.size());
-            String content = createAggregatedContent(eventType, targetId, events.size());
+            String content = createAggregatedContent(eventType, events.size());
             
             // Create notification entity
             Notification notification = Notification.builder()
@@ -132,8 +135,8 @@ public class NotificationAggregationServiceImpl implements NotificationAggregati
                     .targetType(extractTargetType(eventType))
                     .targetId(targetId)
                     .build();
-            notification.setCreatedBy("SYSTEM");
-            notification.setUpdateBy("SYSTEM");
+            notification.setCreatedBy(SYSTEM);
+            notification.setUpdateBy(SYSTEM);
             
             Notification savedNotification = notificationRepository.save(notification);
             
@@ -143,8 +146,8 @@ public class NotificationAggregationServiceImpl implements NotificationAggregati
                     .notification(savedNotification)
                     .status(NotificationStatus.UNREAD)
                     .build();
-            userNotification.setCreatedBy("SYSTEM");
-            userNotification.setUpdateBy("SYSTEM");
+            userNotification.setCreatedBy(SYSTEM);
+            userNotification.setUpdateBy(SYSTEM);
             
             UserNotification savedUserNotification = userNotificationRepository.save(userNotification);
             
@@ -165,9 +168,9 @@ public class NotificationAggregationServiceImpl implements NotificationAggregati
      */
     private NotificationType mapEventTypeToNotificationType(String eventType) {
         return switch (eventType.toUpperCase()) {
-            case "POST_LIKED" -> NotificationType.POST_LIKED;
-            case "POST_COMMENTED" -> NotificationType.POST_COMMENTED;
-            case "MENTION" -> NotificationType.MENTION;
+            case POST_LIKED -> NotificationType.POST_LIKED;
+            case POST_COMMENTED -> NotificationType.POST_COMMENTED;
+            case MENTION -> NotificationType.MENTION;
             default -> null;
         };
     }
@@ -177,9 +180,9 @@ public class NotificationAggregationServiceImpl implements NotificationAggregati
      */
     private String createAggregatedTitle(String eventType, int count) {
         return switch (eventType.toUpperCase()) {
-            case "POST_LIKED" -> String.format("%d người đã thích bài viết của bạn", count);
-            case "POST_COMMENTED" -> String.format("%d người đã bình luận bài viết của bạn", count);
-            case "MENTION" -> String.format("%d người đã nhắc đến bạn", count);
+            case POST_LIKED -> String.format("%d người đã thích bài viết của bạn", count);
+            case POST_COMMENTED -> String.format("%d người đã bình luận bài viết của bạn", count);
+            case MENTION -> String.format("%d người đã nhắc đến bạn", count);
             default -> String.format("%d hoạt động mới", count);
         };
     }
@@ -187,11 +190,11 @@ public class NotificationAggregationServiceImpl implements NotificationAggregati
     /**
      * Create aggregated content
      */
-    private String createAggregatedContent(String eventType, String targetId, int count) {
+    private String createAggregatedContent(String eventType, int count) {
         return switch (eventType.toUpperCase()) {
-            case "POST_LIKED" -> String.format("Có %d người đã thích bài viết của bạn", count);
-            case "POST_COMMENTED" -> String.format("Có %d người đã bình luận bài viết của bạn", count);
-            case "MENTION" -> String.format("Có %d người đã nhắc đến bạn", count);
+            case POST_LIKED -> String.format("Có %d người đã thích bài viết của bạn", count);
+            case POST_COMMENTED -> String.format("Có %d người đã bình luận bài viết của bạn", count);
+            case MENTION -> String.format("Có %d người đã nhắc đến bạn", count);
             default -> String.format("Có %d hoạt động mới liên quan đến bạn", count);
         };
     }

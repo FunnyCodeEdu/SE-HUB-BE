@@ -15,6 +15,8 @@ public class ExamMessageConstants {
     public static final String EXAM_DURATION_INVALID_MESSAGE = "Exam duration is invalid";
     public static final String EXAM_TYPE_INVALID_MESSAGE = "Exam type is invalid";
     public static final String EXAM_CODE_INVALID_MESSAGE = "Exam code is invalid";
+    public static final String EXAM_ID_CAN_NOT_BE_NULL = "Exam id can not be null";
+    public static final String EXAM_TIME_TAKEN_CANNOT_BE_NULL = "Time taken cannot be null";
 
     // API Response Messages
     public static final String API_EXAM_CREATED_SUCCESS = "Exam created successfully";

@@ -20,6 +20,7 @@ public class ProfileConstants {
     public static final String DATE_OF_BIRTH = "dateOfBirth";
     public static final String MAJOR = "major";
     public static final String USERNAME = "username";
+    public static final String USER_ID = "userId";
 
     //===== COLUMN DEFINITIONS ======
     public static final String FULL_NAME_DEFINITION = "VARCHAR(50)";
@@ -39,6 +40,7 @@ public class ProfileConstants {
     public static final int ADDRESS_MAX = 255;
     public static final int MAJOR_MAX = 100;
     public static final int USERNAME_MAX = 50;
+    public static final int BIO_LENGTH = 500;
 
     //===== PATTERNS ======
     public static final String PHONE_NUMBER_PATTERN = "^[0-9]{10,15}$";

@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -51,18 +50,10 @@ public class FollowServiceImpl implements FollowService {
         }
         
         // Get current user (follower)
-        User follower = userRepository.findById(currentUserId)
-                .orElseThrow(() -> {
-                    log.error("Follower user not found: {}", currentUserId);
-                    return new AppException(ErrorCode.USER_NOT_FOUND);
-                });
+        User follower = getCurrentUser(currentUserId);
         
         // Get user to follow (following)
-        User following = userRepository.findById(followingUserId)
-                .orElseThrow(() -> {
-                    log.error("Following user not found: {}", followingUserId);
-                    return new AppException(ErrorCode.USER_NOT_FOUND);
-                });
+        User following = getFollowingUser(followingUserId);
         
         // Check if already following
         if (followRepository.existsByFollowerAndFollowing(follower, following)) {
@@ -79,25 +70,33 @@ public class FollowServiceImpl implements FollowService {
         followRepository.save(follow);
         log.info("User {} followed user {}", currentUserId, followingUserId);
     }
-    
+
+    private User getCurrentUser(String currentUserId){
+        return userRepository.findById(currentUserId)
+                .orElseThrow(() -> {
+                    log.error("Follower user not found: {}", currentUserId);
+                    return new AppException(ErrorCode.USER_NOT_FOUND);
+                });
+    }
+
+    private User getFollowingUser(String followingUserId) {
+        return userRepository.findById(followingUserId)
+                .orElseThrow(() -> {
+                    log.error("Following user not found: {}", followingUserId);
+                    return new AppException(ErrorCode.USER_NOT_FOUND);
+                });
+    }
+
     @Override
     @Transactional
     public void unfollowUser(String followingUserId) {
         String currentUserId = AuthUtils.getCurrentUserId();
         
         // Get current user (follower)
-        User follower = userRepository.findById(currentUserId)
-                .orElseThrow(() -> {
-                    log.error("Follower user not found: {}", currentUserId);
-                    return new AppException(ErrorCode.USER_NOT_FOUND);
-                });
+        User follower = getCurrentUser(currentUserId);
         
         // Get user to unfollow (following)
-        User following = userRepository.findById(followingUserId)
-                .orElseThrow(() -> {
-                    log.error("Following user not found: {}", followingUserId);
-                    return new AppException(ErrorCode.USER_NOT_FOUND);
-                });
+        User following = getFollowingUser(followingUserId);
         
         // Find and delete follow relationship
         Follow follow = followRepository.findByFollowerAndFollowing(follower, following)
@@ -156,7 +155,7 @@ public class FollowServiceImpl implements FollowService {
                     return null;
                 })
                 .filter(java.util.Objects::nonNull)
-                .collect(Collectors.toList());
+                .toList();
         
         return PagingResponse.<ProfileResponse>builder()
                 .currentPage(page)
@@ -188,7 +187,7 @@ public class FollowServiceImpl implements FollowService {
                     return null;
                 })
                 .filter(java.util.Objects::nonNull)
-                .collect(Collectors.toList());
+                .toList();
         
         return PagingResponse.<ProfileResponse>builder()
                 .currentPage(page)
@@ -241,7 +240,7 @@ public class FollowServiceImpl implements FollowService {
                     return null;
                 })
                 .filter(java.util.Objects::nonNull)
-                .collect(Collectors.toList());
+                .toList();
     }
 }
 

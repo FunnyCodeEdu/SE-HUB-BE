@@ -1,6 +1,7 @@
 package com.se.hub.modules.interaction.dto.request;
 
 import com.se.hub.modules.interaction.constant.ReportConstants;
+import com.se.hub.modules.interaction.constant.ReportErrorCodeConstants;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -25,18 +26,18 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CreateReportRequest {
 
-    @NotBlank(message = "Target type is required")
+    @NotBlank(message = ReportErrorCodeConstants.REPORT_TARGET_TYPE_IS_REQUIRED)
     @Pattern(regexp = "BLOG|QUESTION|COURSE|LESSON|COMMENT|EXAM|PRACTICAL_EXAM|DOCUMENT",
-            message = "Invalid target type")
+            message = ReportErrorCodeConstants.REPORT_INVALID_TARGET_TYPE)
     String targetType;
 
-    @NotBlank(message = "Target ID is required")
+    @NotBlank(message = ReportErrorCodeConstants.REPORT_TARGET_TYPE_ID_IS_REQUIRED)
     @Size(max = ReportConstants.TARGET_ID_MAX_LENGTH,
-            message = "Target ID max length is " + ReportConstants.TARGET_ID_MAX_LENGTH)
+            message = ReportErrorCodeConstants.REPORT_INVALID_TARGET_TYPE_ID_LENGTH)
     String targetId;
 
-    @NotNull(message = "Report reasons are required")
-    @NotEmpty(message = "At least one report reason is required")
+    @NotNull(message = ReportErrorCodeConstants.REPORT_REASON_IS_REQUIRED)
+    @NotEmpty(message = ReportErrorCodeConstants.REPORT_REASON_IS_REQUIRED)
     @Valid
     List<ReportReasonRequest> reasons;
 }

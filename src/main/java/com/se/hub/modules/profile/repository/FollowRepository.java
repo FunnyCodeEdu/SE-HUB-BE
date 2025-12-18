@@ -16,7 +16,7 @@ import java.util.Optional;
 public interface FollowRepository extends JpaRepository<Follow, String> {
     
     /**
-     * Check if follower is following following user
+     * Check if follower is following user
      */
     boolean existsByFollowerAndFollowing(User follower, User following);
     
@@ -50,11 +50,11 @@ public interface FollowRepository extends JpaRepository<Follow, String> {
     /**
      * Get mutual friends (users that both current user and target user follow each other)
      * Mutual friend = user A follows user B AND user B follows user A
-     * 
+
      * Query explanation:
      * - f1: current user (userId) follows someone (f1.following = mutual friend)
      * - f2: that someone (f1.following) follows current user back (f2.following = userId)
-     * 
+
      * Using JPQL with proper WHERE clause for mutual follow relationship
      */
     @Query("SELECT DISTINCT f1.following FROM Follow f1 " +

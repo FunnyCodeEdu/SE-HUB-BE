@@ -9,6 +9,7 @@ public class QuestionErrorCodeConstants {
     public static final String QUESTION_SCORE_INVALID = "QUESTION_SCORE_INVALID";
     public static final String QUESTION_CATEGORY_INVALID = "QUESTION_CATEGORY_INVALID";
 
+
     private QuestionErrorCodeConstants() {}
 }
 

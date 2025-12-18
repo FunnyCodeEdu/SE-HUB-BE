@@ -306,7 +306,7 @@ public class ProfileController extends BaseController {
     public ResponseEntity<GenericResponse<ActivityResponse>> getActivityByDate(
             @Parameter(description = ActivityControllerConstants.PROFILE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable @NotBlank(message = "Profile ID cannot be blank") String profileId,
-            @Parameter(description = ActivityControllerConstants.DATE_PARAM_DESCRIPTION, required = false)
+            @Parameter(description = ActivityControllerConstants.DATE_PARAM_DESCRIPTION)
             @RequestParam(required = false) java.time.LocalDate date) {
         log.debug("Getting activity for profile {} on date {}", profileId, date);
         
@@ -331,7 +331,7 @@ public class ProfileController extends BaseController {
     public ResponseEntity<GenericResponse<ContributionGraphResponse>> getContributionGraph(
             @Parameter(description = ActivityControllerConstants.PROFILE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable @NotBlank(message = "Profile ID cannot be blank") String profileId,
-            @Parameter(description = "Year to get contribution graph for (default: current year)", required = false)
+            @Parameter(description = "Year to get contribution graph for (default: current year)")
             @RequestParam(required = false) Integer year) {
         log.debug("Getting contribution graph for profile {} year {}", profileId, year);
         

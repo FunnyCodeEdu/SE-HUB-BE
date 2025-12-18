@@ -1,5 +1,7 @@
 package com.se.hub.modules.exam.dto.request;
 
+import com.se.hub.modules.exam.constant.AnswerReportMessageConstants;
+import com.se.hub.modules.exam.constant.answer_report.AnswerReportErrorCodeConstants;
 import com.se.hub.modules.exam.enums.AnswerReportStatus;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -18,7 +20,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UpdateAnswerReportStatusRequest {
     
-    @NotNull(message = "Status is required")
+    @NotNull(message = AnswerReportErrorCodeConstants.ANSWER_REPORT_STATUS_IS_REQUIRED)
     AnswerReportStatus status;
 }
 

@@ -8,6 +8,7 @@ import com.se.hub.modules.chat.dto.request.GetMessagesRequest;
 import com.se.hub.modules.chat.dto.response.ChatMessageResponse;
 import com.se.hub.modules.chat.entity.ChatMessage;
 import com.se.hub.modules.chat.entity.Conversation;
+import com.se.hub.modules.chat.entity.ParticipantInfo;
 import com.se.hub.modules.chat.event.NewChatMessageEvent;
 import com.se.hub.modules.chat.exception.ChatErrorCode;
 import com.se.hub.modules.chat.mapper.ChatMessageMapper;
@@ -28,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Chat Message Service Implementation
@@ -85,10 +85,10 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         
         // Publish event to send message via SSE and create notifications
         List<String> recipientUserIds = conversation.getParticipants().stream()
-                .map(p -> p.getUserId())
+                .map(ParticipantInfo::getUserId)
                 .filter(id -> !id.equals(currentUserId))
-                .collect(Collectors.toList());
-        
+                .toList();
+
         eventPublisher.publishEvent(new NewChatMessageEvent(
                 this, 
                 request.getConversationId(), 

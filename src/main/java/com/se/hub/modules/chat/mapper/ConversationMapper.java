@@ -11,6 +11,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -60,24 +61,26 @@ public abstract class ConversationMapper {
         if (participants == null || participants.isEmpty()) {
             return List.of();
         }
-        
-        return participants.stream()
-            .map(participant -> {
-                String userId = participant.getUserId();
-                return profileRepository.findByUserId(userId)
-                    .map(profile -> ParticipantInfoResponse.builder()
-                        .userId(profile.getUser().getId())
-                        .username(profile.getUsername())
-                        .fullName(profile.getFullName())
-                        .avatarUrl(profile.getAvtUrl())
-                        .build())
-                    .orElse(ParticipantInfoResponse.builder()
-                        .userId(userId)
-                        .username("Unknown")
-                        .fullName("Unknown User")
-                        .build());
-            })
-            .collect(Collectors.toList());
+
+        return new ArrayList<>(
+                participants.stream()
+                        .map(participant -> {
+                            String userId = participant.getUserId();
+                            return profileRepository.findByUserId(userId)
+                                    .map(profile -> ParticipantInfoResponse.builder()
+                                            .userId(profile.getUser().getId())
+                                            .username(profile.getUsername())
+                                            .fullName(profile.getFullName())
+                                            .avatarUrl(profile.getAvtUrl())
+                                            .build())
+                                    .orElse(ParticipantInfoResponse.builder()
+                                            .userId(userId)
+                                            .username("Unknown")
+                                            .fullName("Unknown User")
+                                            .build());
+                        })
+                        .toList()
+        );
     }
     
     /**

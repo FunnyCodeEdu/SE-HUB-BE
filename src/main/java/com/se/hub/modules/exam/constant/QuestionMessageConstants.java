@@ -13,6 +13,7 @@ public class QuestionMessageConstants {
     public static final String QUESTION_DIFFICULTY_INVALID_MESSAGE = "Question difficulty is invalid";
     public static final String QUESTION_SCORE_INVALID_MESSAGE = "Question score is invalid";
     public static final String QUESTION_CATEGORY_INVALID_MESSAGE = "Question category is invalid";
+    public static final String QUESTION_LIST_CAN_NOT_BE_EMPTY = "Question list can not be empty";
 
     // API Response Messages
     public static final String API_QUESTION_CREATED_SUCCESS = "Question created successfully";

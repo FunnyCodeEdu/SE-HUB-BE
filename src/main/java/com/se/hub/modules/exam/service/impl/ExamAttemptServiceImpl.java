@@ -38,7 +38,7 @@ import java.util.Map;
 
 /**
  * Exam Attempt Service Implementation
- * 
+
  * Virtual Thread Best Practice:
  * - This service uses synchronous blocking I/O operations (JPA repository calls)
  * - Virtual threads automatically handle blocking operations efficiently
@@ -296,13 +296,7 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
         
         // Set profile information
         if (attempt.getProfile() != null) {
-            ExamResultResponse.ProfileInfo profileInfo = ExamResultResponse.ProfileInfo.builder()
-                    .id(attempt.getProfile().getId())
-                    .displayName(attempt.getProfile().getFullName())
-                    .username(attempt.getProfile().getUsername())
-                    .avtUrl(attempt.getProfile().getAvtUrl())
-                    .build();
-            response.setProfile(profileInfo);
+            response.setProfile(mapProfile(attempt.getProfile()));
         }
         
         return response;
@@ -317,16 +311,23 @@ public class ExamAttemptServiceImpl implements ExamAttemptService {
         
         // Set profile information
         if (attempt.getProfile() != null) {
-            ExamResultResponse.ProfileInfo profileInfo = ExamResultResponse.ProfileInfo.builder()
-                    .id(attempt.getProfile().getId())
-                    .displayName(attempt.getProfile().getFullName())
-                    .username(attempt.getProfile().getUsername())
-                    .avtUrl(attempt.getProfile().getAvtUrl())
-                    .build();
-            response.setProfile(profileInfo);
+            response.setProfile(mapProfile(attempt.getProfile()));
         }
         
         return response;
     }
+
+    private ExamResultResponse.ProfileInfo mapProfile(Profile profile) {
+        if (profile == null) return null;
+
+        return ExamResultResponse.ProfileInfo.builder()
+                .id(profile.getId())
+                .displayName(profile.getFullName())
+                .username(profile.getUsername())
+                .avtUrl(profile.getAvtUrl())
+                .build();
+    }
+
 }
+
 

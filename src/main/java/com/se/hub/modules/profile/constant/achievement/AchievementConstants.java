@@ -10,5 +10,7 @@ public class AchievementConstants {
     public static final int MIN_DOCS_UPLOADED_MIN = UserStatsConstants.DOCS_UPLOADED_MIN;
     public static final int MIN_BLOGS_UPLOADED_MIN = UserStatsConstants.BLOGS_UPLOADED_MIN;
     public static final int MIN_BLOG_SHARED_MIN = UserStatsConstants.POSTS_SHARED_MIN;
+
+    private AchievementConstants(){}
 }
 

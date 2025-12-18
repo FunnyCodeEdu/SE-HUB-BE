@@ -9,5 +9,6 @@ public class AchievementErrorCodeConstants {
     public static final String ACHIEVEMENT_MIN_BLOGS_UPLOADED_MIN_VALUE = "ACHIEVEMENT_MIN_BLOGS_UPLOADED_MIN_VALUE";
     public static final String ACHIEVEMENT_MIN_BLOG_SHARED_MIN_VALUE = "ACHIEVEMENT_MIN_BLOG_SHARED_MIN_VALUE";
 
+    private AchievementErrorCodeConstants(){}
 }
 

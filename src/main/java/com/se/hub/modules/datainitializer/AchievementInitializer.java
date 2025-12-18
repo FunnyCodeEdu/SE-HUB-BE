@@ -39,7 +39,7 @@ public class AchievementInitializer implements ApplicationRunner {
         try {
             List<Achievement> achievements = loadAchievementsFromJson();
             
-            if (achievements == null || achievements.isEmpty()) {
+            if (achievements.isEmpty()) {
                 log.warn("AchievementInitializer_run_No achievements found in master data file");
                 return;
             }

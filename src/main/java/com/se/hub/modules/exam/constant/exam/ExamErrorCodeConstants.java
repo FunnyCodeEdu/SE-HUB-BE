@@ -9,6 +9,9 @@ public class ExamErrorCodeConstants {
     public static final String EXAM_DURATION_INVALID = "EXAM_DURATION_INVALID";
     public static final String EXAM_TYPE_INVALID = "EXAM_TYPE_INVALID";
     public static final String EXAM_CODE_INVALID = "EXAM_CODE_INVALID";
+
+
+    private  ExamErrorCodeConstants() {}
 }
 
 

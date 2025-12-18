@@ -19,7 +19,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         configurer.addPathPrefix("/api", c -> {
             // Only add prefix to controllers in com.se.hub packages
             String packageName = c.getPackageName();
-            boolean isSeHubController = packageName != null && packageName.startsWith("com.se.hub");
+            boolean isSeHubController = packageName.startsWith("com.se.hub");
             
             // Check if it's a RestController or Controller annotation
             boolean isController = c.isAnnotationPresent(org.springframework.web.bind.annotation.RestController.class)
@@ -36,7 +36,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
      * - Original protocol (https vs http)
      * - Original host
      * - Original IP address
-     * 
      * This is critical for:
      * - Correct URL generation in responses
      * - Security context (knowing if request was HTTPS)

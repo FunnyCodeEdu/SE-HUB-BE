@@ -27,7 +27,7 @@ import java.util.List;
 public class CreateReportRequest {
 
     @NotBlank(message = ReportErrorCodeConstants.REPORT_TARGET_TYPE_IS_REQUIRED)
-    @Pattern(regexp = ReportConstants.TARGET_TYPE_REGEX,
+    @Pattern(regexp = "BLOG|QUESTION|COURSE|LESSON|COMMENT|EXAM|PRACTICAL_EXAM|DOCUMENT",
             message = ReportErrorCodeConstants.REPORT_INVALID_TARGET_TYPE)
     String targetType;
 

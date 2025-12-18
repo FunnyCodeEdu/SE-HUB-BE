@@ -79,9 +79,6 @@ public class AuthUtils {
     private static Object getClaim(Jwt jwt) {
         Object claim = jwt.getClaims().get(JwtClaimSetConstant.CLAIM_USER_ID);
         if (claim == null) {
-            claim = jwt.getClaims().get(JwtClaimSetConstant.CLAIM_USER_ID);
-        }
-        if (claim == null) {
             claim = jwt.getClaims().get(JwtClaimSetConstant.CLAIM_SUB); // Subject claim
         }
         if (claim == null) {

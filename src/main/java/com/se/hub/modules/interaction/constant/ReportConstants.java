@@ -25,8 +25,6 @@ public class ReportConstants {
     public static final int TARGET_ID_MAX_LENGTH = 36;
     public static final int DESCRIPTION_MAX_LENGTH = 1000;
 
-    //===== REGEX =====
-    public static final String TARGET_TYPE_REGEX = "BLOG|QUESTION|COURSE|LESSON|COMMENT|EXAM|PRACTICAL_EXAM|DOCUMENT";
 
     private ReportConstants() {}
 }

@@ -78,7 +78,7 @@ public class Question extends BaseEntity {
             columnDefinition = QuestionConstants.CATEGORY_DEFINITION)
     QuestionCategory category;
 
-    @OneToMany(mappedBy = QuestionConstants.TABLE_QUESTION,
+    @OneToMany(mappedBy = "question",
             fetch = FetchType.LAZY,
             cascade = CascadeType.REMOVE)
     List<QuestionOption> options;

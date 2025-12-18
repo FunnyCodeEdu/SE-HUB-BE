@@ -64,7 +64,7 @@ public class Report extends BaseEntity {
             columnDefinition = ReportConstants.STATUS_DEFINITION)
     ReportStatus status;
 
-    @OneToMany(mappedBy = ReportConstants.TABLE_REPORT,
+    @OneToMany(mappedBy = "report",
             cascade = CascadeType.ALL,
             fetch = FetchType.LAZY,
             orphanRemoval = true)

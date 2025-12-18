@@ -15,7 +15,7 @@ import lombok.experimental.FieldDefaults;
 @EqualsAndHashCode(callSuper = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = FollowConstants.TABLE_PRIVACY_SETTING,
+@Table(name = FollowConstants.TABLE_FOLLOW,
     uniqueConstraints = {
         @UniqueConstraint(columnNames = {FollowConstants.COL_FOLLOWER_ID, FollowConstants.COL_FOLLOWING_ID})
     },

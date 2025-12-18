@@ -9,7 +9,6 @@ import java.util.Optional;
 
 @Repository
 public interface BlogSettingRepository extends JpaRepository<BlogSetting, String> {
-    @NonNull
     Optional<BlogSetting> findById(@NonNull String id);
 }
 

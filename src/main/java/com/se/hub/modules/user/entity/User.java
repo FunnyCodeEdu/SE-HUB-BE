@@ -70,7 +70,7 @@ public class User implements Serializable {
     @JoinColumn(name = UserConstants.COL_ROLE_NAME)
     Role role;
 
-    @OneToOne(mappedBy = UserConstants.COL_USER)
+    @OneToOne(mappedBy = "user")
     Profile profile;
 
     @PrePersist

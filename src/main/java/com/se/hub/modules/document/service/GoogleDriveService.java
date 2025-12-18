@@ -51,7 +51,7 @@ public class GoogleDriveService {
      */
     private Drive getDrive() {
         try {
-            final com.google.api.client.http.javanet.NetHttpTransport httpTransport =
+            final com.google.api.client.http.javanet.NetHttpTransport HTTP_TRANSPORT =
                     com.google.api.client.googleapis.javanet.GoogleNetHttpTransport.newTrustedTransport();
             
             // Build credentials JSON string
@@ -76,7 +76,7 @@ public class GoogleDriveService {
             
             com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow flow = 
                     new com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow.Builder(
-                            httpTransport,
+                            HTTP_TRANSPORT,
                     com.google.api.client.json.gson.GsonFactory.getDefaultInstance(), 
                     clientSecrets, 
                     java.util.List.of(com.google.api.services.drive.DriveScopes.DRIVE))
@@ -95,7 +95,7 @@ public class GoogleDriveService {
 
             ensureCredentialValidity(credential);
             
-            Drive drive = new Drive.Builder(httpTransport,
+            Drive drive = new Drive.Builder(HTTP_TRANSPORT,
                     com.google.api.client.json.gson.GsonFactory.getDefaultInstance(), 
                     credential)
                     .setApplicationName(applicationName)
@@ -148,7 +148,7 @@ public class GoogleDriveService {
      */
     public String generateGoogleAuthUrl() {
         try {
-            final com.google.api.client.http.javanet.NetHttpTransport httpTransport =
+            final com.google.api.client.http.javanet.NetHttpTransport HTTP_TRANSPORT =
                     com.google.api.client.googleapis.javanet.GoogleNetHttpTransport.newTrustedTransport();
             
             // Build credentials JSON string
@@ -174,7 +174,7 @@ public class GoogleDriveService {
             
             com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow flow = 
                     new com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow.Builder(
-                            httpTransport,
+                            HTTP_TRANSPORT,
                     com.google.api.client.json.gson.GsonFactory.getDefaultInstance(), 
                     clientSecrets, 
                     java.util.List.of(com.google.api.services.drive.DriveScopes.DRIVE))

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ClaimedStreakRewardRepository extends JpaRepository<ClaimedStreakReward, String> {
+    boolean existsByGamificationProfileIdAndStreakRewardId(String gamificationProfileId, String streakRewardId);
 }
 
 

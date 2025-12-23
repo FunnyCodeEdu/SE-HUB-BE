@@ -16,6 +16,7 @@ import com.se.hub.modules.gamification.repository.MissionProgressRepository;
 import com.se.hub.modules.gamification.repository.MissionRepository;
 import com.se.hub.modules.gamification.service.GamificationProfileService;
 import com.se.hub.modules.gamification.service.MissionProgressService;
+import com.se.hub.modules.gamification.service.StreakService;
 import com.se.hub.modules.profile.entity.Profile;
 import com.se.hub.modules.profile.repository.ProfileRepository;
 import lombok.AccessLevel;
@@ -39,6 +40,7 @@ public class MissionProgressServiceImpl implements MissionProgressService {
     MissionProgressMapper missionProgressMapper;
     ProfileRepository profileRepository;
     GamificationProfileService gamificationProfileService;
+    StreakService streakService;
 
     @Override
     @Transactional
@@ -106,8 +108,36 @@ public class MissionProgressServiceImpl implements MissionProgressService {
             return;
         }
         
-        progressList.forEach(progress -> progress.setCurrentValue(progress.getCurrentValue() + 1));
+        progressList.forEach(progress -> {
+            progress.setCurrentValue(progress.getCurrentValue() + 1);
+            if (isMissionCompleted(progress)) {
+                progress.setStatus(MissionProgressStatus.COMPLETED);
+            }
+        });
         missionProgressRepository.saveAll(progressList);
+
+        if (isAllDailyMissionsCompleted(profileId)) {
+            streakService.incrementStreakAndHandleReward(profileId);//profileId = gamificationProfileId
+        }
+    }
+
+    private boolean isMissionCompleted(MissionProgress progress) {
+        Mission mission = progress.getMission();
+        return mission != null && progress.getCurrentValue() >= mission.getTotalCount();
+    }
+
+    private boolean isAllDailyMissionsCompleted(String profileId) {
+        LocalDate today = LocalDate.now();
+        List<MissionProgress> todayProgress = missionProgressRepository
+                .findByGamificationProfileIdAndStartAt(profileId, today);
+
+        long completedDailyCount = todayProgress.stream()
+                .filter(mp -> mp.getMission() != null
+                        && MissionType.DAILY.equals(mp.getMission().getType()))
+                .filter(mp -> MissionProgressStatus.COMPLETED.equals(mp.getStatus()))
+                .count();
+
+        return completedDailyCount >= MissionProgressConstants.DAILY_MISSION_COUNT;
     }
 }
 

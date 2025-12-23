@@ -12,7 +12,7 @@ import com.se.hub.modules.gamification.entity.Reward;
 import com.se.hub.modules.gamification.entity.StreakReward;
 import com.se.hub.modules.gamification.exception.GamificationErrorCode;
 import com.se.hub.modules.gamification.mapper.StreakRewardMapper;
-import com.se.hub.modules.gamification.repository.RewardStreakRepository;
+import com.se.hub.modules.gamification.repository.StreakRewardRepository;
 import com.se.hub.modules.gamification.service.RewardService;
 import com.se.hub.modules.gamification.service.StreakRewardService;
 import lombok.AccessLevel;
@@ -33,7 +33,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class StreakRewardServiceImpl implements StreakRewardService {
 
-    RewardStreakRepository rewardStreakRepository;
+    StreakRewardRepository rewardStreakRepository;
     StreakRewardMapper streakRewardMapper;
     RewardService rewardService;
 

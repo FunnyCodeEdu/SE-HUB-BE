@@ -33,6 +33,7 @@ build/
 .vscode/
 
 .env
+docs/
 
 ### Google Drive OAuth Tokens ###
 tokens/

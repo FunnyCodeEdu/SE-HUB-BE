@@ -112,7 +112,9 @@ public class MissionProgressServiceImpl implements MissionProgressService {
                 progress.setCurrentValue(progress.getCurrentValue() + 1);
                 if (isMissionCompleted(progress)) {
                     progress.setStatus(MissionProgressStatus.COMPLETED);
-                    awardMissionRewards(profileId, progress.getMission().getId());
+                    if (progress.getMission() != null) {
+                        awardMissionRewards(profileId, progress.getMission().getId());
+                    }
                 }
             }
         });

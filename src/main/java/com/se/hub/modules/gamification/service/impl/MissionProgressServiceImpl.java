@@ -3,16 +3,22 @@ package com.se.hub.modules.gamification.service.impl;
 import com.se.hub.modules.auth.utils.AuthUtils;
 import com.se.hub.modules.gamification.constant.missionprogress.MissionProgressConstants;
 import com.se.hub.modules.gamification.dto.response.MissionProgressResponse;
-import com.se.hub.modules.gamification.entity.*;
-import com.se.hub.modules.gamification.enums.*;
+import com.se.hub.modules.gamification.entity.GamificationProfile;
+import com.se.hub.modules.gamification.entity.Mission;
+import com.se.hub.modules.gamification.entity.MissionProgress;
+import com.se.hub.modules.gamification.enums.ActionType;
+import com.se.hub.modules.gamification.enums.MissionProgressStatus;
+import com.se.hub.modules.gamification.enums.MissionTargetType;
+import com.se.hub.modules.gamification.enums.MissionType;
+import com.se.hub.modules.gamification.enums.RewardStatus;
 import com.se.hub.modules.gamification.exception.GamificationErrorCode;
 import com.se.hub.modules.gamification.mapper.MissionProgressMapper;
-import com.se.hub.modules.gamification.repository.GamificationEventLogRepository;
 import com.se.hub.modules.gamification.repository.GamificationProfileRepository;
 import com.se.hub.modules.gamification.repository.MissionProgressRepository;
 import com.se.hub.modules.gamification.repository.MissionRepository;
 import com.se.hub.modules.gamification.service.GamificationProfileService;
 import com.se.hub.modules.gamification.service.MissionProgressService;
+import com.se.hub.modules.gamification.service.RewardService;
 import com.se.hub.modules.gamification.service.StreakService;
 import com.se.hub.modules.profile.entity.Profile;
 import com.se.hub.modules.profile.repository.ProfileRepository;
@@ -39,7 +45,7 @@ public class MissionProgressServiceImpl implements MissionProgressService {
     GamificationProfileService gamificationProfileService;
     StreakService streakService;
     GamificationProfileRepository gamificationProfileRepository;
-    GamificationEventLogRepository  gamificationEventLogRepository;
+    RewardService rewardService;
 
     @Override
     @Transactional
@@ -69,7 +75,7 @@ public class MissionProgressServiceImpl implements MissionProgressService {
         
         // get 5 daily mission
         List<Mission> randomMissions = missionRepository.findRandomByTypeAndActiveTrue(
-                MissionType.DAILY.name(), 
+                MissionType.DAILY.name(),
                 MissionProgressConstants.DAILY_MISSION_COUNT
         );
         
@@ -155,37 +161,9 @@ public class MissionProgressServiceImpl implements MissionProgressService {
         GamificationProfile profile = gamificationProfileRepository.findById(profileId)
                 .orElseThrow(GamificationErrorCode.GAMIFICATION_PROFILE_NOT_FOUND::toException);
 
-        for (Reward reward : mission.getRewards()) {
-            GamificationEventLog.GamificationEventLogBuilder logBuilder = GamificationEventLog.builder()
-                    .gamificationProfile(profile)
-                    .actionType(ActionType.MISSION)
-                    .xpDelta(0L)
-                    .tokenDelta(0L);
-
-            switch (reward.getRewardType()) {
-                case XP:
-                    long xpValue = reward.getRewardValue();
-                    profile.setTotalXp(profile.getTotalXp() + xpValue);
-                    profile.setSeasonXp(profile.getSeasonXp() + xpValue);
-                    logBuilder.xpDelta(xpValue);
-                    break;
-
-                case SE_TOKEN:
-                    long tokenValue =reward.getRewardValue();
-                    logBuilder.tokenDelta(tokenValue);
-                    break;
-
-                case FREEZE:
-                    profile.setFreezeCount((int)(profile.getFreezeCount() + reward.getRewardValue()));
-                    break;
-
-                case REPAIR:
-                    profile.setRepairCount((int)(profile.getRepairCount() + reward.getRewardValue()));
-                    break;
-            }
-
-            gamificationEventLogRepository.save(logBuilder.build());
-        }
+      mission.getRewards().forEach(
+              reward -> rewardService.handleReward(reward, profile, ActionType.MISSION)
+        );
         gamificationProfileRepository.save(profile);
     }
 

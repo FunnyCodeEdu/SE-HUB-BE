@@ -1,10 +1,21 @@
 package com.se.hub.modules.gamification.service.impl;
 
-import com.se.hub.modules.gamification.entity.*;
+
+import com.se.hub.modules.gamification.entity.ClaimedStreakReward;
+import com.se.hub.modules.gamification.entity.GamificationProfile;
+import com.se.hub.modules.gamification.entity.Streak;
+import com.se.hub.modules.gamification.entity.StreakLog;
+import com.se.hub.modules.gamification.entity.StreakReward;
 import com.se.hub.modules.gamification.enums.ActionType;
 import com.se.hub.modules.gamification.enums.StreakLogStatus;
 import com.se.hub.modules.gamification.exception.GamificationErrorCode;
-import com.se.hub.modules.gamification.repository.*;
+import com.se.hub.modules.gamification.repository.ClaimedStreakRewardRepository;
+import com.se.hub.modules.gamification.repository.GamificationEventLogRepository;
+import com.se.hub.modules.gamification.repository.GamificationProfileRepository;
+import com.se.hub.modules.gamification.repository.StreakLogRepository;
+import com.se.hub.modules.gamification.repository.StreakRepository;
+import com.se.hub.modules.gamification.repository.StreakRewardRepository;
+import com.se.hub.modules.gamification.service.RewardService;
 import com.se.hub.modules.gamification.service.StreakService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +36,8 @@ public class StreakServiceImpl implements StreakService {
     StreakRewardRepository streakRewardRepository;
     ClaimedStreakRewardRepository claimedStreakRewardRepository;
     GamificationProfileRepository gamificationProfileRepository;
-    GamificationEventLogRepository  gamificationEventLogRepository;
+    GamificationEventLogRepository gamificationEventLogRepository;
+    RewardService  rewardService;
 
     @Override
     @Transactional
@@ -52,10 +64,10 @@ public class StreakServiceImpl implements StreakService {
                 .build();
         streakLogRepository.save(streakLog);
 
-        handleStreakReward(gamificationProfile, newCurrent, gamificationProfile);
+        handleStreakReward(gamificationProfile, newCurrent);
     }
 
-    private void handleStreakReward(GamificationProfile gamificationProfile, int currentStreak, GamificationProfile profile) {
+    private void handleStreakReward(GamificationProfile gamificationProfile, int currentStreak) {
         List<StreakReward> eligibleRewards = streakRewardRepository.findByActiveTrueAndStreakTargetLessThanEqual(currentStreak);
         if (eligibleRewards.isEmpty()) {
             return;
@@ -67,35 +79,9 @@ public class StreakServiceImpl implements StreakService {
             if (claimed) {
                 return;
             }
-            for (Reward reward : streakReward.getRewards()) {
-                // Khởi tạo log builder
-                GamificationEventLog.GamificationEventLogBuilder logBuilder = GamificationEventLog.builder()
-                        .gamificationProfile(profile)
-                        .actionType(ActionType.STREAK) // Dùng ActionType phù hợp cho Streak
-                        .xpDelta(0L)
-                        .tokenDelta(0L);
-
-                // Logic cộng thưởng y hệt như bên Mission (nên dùng Enum RewardType b đã đưa)
-                switch (reward.getRewardType()) {
-                    case XP:
-                        long xpValue = reward.getRewardValue();
-                        profile.setTotalXp(profile.getTotalXp() + xpValue);
-                        profile.setSeasonXp(profile.getSeasonXp() + xpValue);
-                        logBuilder.xpDelta(xpValue);
-                        break;
-                    case SE_TOKEN:
-                        logBuilder.tokenDelta(reward.getRewardValue());
-                        break;
-                    case FREEZE:
-                        profile.setFreezeCount((int)(profile.getFreezeCount() + reward.getRewardValue()));
-                        break;
-
-                    case REPAIR:
-                        profile.setRepairCount((int)(profile.getRepairCount() + reward.getRewardValue()));
-                        break;
-                }
-                gamificationEventLogRepository.save(logBuilder.build());
-            }
+            streakReward.getRewards().forEach(
+                    reward -> rewardService.handleReward(reward, gamificationProfile, ActionType.STREAK)
+            );
             ClaimedStreakReward claimedReward = ClaimedStreakReward.builder()
                     .claimedAt(Instant.now())
                     .gamificationProfile(gamificationProfile)

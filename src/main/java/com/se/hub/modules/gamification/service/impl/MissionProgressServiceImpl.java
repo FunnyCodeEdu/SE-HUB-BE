@@ -164,12 +164,15 @@ public class MissionProgressServiceImpl implements MissionProgressService {
 
             switch (reward.getRewardType()) {
                 case XP:
-                    profile.setTotalXp(profile.getTotalXp() + reward.getRewardValue());
-                    profile.setSeasonXp(profile.getSeasonXp() + reward.getRewardValue());
+                    long xpValue = reward.getRewardValue();
+                    profile.setTotalXp(profile.getTotalXp() + xpValue);
+                    profile.setSeasonXp(profile.getSeasonXp() + xpValue);
+                    logBuilder.xpDelta(xpValue);
                     break;
 
                 case SE_TOKEN:
-                    //update
+                    long tokenValue =reward.getRewardValue();
+                    logBuilder.tokenDelta(tokenValue);
                     break;
 
                 case FREEZE:

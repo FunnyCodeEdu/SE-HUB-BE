@@ -48,7 +48,7 @@ public class RewardServiceImpl implements RewardService {
     public void handleReward(Reward reward, GamificationProfile profile, ActionType type) {
         long xpDelta = 0L;
         long tokenDelta = 0L;
-        Long rewardValue = reward.getRewardValue()
+        Long rewardValue = reward.getRewardValue();
 
         switch (reward.getRewardType()) {
             case XP:

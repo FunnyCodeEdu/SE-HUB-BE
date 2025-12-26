@@ -1,17 +1,21 @@
 package com.se.hub.modules.gamification.service.impl;
 
+
 import com.se.hub.modules.gamification.entity.ClaimedStreakReward;
 import com.se.hub.modules.gamification.entity.GamificationProfile;
 import com.se.hub.modules.gamification.entity.Streak;
 import com.se.hub.modules.gamification.entity.StreakLog;
 import com.se.hub.modules.gamification.entity.StreakReward;
+import com.se.hub.modules.gamification.enums.ActionType;
 import com.se.hub.modules.gamification.enums.StreakLogStatus;
 import com.se.hub.modules.gamification.exception.GamificationErrorCode;
 import com.se.hub.modules.gamification.repository.ClaimedStreakRewardRepository;
+import com.se.hub.modules.gamification.repository.GamificationEventLogRepository;
 import com.se.hub.modules.gamification.repository.GamificationProfileRepository;
-import com.se.hub.modules.gamification.repository.StreakRewardRepository;
 import com.se.hub.modules.gamification.repository.StreakLogRepository;
 import com.se.hub.modules.gamification.repository.StreakRepository;
+import com.se.hub.modules.gamification.repository.StreakRewardRepository;
+import com.se.hub.modules.gamification.service.RewardService;
 import com.se.hub.modules.gamification.service.StreakService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +36,8 @@ public class StreakServiceImpl implements StreakService {
     StreakRewardRepository streakRewardRepository;
     ClaimedStreakRewardRepository claimedStreakRewardRepository;
     GamificationProfileRepository gamificationProfileRepository;
+    GamificationEventLogRepository gamificationEventLogRepository;
+    RewardService  rewardService;
 
     @Override
     @Transactional
@@ -73,7 +79,9 @@ public class StreakServiceImpl implements StreakService {
             if (claimed) {
                 return;
             }
-
+            streakReward.getRewards().forEach(
+                    reward -> rewardService.handleReward(reward, gamificationProfile, ActionType.STREAK)
+            );
             ClaimedStreakReward claimedReward = ClaimedStreakReward.builder()
                     .claimedAt(Instant.now())
                     .gamificationProfile(gamificationProfile)

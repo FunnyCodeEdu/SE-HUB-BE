@@ -6,16 +6,19 @@ import com.se.hub.modules.gamification.dto.response.MissionProgressResponse;
 import com.se.hub.modules.gamification.entity.GamificationProfile;
 import com.se.hub.modules.gamification.entity.Mission;
 import com.se.hub.modules.gamification.entity.MissionProgress;
+import com.se.hub.modules.gamification.enums.ActionType;
 import com.se.hub.modules.gamification.enums.MissionProgressStatus;
 import com.se.hub.modules.gamification.enums.MissionTargetType;
 import com.se.hub.modules.gamification.enums.MissionType;
 import com.se.hub.modules.gamification.enums.RewardStatus;
 import com.se.hub.modules.gamification.exception.GamificationErrorCode;
 import com.se.hub.modules.gamification.mapper.MissionProgressMapper;
+import com.se.hub.modules.gamification.repository.GamificationProfileRepository;
 import com.se.hub.modules.gamification.repository.MissionProgressRepository;
 import com.se.hub.modules.gamification.repository.MissionRepository;
 import com.se.hub.modules.gamification.service.GamificationProfileService;
 import com.se.hub.modules.gamification.service.MissionProgressService;
+import com.se.hub.modules.gamification.service.RewardService;
 import com.se.hub.modules.gamification.service.StreakService;
 import com.se.hub.modules.profile.entity.Profile;
 import com.se.hub.modules.profile.repository.ProfileRepository;
@@ -41,6 +44,8 @@ public class MissionProgressServiceImpl implements MissionProgressService {
     ProfileRepository profileRepository;
     GamificationProfileService gamificationProfileService;
     StreakService streakService;
+    GamificationProfileRepository gamificationProfileRepository;
+    RewardService rewardService;
 
     @Override
     @Transactional
@@ -70,7 +75,7 @@ public class MissionProgressServiceImpl implements MissionProgressService {
         
         // get 5 daily mission
         List<Mission> randomMissions = missionRepository.findRandomByTypeAndActiveTrue(
-                MissionType.DAILY.name(), 
+                MissionType.DAILY.name(),
                 MissionProgressConstants.DAILY_MISSION_COUNT
         );
         
@@ -107,11 +112,16 @@ public class MissionProgressServiceImpl implements MissionProgressService {
         if (progressList.isEmpty()) {
             return;
         }
-        
+
         progressList.forEach(progress -> {
-            progress.setCurrentValue(progress.getCurrentValue() + 1);
-            if (isMissionCompleted(progress)) {
-                progress.setStatus(MissionProgressStatus.COMPLETED);
+            if (progress.getStatus() != MissionProgressStatus.COMPLETED) {
+                progress.setCurrentValue(progress.getCurrentValue() + 1);
+                if (isMissionCompleted(progress)) {
+                    progress.setStatus(MissionProgressStatus.COMPLETED);
+                    if (progress.getMission() != null) {
+                        awardMissionRewards(profileId, progress.getMission().getId());
+                    }
+                }
             }
         });
         missionProgressRepository.saveAll(progressList);
@@ -139,5 +149,23 @@ public class MissionProgressServiceImpl implements MissionProgressService {
 
         return completedDailyCount >= MissionProgressConstants.DAILY_MISSION_COUNT;
     }
+
+    private void awardMissionRewards(String profileId, String missionId) {
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(GamificationErrorCode.MISSION_NOT_FOUND::toException);
+
+        if (mission.getRewards() == null || mission.getRewards().isEmpty()) {
+            return;
+        }
+
+        GamificationProfile profile = gamificationProfileRepository.findById(profileId)
+                .orElseThrow(GamificationErrorCode.GAMIFICATION_PROFILE_NOT_FOUND::toException);
+
+      mission.getRewards().forEach(
+              reward -> rewardService.handleReward(reward, profile, ActionType.MISSION)
+        );
+        gamificationProfileRepository.save(profile);
+    }
+
 }
 

@@ -48,7 +48,7 @@ public class RewardServiceImpl implements RewardService {
     public void handleReward(Reward reward, GamificationProfile profile, ActionType type) {
         long xpDelta = 0L;
         long tokenDelta = 0L;
-        long rewardValue = reward.getRewardValue().intValue();
+        Long rewardValue = reward.getRewardValue()
 
         switch (reward.getRewardType()) {
             case XP:
@@ -63,15 +63,11 @@ public class RewardServiceImpl implements RewardService {
                 break;
 
             case FREEZE:
-                long freezeReward = reward.getRewardValue();
-                int freezeToAdd = (freezeReward > Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int) freezeReward;
-                profile.setFreezeCount(profile.getFreezeCount() + freezeToAdd);
+                profile.setFreezeCount(profile.getFreezeCount() + rewardValue.intValue());
                 break;
 
             case REPAIR:
-                long repairReward = reward.getRewardValue();
-                int repairToAdd = (repairReward > Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int) repairReward;
-                profile.setRepairCount(profile.getRepairCount() + repairToAdd);
+                profile.setRepairCount(profile.getRepairCount() + rewardValue.intValue());
                 break;
         }
         GamificationEventLog log = GamificationEventLog.builder()

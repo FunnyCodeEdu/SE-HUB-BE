@@ -46,36 +46,41 @@ public class RewardServiceImpl implements RewardService {
 
     @Override
     public void handleReward(Reward reward, GamificationProfile profile, ActionType type) {
-        GamificationEventLog.GamificationEventLogBuilder logBuilder = GamificationEventLog.builder()
-                .gamificationProfile(profile)
-                .actionType(type)
-                .xpDelta(0L)
-                .tokenDelta(0L);
+        long xpDelta = 0L;
+        long tokenDelta = 0L;
+        long rewardValue = reward.getRewardValue().intValue();
 
         switch (reward.getRewardType()) {
             case XP:
-                long xpValue = reward.getRewardValue();
-                profile.setTotalXp(profile.getTotalXp() + xpValue);
-                profile.setSeasonXp(profile.getSeasonXp() + xpValue);
-                logBuilder.xpDelta(xpValue);
+                xpDelta = rewardValue;
+                profile.setTotalXp(profile.getTotalXp() + xpDelta);
+                profile.setSeasonXp(profile.getSeasonXp() + xpDelta);
                 break;
 
             case SE_TOKEN:
-                long tokenValue =reward.getRewardValue();
-                logBuilder.tokenDelta(tokenValue);
+                tokenDelta = rewardValue;
+                // profile.setTokenBalance(...)
                 break;
 
             case FREEZE:
-                profile.setFreezeCount(profile.getFreezeCount() + reward.getRewardValue().intValue());
+                long freezeReward = reward.getRewardValue();
+                int freezeToAdd = (freezeReward > Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int) freezeReward;
+                profile.setFreezeCount(profile.getFreezeCount() + freezeToAdd);
                 break;
 
             case REPAIR:
-                profile.setRepairCount(profile.getRepairCount() + reward.getRewardValue().intValue());
+                long repairReward = reward.getRewardValue();
+                int repairToAdd = (repairReward > Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int) repairReward;
+                profile.setRepairCount(profile.getRepairCount() + repairToAdd);
                 break;
         }
-        gamificationEventLogRepository.save(logBuilder.build());
+        GamificationEventLog log = GamificationEventLog.builder()
+                .gamificationProfile(profile)
+                .actionType(type)
+                .xpDelta(xpDelta)
+                .tokenDelta(tokenDelta)
+                .build();
+        gamificationEventLogRepository.save(log);
     }
-
-
 }
 

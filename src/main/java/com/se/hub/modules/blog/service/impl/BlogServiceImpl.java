@@ -12,6 +12,8 @@ import com.se.hub.modules.blog.dto.request.UpdateBlogRequest;
 import com.se.hub.modules.blog.dto.response.BlogResponse;
 import com.se.hub.modules.blog.entity.Blog;
 import com.se.hub.modules.blog.mapper.BlogMapper;
+import com.se.hub.modules.gamification.enums.MissionTargetType;
+import com.se.hub.modules.gamification.service.MissionProgressService;
 import com.se.hub.modules.interaction.dto.response.ReactionInfo;
 import com.se.hub.modules.interaction.dto.response.ReactionToggleResult;
 import com.se.hub.modules.interaction.enums.ReactionType;
@@ -69,6 +71,7 @@ public class BlogServiceImpl implements BlogService {
     ReactionService reactionService;
     CommentRepository commentRepository;
     ReactionRepository reactionRepository;
+    MissionProgressService missionProgressService;
 
     /**
      * Helper method to build PagingResponse from Page<Blog>
@@ -212,6 +215,7 @@ public class BlogServiceImpl implements BlogService {
         // If blog is auto-approved, update stats and activity immediately
         if (savedBlog.getIsApproved()) {
             profileProgressService.updatePostsUploaded();
+            missionProgressService.updateCurrentValue(author.getId(), MissionTargetType.BLOG);
             activityService.incrementActivity(author.getId());
         } else {
             // Note: User stats and activity will be incremented only when blog is approved by admin

@@ -161,7 +161,7 @@ public class MissionProgressServiceImpl implements MissionProgressService {
         GamificationProfile profile = gamificationProfileRepository.findById(profileId)
                 .orElseThrow(GamificationErrorCode.GAMIFICATION_PROFILE_NOT_FOUND::toException);
 
-      mission.getRewards().forEach(
+        mission.getRewards().forEach(
               reward -> rewardService.handleReward(reward, profile, ActionType.MISSION)
         );
         gamificationProfileRepository.save(profile);

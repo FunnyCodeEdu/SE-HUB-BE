@@ -84,7 +84,7 @@ public class NotificationRedisServiceImpl implements NotificationRedisService {
             // Use list, add to left (most recent first)
             stringRedisTemplate.opsForList().leftPush(key, notificationJson);
             // Trim list to keep only recent items
-            stringRedisTemplate.opsForList().trim(key, 0, NotificationConstants.RECENT_LIST_MAX_SIZE - 1);
+            stringRedisTemplate.opsForList().trim(key, 0, (long)NotificationConstants.RECENT_LIST_MAX_SIZE - 1);
             // Set TTL
             stringRedisTemplate.expire(key, Duration.ofSeconds(NotificationConstants.REDIS_TTL_RECENT_LIST_SECONDS));
             log.debug("NotificationRedisService_addToRecentList_Added notification to recent list for user: {}", userId);
@@ -96,7 +96,7 @@ public class NotificationRedisServiceImpl implements NotificationRedisService {
     @Override
     public List<NotificationResponse> getRecentList(String userId, int limit) {
         String key = NotificationConstants.REDIS_KEY_RECENT_PREFIX + userId;
-        List<String> notificationJsonList = stringRedisTemplate.opsForList().range(key, 0, limit - 1);
+        List<String> notificationJsonList = stringRedisTemplate.opsForList().range(key, 0, (long)limit - 1);
         
         if (notificationJsonList == null || notificationJsonList.isEmpty()) {
             return new ArrayList<>();

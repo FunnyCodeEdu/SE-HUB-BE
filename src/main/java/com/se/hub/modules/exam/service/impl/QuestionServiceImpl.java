@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 
 /**
  * Question Service Implementation
- * 
+
  * Virtual Thread Best Practice:
  * - This service uses synchronous blocking I/O operations (JPA repository calls)
  * - Virtual threads automatically handle blocking operations efficiently
@@ -87,12 +87,7 @@ public class QuestionServiceImpl implements QuestionService {
         
         // Validate options based on question type
         // CONTENT type questions don't require options, other types do
-        if (request.getQuestionType() != QuestionType.CONTENT) {
-            if (request.getOptions() == null || request.getOptions().isEmpty()) {
-                log.error("QuestionService_createQuestion_Options are required for question type: {}", request.getQuestionType());
-                throw QuestionErrorCode.QUESTION_TYPE_INVALID.toException();
-            }
-        }
+        validateRequestType(request);
         
         // Extract option contents for hash generation
         List<String> optionContents = request.getOptions() != null 
@@ -399,7 +394,22 @@ public class QuestionServiceImpl implements QuestionService {
                 })
                 .collect(Collectors.toCollection(ArrayList::new));
     }
-    
+
+    private void validateRequestType(CreateQuestionRequest request) {
+        if (request.getQuestionType() != QuestionType.CONTENT &&
+                (request.getOptions() == null || request.getOptions().isEmpty())) {
+            log.error("Options are required for question type: {}", request.getQuestionType());
+            throw QuestionErrorCode.QUESTION_TYPE_INVALID.toException();
+        }
+    }
+
+    private List<String> extractOptionContents(CreateQuestionRequest req) {
+        return req.getOptions() == null
+                ? List.of()
+                : req.getOptions().stream()
+                .map(CreateQuestionOptionRequest::getContent)
+                .toList();
+    }
     @Override
     @Transactional
     public List<String> createQuestions(List<CreateQuestionRequest> requests, String courseId) {
@@ -415,23 +425,17 @@ public class QuestionServiceImpl implements QuestionService {
         for (CreateQuestionRequest request : requests) {
             // Validate options based on question type
             // CONTENT type questions don't require options, other types do
-            if (request.getQuestionType() != QuestionType.CONTENT) {
-                if (request.getOptions() == null || request.getOptions().isEmpty()) {
-                    log.error("QuestionService_createQuestions_Options are required for question type: {}", request.getQuestionType());
-                    throw QuestionErrorCode.QUESTION_TYPE_INVALID.toException();
-                }
-            }
-            
-            // Extract option contents for hash generation
-            List<String> optionContents = request.getOptions() != null 
-                    ? request.getOptions().stream()
-                            .map(CreateQuestionOptionRequest::getContent)
-                            .toList()
-                    : new ArrayList<>();
-            
+            validateRequestType(request);
+
             // Generate hash from question content and options
-            String contentHash = QuestionHashUtil.generateQuestionHash(request.getContent(), optionContents);
-            String normalizedText = QuestionHashUtil.buildHashContent(request.getContent(), optionContents);
+            String contentHash = QuestionHashUtil.generateQuestionHash(
+                    request.getContent(),
+                    extractOptionContents(request)
+            );
+            String normalizedText = QuestionHashUtil.buildHashContent(
+                    request.getContent(),
+                    extractOptionContents(request)
+            );
             
             // First check if question was already created in this batch
             Question existingQuestion = batchCreatedQuestions.get(contentHash);

@@ -1,5 +1,6 @@
 package com.se.hub.modules.profile.dto.request;
 
+import com.se.hub.modules.profile.constant.profile.ProfileErrorCodeConstants;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -16,6 +17,6 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CreateDefaultProfileRequest {
-    @NotBlank(message = "User ID is required")
+    @NotBlank(message = ProfileErrorCodeConstants.USER_ID_NOT_BLANK)
     String userId;
 }

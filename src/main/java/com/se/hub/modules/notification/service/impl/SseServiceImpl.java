@@ -1,13 +1,11 @@
 package com.se.hub.modules.notification.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.se.hub.modules.notification.constant.NotificationConstants;
 import com.se.hub.modules.notification.service.api.SseService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
@@ -82,16 +80,17 @@ public class SseServiceImpl implements SseService {
             removeEmitter(userId, emitter);
             log.debug("SseService_subscribe_Emitter timeout for user: {}", userId);
         });
-        
-        emitter.onError((e) -> {
+
+        emitter.onError(e -> {
             removeEmitter(userId, emitter);
-            // Only log if it's not a client disconnect (Broken pipe is expected when client closes connection)
-            if (!(e instanceof IOException) && 
-                !(e instanceof org.springframework.web.context.request.async.AsyncRequestNotUsableException)) {
-                log.warn("SseService_subscribe_Emitter error for user: {}", userId, e);
-            } else {
+            // Broken pipe hoặc client đóng kết nối
+            if (e instanceof IOException || e instanceof IllegalStateException) {
                 log.debug("SseService_subscribe_Client disconnected for user: {}", userId);
+                return;
             }
+
+            // Các lỗi thật sự
+            log.warn("SseService_subscribe_Emitter error for user: {}", userId, e);
         });
         
         log.info("SseService_subscribe_User {} subscribed to SSE, total connections: {}", 
@@ -161,32 +160,31 @@ public class SseServiceImpl implements SseService {
      * Uses a single channel "notifications" and filters by userId
      */
     private void setupRedisSubscription() {
-        // Subscribe to the notifications channel
         String channel = "notifications";
-        MessageListener listener = new MessageListener() {
-            @Override
-            public void onMessage(Message message, byte[] pattern) {
-                try {
-                    String messageBody = new String(message.getBody());
-                    // Parse message: expected format {"userId": "...", "payload": ...}
-                    Map<String, Object> messageData = objectMapper.readValue(messageBody, Map.class);
-                    String userId = (String) messageData.get("userId");
-                    Object payload = messageData.get("payload");
-                    
-                    if (userId != null && payload != null) {
-                        sendNotificationToUser(userId, payload);
-                    }
-                } catch (Exception e) {
-                    log.error("SseService_setupRedisSubscription_Error processing Redis message", e);
+
+        MessageListener listener = (message, pattern) -> {
+            try {
+                String messageBody = new String(message.getBody());
+
+                Map<String, Object> messageData = objectMapper.readValue(messageBody, Map.class);
+                String userId = (String) messageData.get("userId");
+                Object payload = messageData.get("payload");
+
+                if (userId != null && payload != null) {
+                    sendNotificationToUser(userId, payload);
                 }
+
+            } catch (Exception e) {
+                log.error("SseService_setupRedisSubscription_Error processing Redis message", e);
             }
         };
-        
-        ChannelTopic topic = new ChannelTopic(channel);
-        redisMessageListenerContainer.addMessageListener(listener, topic);
-        
+
+        redisMessageListenerContainer.addMessageListener(listener, new ChannelTopic(channel));
+
         log.info("SseService_setupRedisSubscription_Subscribed to Redis channel: {}", channel);
     }
+
+
 
     /**
      * Send keep-alive comments to all connected clients every 30 seconds

@@ -16,8 +16,6 @@ import com.se.hub.modules.interaction.dto.response.ReactionInfo;
 import com.se.hub.modules.interaction.dto.response.ReactionToggleResult;
 import com.se.hub.modules.interaction.enums.ReactionType;
 import com.se.hub.modules.interaction.enums.TargetType;
-import com.se.hub.modules.interaction.repository.CommentRepository;
-import com.se.hub.modules.interaction.repository.ReactionRepository;
 import com.se.hub.modules.interaction.service.api.ReactionService;
 import com.se.hub.modules.blog.constant.BlogCacheConstants;
 import com.se.hub.modules.blog.repository.BlogRepository;
@@ -47,7 +45,7 @@ import java.util.stream.Collectors;
 
 /**
  * Blog Service Implementation
- * 
+
  * Virtual Thread Best Practice:
  * - This service uses synchronous blocking I/O operations (JPA repository calls)
  * - Virtual threads automatically handle blocking operations efficiently
@@ -67,8 +65,6 @@ public class BlogServiceImpl implements BlogService {
     ActivityService activityService;
     BlogSettingService blogSettingService;
     ReactionService reactionService;
-    CommentRepository commentRepository;
-    ReactionRepository reactionRepository;
 
     /**
      * Helper method to build PagingResponse from Page<Blog>
@@ -140,27 +136,14 @@ public class BlogServiceImpl implements BlogService {
      * Convert Blog to BlogResponse with reaction info (single blog)
      */
     private BlogResponse toBlogResponseWithReaction(Blog blog, String userId) {
-        BlogResponse response = blogMapper.toBlogResponse(blog);
         ReactionInfo reactionInfo = reactionService.getReactionsForTargets(
                 TargetType.BLOG, 
                 List.of(blog.getId()), 
                 userId
         ).get(blog.getId());
         
-        if (reactionInfo != null) {
-            response.setReactions(reactionInfo);
-        } else {
-            response.setReactions(ReactionInfo.builder()
-                    .userReacted(false)
-                    .type(null)
-                    .build());
-        }
-        // Always read counts directly from Blog entity fields
-        response.setCmtCount(blog.getCmtCount());
-        response.setReactionCount(blog.getReactionCount());
-        return response;
+        return toBlogResponseWithReaction(blog, reactionInfo);
     }
-
     /**
      * Update blog reaction count from Reaction table.
      * Virtual Thread Best Practice: Uses synchronous blocking I/O operations.
@@ -210,13 +193,11 @@ public class BlogServiceImpl implements BlogService {
         BlogResponse response = blogMapper.toBlogResponse(savedBlog);
         
         // If blog is auto-approved, update stats and activity immediately
-        if (savedBlog.getIsApproved()) {
+        if (Boolean.TRUE.equals(savedBlog.getIsApproved())) {
             profileProgressService.updatePostsUploaded();
             activityService.incrementActivity(author.getId());
-        } else {
-            // Note: User stats and activity will be incremented only when blog is approved by admin
-            // See approveBlog() method for stats and activity tracking
         }
+
         
         return response;
     }
@@ -234,12 +215,12 @@ public class BlogServiceImpl implements BlogService {
     public BlogResponse getById(String blogId) {
         Blog blog = blogRepository.findById(blogId)
                 .orElseThrow(() -> {
-                    log.error("BlogService_getById_Blog not found with id: {}", blogId);
+                    log.error("BlogService_getById_Blog first not found with id: {}", blogId);
                     return BlogErrorCode.BLOG_NOT_FOUND.toException();
                 });
         
         // Only return approved blogs (unless admin)
-        if (!blog.getIsApproved() && !isAdmin()) {
+        if (!Boolean.TRUE.equals(blog.getIsApproved()) && !isAdmin()) {
             log.error("BlogService_getById_Blog {} is not approved", blogId);
             throw BlogErrorCode.BLOG_NOT_FOUND.toException();
         }
@@ -252,13 +233,12 @@ public class BlogServiceImpl implements BlogService {
         // Refresh blog to get updated view count
         blog = blogRepository.findById(blogId)
                 .orElseThrow(() -> {
-                    log.error("BlogService_getById_Blog not found with id: {}", blogId);
+                    log.error("BlogService_getById_Blog second not found with id: {}", blogId);
                     return BlogErrorCode.BLOG_NOT_FOUND.toException();
                 });
         
         String currentUserId = AuthUtils.getCurrentUserIdOrNull();
-        BlogResponse response = toBlogResponseWithReaction(blog, currentUserId);
-        return response;
+        return toBlogResponseWithReaction(blog, currentUserId);
     }
 
     @Override
@@ -313,9 +293,7 @@ public class BlogServiceImpl implements BlogService {
 
         blog = blogMapper.updateBlogFromRequest(blog, request);
         blog.setUpdateBy(AuthUtils.getCurrentUserId());
-
-        BlogResponse response = blogMapper.toBlogResponse(blogRepository.save(blog));
-        return response;
+        return blogMapper.toBlogResponse(blogRepository.save(blog));
     }
 
     @Override
@@ -466,7 +444,7 @@ public class BlogServiceImpl implements BlogService {
                     return BlogErrorCode.BLOG_NOT_FOUND.toException();
                 });
 
-        if (!blog.getIsApproved()) {
+        if (!Boolean.TRUE.equals(blog.getIsApproved())) {
             log.error("BlogService_likeBlog_Blog {} is not approved", blogId);
             throw BlogErrorCode.BLOG_NOT_FOUND.toException();
         }
@@ -508,7 +486,7 @@ public class BlogServiceImpl implements BlogService {
                     return BlogErrorCode.BLOG_NOT_FOUND.toException();
                 });
 
-        if (!blog.getIsApproved()) {
+        if (!Boolean.TRUE.equals(blog.getIsApproved())) {
             log.error("BlogService_dislikeBlog_Blog {} is not approved", blogId);
             throw BlogErrorCode.BLOG_NOT_FOUND.toException();
         }

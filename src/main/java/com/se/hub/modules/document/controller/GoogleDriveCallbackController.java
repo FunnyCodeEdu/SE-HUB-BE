@@ -31,7 +31,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/drive")
 public class GoogleDriveCallbackController {
-
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
     @Value("${google.drive.client_id:}")
@@ -49,6 +48,88 @@ public class GoogleDriveCallbackController {
     @Value("${google.drive.callback.url:http://localhost:8080/api/drive/callback}")
     private String callbackUrl;
 
+    private static final String ACCESS_DENIED_MESSAGE = """
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #f44336;">Access Denied - Google OAuth Verification Required</h2>
+                <p style="font-size: 16px; line-height: 1.6;">
+                    The application is currently in <strong>Testing mode</strong> and can only be accessed by developer-approved test users.
+                </p>
+                <h3 style="color: #333; margin-top: 20px;">To fix this issue:</h3>
+                <ol style="line-height: 1.8; padding-left: 20px;">
+                    <li>Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
+                    <li>Select your project</li>
+                    <li>Navigate to <strong>APIs & Services</strong> → <strong>OAuth consent screen</strong></li>
+                    <li>Scroll down to <strong>Test users</strong> section</li>
+                    <li>Click <strong>+ ADD USERS</strong></li>
+                    <li>Add your email address: <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px;">funnycode.softwareengineering@gmail.com</code></li>
+                    <li>Click <strong>SAVE</strong></li>
+                    <li>Try authorizing again</li>
+                </ol>
+                <p style="margin-top: 20px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                    <strong>Note:</strong> If you want to make the app available to all users without adding test users.
+                     You need to publish the app (requires Google verification process).
+                </p>
+                <p style="margin-top: 15px;">
+                    <a href="/api/drive/auth-url" style="display: inline-block; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 4px;">
+                        Try Again
+                    </a>
+                </p>
+            </div>
+    """;
+
+    private static final String SUCCESS_HTML = """
+    <html>
+    <head>
+        <title>Authorization Successful</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                background-color: #f5f5f5;
+            }
+            .container {
+                text-align: center;
+                background: white;
+                padding: 40px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                max-width: 500px;
+            }
+            .success {
+                color: #4CAF50;
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            .message {
+                color: #333;
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+            .note {
+                color: #666;
+                font-size: 14px;
+                margin-top: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="success">✓ Authorization Successful!</div>
+            <div class="message">Google Drive access has been authorized.</div>
+            <div class="note">Please restart your application for the changes to take effect.</div>
+            <div class="note">You can close this window now.</div>
+        </div>
+    </body>
+    </html>
+    """;
+
+
+
+
     /**
      * OAuth callback endpoint
      * This endpoint is called by Google after user authorization
@@ -65,6 +146,7 @@ public class GoogleDriveCallbackController {
             @RequestParam(value = "error_description", required = false) String errorDescription) {
         
         // Check for error first
+        String authorizationFailed  = "Authorization Failed";
         if (error != null) {
             log.error("GoogleDriveCallbackController_callback_OAuth error: {} - {}", error, errorDescription);
             
@@ -76,20 +158,20 @@ public class GoogleDriveCallbackController {
             }
             
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(buildErrorHtml("Authorization Failed", errorMessage));
+                    .body(buildErrorHtml(authorizationFailed , errorMessage));
         }
         
         // Check if code is present
         if (code == null || code.isEmpty()) {
             log.error("GoogleDriveCallbackController_callback_No authorization code received");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(buildErrorHtml("Authorization Failed", "No authorization code received from Google"));
+                    .body(buildErrorHtml(authorizationFailed , "No authorization code received from Google"));
         }
         
         log.info("GoogleDriveCallbackController_callback_Received authorization code. Callback URL: {}", callbackUrl);
         
         try {
-            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+            final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 
             // Build credentials JSON string
             String credentialsJson = String.format("""
@@ -112,7 +194,7 @@ public class GoogleDriveCallbackController {
 
             log.debug("GoogleDriveCallbackController_callback_Creating authorization flow. Tokens dir: {}", tokensDir);
             GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-                    HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, List.of(DriveScopes.DRIVE))
+                    httpTransport, JSON_FACTORY, clientSecrets, List.of(DriveScopes.DRIVE))
                     .setDataStoreFactory(new FileDataStoreFactory(new File(tokensDir)))
                     .setAccessType("offline")
                     .build();
@@ -135,7 +217,7 @@ public class GoogleDriveCallbackController {
         } catch (Exception e) {
             log.error("GoogleDriveCallbackController_callback_Authorization failed: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(buildErrorHtml("Authorization Failed", 
+                    .body(buildErrorHtml(authorizationFailed ,
                             "Failed to exchange authorization code for token: " + e.getMessage()));
         }
     }
@@ -144,55 +226,7 @@ public class GoogleDriveCallbackController {
      * Build success HTML page
      */
     private String buildSuccessHtml() {
-        return """
-            <html>
-            <head>
-                <title>Authorization Successful</title>
-                <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        height: 100vh;
-                        margin: 0;
-                        background-color: #f5f5f5;
-                    }
-                    .container {
-                        text-align: center;
-                        background: white;
-                        padding: 40px;
-                        border-radius: 8px;
-                        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                        max-width: 500px;
-                    }
-                    .success {
-                        color: #4CAF50;
-                        font-size: 24px;
-                        margin-bottom: 20px;
-                    }
-                    .message {
-                        color: #333;
-                        font-size: 16px;
-                        margin-bottom: 10px;
-                    }
-                    .note {
-                        color: #666;
-                        font-size: 14px;
-                        margin-top: 20px;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="success">✓ Authorization Successful!</div>
-                    <div class="message">Google Drive access has been authorized.</div>
-                    <div class="note">Please restart your application for the changes to take effect.</div>
-                    <div class="note">You can close this window now.</div>
-                </div>
-            </body>
-            </html>
-            """;
+        return SUCCESS_HTML;
     }
     
     /**
@@ -247,34 +281,7 @@ public class GoogleDriveCallbackController {
      * Build access denied message with instructions
      */
     private String buildAccessDeniedMessage() {
-        return """
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #f44336;">Access Denied - Google OAuth Verification Required</h2>
-                <p style="font-size: 16px; line-height: 1.6;">
-                    The application is currently in <strong>Testing mode</strong> and can only be accessed by developer-approved test users.
-                </p>
-                <h3 style="color: #333; margin-top: 20px;">To fix this issue:</h3>
-                <ol style="line-height: 1.8; padding-left: 20px;">
-                    <li>Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
-                    <li>Select your project</li>
-                    <li>Navigate to <strong>APIs & Services</strong> → <strong>OAuth consent screen</strong></li>
-                    <li>Scroll down to <strong>Test users</strong> section</li>
-                    <li>Click <strong>+ ADD USERS</strong></li>
-                    <li>Add your email address: <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px;">funnycode.softwareengineering@gmail.com</code></li>
-                    <li>Click <strong>SAVE</strong></li>
-                    <li>Try authorizing again</li>
-                </ol>
-                <p style="margin-top: 20px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
-                    <strong>Note:</strong> If you want to make the app available to all users without adding test users, 
-                    you need to publish the app (requires Google verification process).
-                </p>
-                <p style="margin-top: 15px;">
-                    <a href="/api/drive/auth-url" style="display: inline-block; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 4px;">
-                        Try Again
-                    </a>
-                </p>
-            </div>
-            """;
+        return ACCESS_DENIED_MESSAGE;
     }
 
     /**
@@ -288,7 +295,7 @@ public class GoogleDriveCallbackController {
         log.debug("GoogleDriveCallbackController_getAuthUrl_Generating authorization URL");
         
         try {
-            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+            final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 
             String credentialsJson = String.format("""
                 {
@@ -308,7 +315,7 @@ public class GoogleDriveCallbackController {
                     JSON_FACTORY, new StringReader(credentialsJson));
 
             GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-                    HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, List.of(DriveScopes.DRIVE))
+                    httpTransport, JSON_FACTORY, clientSecrets, List.of(DriveScopes.DRIVE))
                     .setDataStoreFactory(new FileDataStoreFactory(new File(tokensDir)))
                     .setAccessType("offline")
                     .build();

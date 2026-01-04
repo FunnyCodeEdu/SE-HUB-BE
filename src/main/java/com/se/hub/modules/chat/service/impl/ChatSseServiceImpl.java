@@ -6,7 +6,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
@@ -82,10 +81,10 @@ public class ChatSseServiceImpl implements ChatSseService {
             log.debug("ChatSseService_subscribe_Emitter timeout for user: {}", userId);
         });
         
-        emitter.onError((e) -> {
+        emitter.onError(e -> {
             removeEmitter(userId, emitter);
             // Only log if it's not a client disconnect (Broken pipe is expected when client closes connection)
-            if (!(e instanceof IOException) && 
+            if (!(e instanceof IOException) &&
                 !(e instanceof org.springframework.web.context.request.async.AsyncRequestNotUsableException)) {
                 log.warn("ChatSseService_subscribe_Emitter error for user: {}", userId, e);
             } else {
@@ -162,23 +161,20 @@ public class ChatSseServiceImpl implements ChatSseService {
     private void setupRedisSubscription() {
         // Subscribe to the chat_messages channel
         String channel = "chat_messages";
-        MessageListener listener = new MessageListener() {
-            @Override
-            public void onMessage(Message message, byte[] pattern) {
-                try {
-                    String messageBody = new String(message.getBody());
-                    // Parse message: expected format {"userId": "...", "payload": ...}
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> messageData = objectMapper.readValue(messageBody, Map.class);
-                    String userId = (String) messageData.get("userId");
-                    Object payload = messageData.get("payload");
-                    
-                    if (userId != null && payload != null) {
-                        sendMessageToUser(userId, payload);
-                    }
-                } catch (Exception e) {
-                    log.error("ChatSseService_setupRedisSubscription_Error processing Redis message", e);
+        MessageListener listener = (message, pattern) -> {
+            try {
+                String messageBody = new String(message.getBody());
+                // Parse message: expected format {"userId": "...", "payload": ...}
+                @SuppressWarnings("unchecked")
+                Map<String, Object> messageData = objectMapper.readValue(messageBody, Map.class);
+                String userId = (String) messageData.get("userId");
+                Object payload = messageData.get("payload");
+
+                if (userId != null && payload != null) {
+                    sendMessageToUser(userId, payload);
                 }
+            } catch (Exception e) {
+                log.error("ChatSseService_setupRedisSubscription_Error processing Redis message", e);
             }
         };
         

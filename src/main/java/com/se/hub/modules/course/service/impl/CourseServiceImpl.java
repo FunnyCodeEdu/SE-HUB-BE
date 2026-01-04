@@ -168,12 +168,6 @@ public class CourseServiceImpl implements CourseService {
             throw CourseErrorCode.COURSE_ID_REQUIRED.toException();
         }
 
-        Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> {
-                    log.error("CourseService_deleteCourseById_Course not found with id: {}", courseId);
-                    return CourseErrorCode.COURSE_NOT_FOUND.toException();
-                });
-
         // Xóa tất cả documents liên quan trước
         List<Document> documents = documentRepository.findAllByCourseId(courseId, Pageable.unpaged()).getContent();
         if (!documents.isEmpty()) {

@@ -75,7 +75,7 @@ public interface FollowService {
     FollowCountResponse getFollowCountByUserId(String userId);
     
     /**
-     * Get mutual friends (users that both current user and they follow each other)
+     * Get mutual friends (users that both current user, they follow each other)
      * @return List of ProfileResponse for mutual friends
      */
     List<ProfileResponse> getMutualFriends();

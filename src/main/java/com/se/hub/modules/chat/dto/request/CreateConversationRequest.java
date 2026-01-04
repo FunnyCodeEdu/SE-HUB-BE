@@ -25,10 +25,10 @@ import java.util.List;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CreateConversationRequest {
-    @NotNull(message = "Conversation type is required")
+    @NotNull(message = ChatErrorCodeConstants.CONVERSATION_TYPE_IS_REQUIRED)
     ConversationType type;
     
-    @NotNull(message = "Participant IDs are required")
+    @NotNull(message = ChatErrorCodeConstants.PARTICIPANT_ID_ARE_REQUIRED)
     @Size(min = ChatConstants.MIN_PARTICIPANTS, 
           max = ChatConstants.MAX_PARTICIPANTS,
           message = ChatErrorCodeConstants.INVALID_PARTICIPANT_COUNT)

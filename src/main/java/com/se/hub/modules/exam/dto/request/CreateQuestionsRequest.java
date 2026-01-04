@@ -1,5 +1,7 @@
 package com.se.hub.modules.exam.dto.request;
 
+import com.se.hub.modules.exam.constant.QuestionMessageConstants;
+import com.se.hub.modules.exam.constant.question.QuestionErrorCodeConstants;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AccessLevel;
@@ -19,7 +21,7 @@ import java.util.List;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CreateQuestionsRequest {
-    @NotEmpty(message = "Questions list cannot be empty")
+    @NotEmpty(message = QuestionMessageConstants.QUESTION_LIST_CAN_NOT_BE_EMPTY)
     @Valid
     List<CreateQuestionRequest> questions;
 }

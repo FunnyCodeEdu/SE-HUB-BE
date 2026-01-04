@@ -2,6 +2,9 @@ package com.se.hub.modules.exam.entity;
 
 import com.se.hub.common.constant.BaseFieldConstant;
 import com.se.hub.common.entity.BaseEntity;
+import com.se.hub.modules.exam.constant.ExamMessageConstants;
+import com.se.hub.modules.exam.constant.exam_attempt.ExamAttemptConstants;
+import com.se.hub.modules.exam.constant.exam_attempt.ExamAttemptErrorCodeConstants;
 import com.se.hub.modules.profile.entity.Profile;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,42 +28,42 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "exam_attempt")
+@Table(name = ExamAttemptConstants.TABLE_EXAM_ATTEMPT)
 @Entity
 public class ExamAttempt extends BaseEntity {
     
-    @NotNull(message = "Exam ID cannot be null")
+    @NotNull(message = ExamMessageConstants.EXAM_ID_CAN_NOT_BE_NULL)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "exam_id", 
+    @JoinColumn(name = ExamAttemptConstants.COL_EXAM_ID,
             referencedColumnName = BaseFieldConstant.ID,
             nullable = false)
     Exam exam;
     
-    @NotNull(message = "Profile ID cannot be null")
+    @NotNull(message = ExamAttemptErrorCodeConstants.EXAM_ATTEMPT_PROFILE_ID_CAN_NOT_BE_NULL)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "profile_id", 
+    @JoinColumn(name = ExamAttemptConstants.COL_PROFILE_ID,
             referencedColumnName = BaseFieldConstant.ID,
             nullable = false)
     Profile profile;
     
-    @Min(value = 0, message = "Score cannot be negative")
-    @Column(name = "score", nullable = false)
+    @Min(value = ExamAttemptConstants.SCORE_MIN_VALUE, message = ExamAttemptErrorCodeConstants.EXAM_ATTEMPT_SCORE_CAN_NOT_BE_NEGATIVE)
+    @Column(name = ExamAttemptConstants.COL_SCORE, nullable = false)
     int score;
     
-    @Min(value = 0, message = "Total score cannot be negative")
-    @Column(name = "total_score", nullable = false)
+    @Min(value = ExamAttemptConstants.TOTAL_SCORE_MIN_VALUE, message = ExamAttemptErrorCodeConstants.EXAM_ATTEMPT_TOTAL_SCORE_CAN_NOT_BE_NEGATIVE)
+    @Column(name = ExamAttemptConstants.COL_TOTAL_SCORE, nullable = false)
     int totalScore;
     
-    @Column(name = "correct_count")
+    @Column(name = ExamAttemptConstants.COL_CORRECT_COUNT)
     int correctCount;
     
-    @Column(name = "total_questions")
+    @Column(name = ExamAttemptConstants.COL_TOTAL_QUESTIONS)
     int totalQuestions;
     
-    @Column(name = "time_taken_seconds")
+    @Column(name = ExamAttemptConstants.COL_TIME_TAKEN_SECONDS)
     int timeTakenSeconds;
     
-    @Column(name = "submitted_answers", columnDefinition = "TEXT")
+    @Column(name = ExamAttemptConstants.COL_SUBMITTED_ANSWERS, columnDefinition = ExamAttemptConstants.DESCRIPTION_DEFINITION)
     String submittedAnswers; // JSON string of questionId -> optionId mappings
 }
 

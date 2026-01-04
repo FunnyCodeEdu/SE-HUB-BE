@@ -77,7 +77,7 @@ public class Profile extends BaseEntity {
     @Column(name = ProfileConstants.GENDER)
     GenderEnums gender;
 
-    @Column(name = ProfileConstants.BIO, length = 500)
+    @Column(name = ProfileConstants.BIO, length = ProfileConstants.BIO_LENGTH)
     @Size(max = ProfileConstants.BIO_MAX,
             message = ProfileErrorCodeConstants.BIO_SIZE_INVALID)
     String bio;
@@ -115,7 +115,7 @@ public class Profile extends BaseEntity {
     @NotNull(message = ProfileErrorCodeConstants.LEVEL_NOT_NULL)
     UserLevel level;
 
-    @OneToOne(mappedBy = "profile",
+    @OneToOne(mappedBy = ProfileConstants.TABLE_PROFILE,
             cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     UserStats userStats;
 
@@ -127,7 +127,7 @@ public class Profile extends BaseEntity {
     Set<Achievement> achievements;
 
     @OneToOne(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", referencedColumnName = BaseFieldConstant.ID)
+    @JoinColumn(name = ProfileConstants.USER_ID, referencedColumnName = BaseFieldConstant.ID)
     @NotNull(message = ProfileErrorCodeConstants.USER_NOT_NULL)
     User user;
 }

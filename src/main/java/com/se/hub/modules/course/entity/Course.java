@@ -35,9 +35,9 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = CourseConstants.TABLE_COURSE)
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Course extends BaseEntity {
     @NotBlank(message = CourseErrorCodeConstants.COURSE_NAME_INVALID)
     @Size(min = CourseConstants.NAME_MIN_LENGTH,

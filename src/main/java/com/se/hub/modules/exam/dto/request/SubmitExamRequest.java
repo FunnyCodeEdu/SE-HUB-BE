@@ -1,5 +1,9 @@
 package com.se.hub.modules.exam.dto.request;
 
+import com.se.hub.modules.exam.constant.AnswerReportMessageConstants;
+import com.se.hub.modules.exam.constant.ExamMessageConstants;
+import com.se.hub.modules.exam.constant.answer_report.AnswerReportErrorCodeConstants;
+import com.se.hub.modules.exam.constant.exam.ExamErrorCodeConstants;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -21,7 +25,7 @@ import java.util.Map;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SubmitExamRequest {
     
-    @NotNull(message = "Exam ID cannot be null")
+    @NotNull(message = ExamMessageConstants.EXAM_ID_CAN_NOT_BE_NULL)
     private String examId;
     
     /**
@@ -29,14 +33,14 @@ public class SubmitExamRequest {
      * For MULTIPLE_CHOICE and TRUE_FALSE: single option ID
      * For FILL_IN_BLANK: the option ID or null if not answered
      */
-    @NotEmpty(message = "Answers cannot be empty")
+    @NotEmpty(message = AnswerReportErrorCodeConstants.ANSWER_REPORT_CAN_NOT_BE_EMPTY)
     @Valid
     private Map<String, String> answers;
     
     /**
      * Time taken in seconds
      */
-    @NotNull(message = "Time taken cannot be null")
+    @NotNull(message = ExamMessageConstants.EXAM_TIME_TAKEN_CANNOT_BE_NULL)
     private Integer timeTakenSeconds;
 }
 

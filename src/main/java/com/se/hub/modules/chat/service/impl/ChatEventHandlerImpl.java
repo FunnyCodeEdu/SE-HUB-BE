@@ -21,7 +21,7 @@ import java.util.Map;
 
 /**
  * Chat Event Handler Implementation
- * 
+
  * Handles all chat-related domain events
  * Uses @Async to process events asynchronously with virtual threads
  */
@@ -94,10 +94,18 @@ public class ChatEventHandlerImpl implements ChatEventHandler {
     private void sendChatNotification(NewChatMessageEvent event) {
         try {
             ChatMessageResponse message = event.getMessage();
-            String senderName = message.getSender() != null && message.getSender().getFullName() != null 
-                    ? message.getSender().getFullName() 
-                    : message.getSender() != null ? message.getSender().getUsername() : "Someone";
-            
+
+            String senderName;
+
+            if (message.getSender() == null) {
+                senderName = "Someone";
+            } else if (message.getSender().getFullName() != null) {
+                senderName = message.getSender().getFullName();
+            } else {
+                senderName = message.getSender().getUsername();
+            }
+
+
             // Create notification response for each recipient
             for (String recipientUserId : event.getRecipientUserIds()) {
                 NotificationResponse notification = NotificationResponse.builder()

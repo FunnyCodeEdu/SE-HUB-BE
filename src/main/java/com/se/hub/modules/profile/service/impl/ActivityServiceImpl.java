@@ -63,7 +63,7 @@ public class ActivityServiceImpl implements ActivityService {
         String userId = AuthUtils.getCurrentUserId();
         
         // Blocking I/O - virtual thread yields here
-        // Use upsert to increment count (creates new record if doesn't exist, increments if exists)
+        // Use upsert to increment count (creates new record if it doesn't exist, increments if exists)
         activityRepository.incrementActivityCount(profileId, today, userId);
         
         log.debug("ActivityService_incrementActivity_Activity incremented for profile {} on date {}", profileId, today);

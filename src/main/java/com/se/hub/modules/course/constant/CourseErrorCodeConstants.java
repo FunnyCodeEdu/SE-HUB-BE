@@ -8,4 +8,6 @@ public class CourseErrorCodeConstants {
     public static final String COURSE_DESCRIPTION_INVALID = "COURSE_DESCRIPTION_INVALID";
     public static final String COURSE_SEMESTER_INVALID = "COURSE_SEMESTER_INVALID";
     public static final String COURSE_SPECIALIZATION_INVALID = "COURSE_SPECIALIZATION_INVALID";
+
+    private CourseErrorCodeConstants() {}
 }

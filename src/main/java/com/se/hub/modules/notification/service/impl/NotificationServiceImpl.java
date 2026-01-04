@@ -37,7 +37,7 @@ import java.util.List;
 
 /**
  * Notification Service Implementation
- * 
+
  * Virtual Thread Best Practice:
  * - This service uses synchronous blocking I/O operations (JPA repository calls)
  * - Virtual threads automatically handle blocking operations efficiently
@@ -229,19 +229,8 @@ public class NotificationServiceImpl implements NotificationService {
     public NotificationSettingResponse getSettings() {
         log.debug("NotificationService_getSettings_Getting notification settings for user: {}", AuthUtils.getCurrentUserId());
         String userId = AuthUtils.getCurrentUserId();
-        
-        NotificationSetting setting = notificationSettingRepository.findByUser_User_Id(userId)
-                .orElseGet(() -> {
-                    // Create default settings if not exists
-                    NotificationSetting defaultSetting = NotificationSetting.builder()
-                            .user(profileRepository.findByUserId(userId)
-                                    .orElseThrow(() -> new AppException(ErrorCode.PROFILE_NOT_FOUND)))
-                            .build();
-                    defaultSetting.setCreatedBy(userId);
-                    defaultSetting.setUpdateBy(userId);
-                    return notificationSettingRepository.save(defaultSetting);
-                });
-        
+
+        NotificationSetting setting = getOrCreateSetting(userId);
         return notificationSettingMapper.toNotificationSettingResponse(setting);
     }
 
@@ -251,7 +240,19 @@ public class NotificationServiceImpl implements NotificationService {
         log.debug("NotificationService_updateSettings_Updating notification settings for user: {}", AuthUtils.getCurrentUserId());
         String userId = AuthUtils.getCurrentUserId();
         
-        NotificationSetting setting = notificationSettingRepository.findByUser_User_Id(userId)
+        NotificationSetting setting = getOrCreateSetting(userId);
+        
+        setting = notificationSettingMapper.updateSettingFromRequest(setting, request);
+        setting.setUpdateBy(userId);
+        
+        NotificationSetting savedSetting = notificationSettingRepository.save(setting);
+        log.debug("NotificationService_updateSettings_Notification settings updated successfully");
+        
+        return notificationSettingMapper.toNotificationSettingResponse(savedSetting);
+    }
+
+    private NotificationSetting getOrCreateSetting(String userId) {
+        return notificationSettingRepository.findByUser_User_Id(userId)
                 .orElseGet(() -> {
                     NotificationSetting newSetting = NotificationSetting.builder()
                             .user(profileRepository.findByUserId(userId)
@@ -261,14 +262,6 @@ public class NotificationServiceImpl implements NotificationService {
                     newSetting.setUpdateBy(userId);
                     return notificationSettingRepository.save(newSetting);
                 });
-        
-        setting = notificationSettingMapper.updateSettingFromRequest(setting, request);
-        setting.setUpdateBy(userId);
-        
-        NotificationSetting savedSetting = notificationSettingRepository.save(setting);
-        log.debug("NotificationService_updateSettings_Notification settings updated successfully");
-        
-        return notificationSettingMapper.toNotificationSettingResponse(savedSetting);
     }
 }
 

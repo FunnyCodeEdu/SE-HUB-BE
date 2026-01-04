@@ -58,7 +58,7 @@ public class ReactionController extends BaseController {
             @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = InteractionMessageConstants.API_BAD_REQUEST),
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = InteractionMessageConstants.API_INTERNAL_ERROR)
     })
-    public ResponseEntity<?> toggleReaction(
+    public ResponseEntity<GenericResponse<ReactionResponse>> toggleReaction(
             @PathVariable String targetType,
             @PathVariable String targetId,
             @RequestParam(defaultValue = "LIKE") ReactionType reactionType) {
@@ -80,7 +80,7 @@ public class ReactionController extends BaseController {
             @ApiResponse(responseCode = ResponseCode.BAD_REQUEST_400, description = InteractionMessageConstants.API_BAD_REQUEST),
             @ApiResponse(responseCode = ResponseCode.INTERNAL_ERROR_500, description = InteractionMessageConstants.API_INTERNAL_ERROR)
     })
-    public ResponseEntity<?> getReactionCount(
+    public ResponseEntity<GenericResponse<ReactionResponse>> getReactionCount(
             @PathVariable String targetType,
             @PathVariable String targetId,
             @RequestParam(defaultValue = "LIKE") ReactionType reactionType) {

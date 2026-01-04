@@ -18,5 +18,7 @@ public class UserLevelConstants {
     public static final int PLATINUM_MAX = 399;
     public static final int DIAMOND_MIN = PLATINUM_MAX + 1;
     public static final int DIAMOND_MAX = 599;
+
+    private UserLevelConstants() {}
 }
 

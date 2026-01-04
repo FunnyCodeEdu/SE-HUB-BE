@@ -1,6 +1,7 @@
 package com.se.hub.common.constant;
 
 public class ErrorCodeConstant {
+
     public static final String SERVER_UNCATEGORIZED_EXCEPTION = "SERVER_UNCATEGORIZED_EXCEPTION";
 
     // ==== AUTHENTICATION ERRORS ====
@@ -16,4 +17,6 @@ public class ErrorCodeConstant {
 
     // ==== ROLE ====
     public static final String ROLE_NOT_FOUND = "ROLE_NOT_FOUND";
+
+    private ErrorCodeConstant() {}
 }

@@ -1,5 +1,6 @@
 package com.se.hub.modules.chat.dto.request;
 
+import com.se.hub.modules.chat.constant.ChatErrorCodeConstants;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -22,7 +23,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class GetMessagesRequest {
-    @NotBlank(message = "Conversation ID is required")
+    @NotBlank(message = ChatErrorCodeConstants.CONVERSATION_ID_IS_REQUIRED)
     String conversationId;
     
     // Pagination

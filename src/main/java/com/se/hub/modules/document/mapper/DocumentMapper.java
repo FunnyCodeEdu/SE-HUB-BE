@@ -47,10 +47,6 @@ public interface DocumentMapper {
         if (filePath == null || filePath.isEmpty()) {
             return null;
         }
-        // If it's already a Google Drive URL, return it as is
-        if (filePath.startsWith("https://drive.google.com")) {
-            return filePath;
-        }
         // Otherwise, return the filePath directly
         return filePath;
     }

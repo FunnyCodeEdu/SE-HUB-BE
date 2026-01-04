@@ -5,7 +5,6 @@ import com.se.hub.common.dto.MessageDTO;
 import com.se.hub.common.dto.response.GenericResponse;
 import com.se.hub.common.enums.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
@@ -48,7 +47,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
-                         AuthenticationException exception) throws IOException, ServletException {
+                         AuthenticationException exception) throws IOException {
         String requestPath = request.getRequestURI();
         
         // Remove query string for matching
@@ -58,18 +57,13 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         
         // Check if request is to a whitelist endpoint
         boolean isWhitelisted = WHITELIST_PATTERNS.stream()
-                .anyMatch(pattern -> {
-                    // Handle exact match
-                    if (pathWithoutQuery.equals(pattern)) {
-                        return true;
-                    }
-                    // Handle prefix match (for patterns like /api/swagger-ui)
-                    if (pathWithoutQuery.startsWith(pattern + "/") || pathWithoutQuery.startsWith(pattern + "?")) {
-                        return true;
-                    }
-                    return false;
-                });
-        
+                .anyMatch(pattern ->
+                        pathWithoutQuery.equals(pattern)
+                                || pathWithoutQuery.startsWith(pattern + "/")
+                                || pathWithoutQuery.startsWith(pattern + "?")
+                );
+
+
         // If whitelisted, don't send error response
         // Set anonymous authentication and let the filter chain continue
         if (isWhitelisted) {
